@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "UROP - Energy Database",
+			"path": "../../../../Downloads/UROP - Energy Database"
+		},
+		{
+			"name": "California",
+			"path": "../California"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}
