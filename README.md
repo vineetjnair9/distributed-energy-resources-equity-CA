@@ -16,7 +16,7 @@ National and state-level data available for specific years, such as 2018, provid
 ### Data Accessibility: 
 Some datasets are accessible at varying temporal resolutions, including annual, monthly, daily, and hourly intervals.
 
-### Coordinate-Based Data Retrieval: 
+### Zip-code-Based Data Retrieval: 
 Certain datasets allow users to look up available data at specific geographic coordinates, with results returned based on the closest matching data.
 
 ### City-Level Data: 
