@@ -2,3 +2,5 @@ Datasets/
 Graphs and Plots/
 *.pkl
 *.xlsx
+*.csv
+
