@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DER Adoption Disparities in California ZIP Codes</title>
+
+  <!-- Minimal, notes-style CSS inspired by the provided template -->
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --bg-alt: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --todo-bg: #fef3c7;
+      --todo-border: #f97316;
+      --todo-text: #7c2d12;
+      --code-bg: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Iowan Old Style", "Palatino", "Times New Roman", Georgia, serif;
+      font-size: 16px;
+      line-height: 1.6;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      background: #ffffffcc;
+      backdrop-filter: blur(6px);
+    }
+
+    .header-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem 1.5rem;
+    }
+
+    .course-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .course-meta {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+      background: var(--bg-alt);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      min-height: 100vh;
+    }
+
+    .page-layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 3rem;
+      justify-content: center;
+    }
+
+    .content-column {
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: 900px;
+    }
+
+    h1, h2, h3, h4 {
+      font-weight: 600;
+      margin-top: 1.6rem;
+      margin-bottom: 0.6rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.25rem;
+      margin-top: 2rem;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 1.4rem;
+    }
+
+    h4 {
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+
+    p {
+      margin: 0.4rem 0 0.9rem;
+      font-size: 1rem;
+    }
+
+    ul, ol {
+      margin: 0.3rem 0 0.9rem 1.3rem;
+      font-size: 1rem;
+    }
+
+    li {
+      margin: 0.15rem 0;
+      font-size: 1rem;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+                   "Courier New", monospace;
+      font-size: 0.9em;
+      background: var(--code-bg);
+      padding: 0.05rem 0.25rem;
+      border-radius: 3px;
+    }
+
+    pre code {
+      display: block;
+      padding: 0.75rem 0.9rem;
+      border-radius: 5px;
+      overflow-x: auto;
+      background: var(--code-bg);
+    }
+
+    .author-block {
+      font-size: 1rem;
+      color: var(--muted);
+      margin-bottom: 1.3rem;
+    }
+
+    .author-block span {
+      display: inline-block;
+      margin-right: 1.5rem;
+    }
+
+    .key-idea {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      margin: 0.75rem 0;
+      border-left: 4px solid var(--accent);
+      background: #eff6ff;
+      font-weight: 500;
+    }
+
+    .result-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.6rem 0.8rem;
+      background: #f9fafb;
+      margin: 0.6rem 0 1rem;
+      font-size: 0.95rem;
+    }
+
+    .todo {
+      background: var(--todo-bg);
+      border-left: 4px solid var(--todo-border);
+      padding: 0.4rem 0.7rem;
+      display: block;
+      margin: 0.5rem 0 0.9rem;
+      font-size: 0.9rem;
+      color: var(--todo-text);
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0 1.25rem;
+      font-size: 0.95rem;
+    }
+
+    thead th {
+      background: #f1f5f9;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    .table-caption {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: -0.3rem;
+      margin-bottom: 0.8rem;
+      font-style: italic;
+    }
+
+    .toc-wrapper {
+      position: sticky;
+      top: 5.5rem;
+      width: 260px;
+      max-height: calc(100vh - 6rem);
+      overflow-y: auto;
+      font-size: 0.9rem;
+      background: transparent;
+      border-left: 1px solid var(--border);
+      padding-left: 1rem;
+      margin: 0;
+      z-index: 5;
+    }
+
+    .toc {
+      font-size: 0.95rem;
+      background: transparent;
+    }
+
+    .toc-title {
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--muted);
+    }
+
+    .toc ol {
+      list-style: none;
+      margin: 0;
+      padding-left: 0;
+      border-left: 2px solid var(--border);
+    }
+
+    .toc li { margin: 0.1rem 0; }
+
+    .toc a {
+      display: block;
+      padding: 0.15rem 0.75rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .toc a.active {
+      color: var(--accent);
+      font-weight: 500;
+      background: #eff6ff;
+      border-left: 2px solid var(--accent);
+      margin-left: -2px;
+    }
+
+    .toc-progress {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0.35rem 0 0.6rem;
+    }
+
+    .toc-progress-inner {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 0.12s ease-out;
+    }
+
+    .toc ol ol {
+      border-left: none;
+      padding-left: 1.1rem;
+    }
+
+    /* Collapsible TOC sections */
+    .toc li.has-children {
+      position: relative;
+      padding-left: 0.4rem;
+    }
+
+    .toc li.has-children > ol { display: none; }
+    .toc li.has-children.expanded > ol { display: block; }
+
+    .toc-toggle {
+      position: absolute;
+      left: 0;
+      top: 0.18rem;
+      width: 0.6rem;
+      height: 0.9rem;
+      border: none;
+      background: none;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      font-size: 0.7rem;
+      line-height: 1;
+      color: var(--muted);
+    }
+
+    .toc-toggle:focus {
+      outline: 1px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .toc li.has-children.expanded > .toc-toggle::before { content: "▾"; }
+    .toc li.has-children:not(.expanded) > .toc-toggle::before { content: "▸"; }
+    .toc li.has-children > a { padding-left: 0.85rem; }
+
+    /* Collapsible content subsections (used for 3.8a–3.8f) */
+    details.collapsible {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #f9fafb;
+      margin: 0.65rem 0 1rem;
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] details.collapsible {
+      background: #020617;
+    }
+
+    details.collapsible summary {
+      cursor: pointer;
+      padding: 0.55rem 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+      user-select: none;
+      position: relative;
+      list-style: none;
+    }
+
+    details.collapsible summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.collapsible summary::before {
+      content: "▸";
+      display: inline-block;
+      margin-right: 0.5rem;
+      color: var(--muted);
+      transform: translateY(-1px);
+    }
+
+    details.collapsible[open] summary::before {
+      content: "▾";
+    }
+
+    details.collapsible .collapsible-body {
+      padding: 0.15rem 0.75rem 0.75rem;
+    }
+
+
+    /* Copyable code blocks */
+    .pre-wrapper {
+      position: relative;
+      margin: 0.85rem 0;
+    }
+
+    .pre-wrapper pre code { padding-right: 2.8rem; }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.4rem;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+    }
+
+    .copy-btn:hover { background: #e5e7eb; }
+
+    .copy-btn.copied {
+      background: #bbf7d0;
+      border-color: #22c55e;
+    }
+
+    .theme-toggle {
+      margin-left: auto;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .theme-toggle:hover { background: #e5e7eb; }
+
+    /* Center display-style MathJax equations */
+    mjx-container[display="true"] {
+      display: block;
+      text-align: center;
+      margin: 1rem auto;
+    }
+
+    mjx-container { color: var(--text); }
+    mjx-container svg { fill: currentColor; stroke: currentColor; }
+
+    [data-theme="dark"] {
+      --bg: #020617;
+      --bg-alt: #020617;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --accent: #38bdf8;
+      --todo-bg: #1f2937;
+      --todo-border: #eab308;
+      --todo-text: #facc15;
+      --code-bg: #020617;
+    }
+
+    [data-theme="dark"] header { background: #020617cc; }
+    [data-theme="dark"] .result-card { background: #020617; }
+    [data-theme="dark"] table tbody tr:nth-child(even) { background: #020617; }
+
+    [data-theme="dark"] .key-idea {
+      background: #020617;
+      border-left-color: var(--accent);
+      color: var(--text);
+    }
+
+    [data-theme="dark"] .todo {
+      background: #020617;
+      border-left-color: var(--todo-border);
+      color: var(--todo-text);
+    }
+
+    [data-theme="dark"] thead th {
+      background: #020617;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+
+    @media (max-width: 720px) {
+      main {
+        border-left: none;
+        border-right: none;
+        padding: 1.5rem 1.1rem 2.25rem;
+      }
+
+      .header-inner { padding: 0.8rem 1.1rem; }
+
+      .toc-wrapper {
+        position: static;
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-left: 0;
+        margin-top: 1.5rem;
+      }
+
+      .toc ol { border-left: none; }
+      .page-layout { flex-direction: column; }
+      h1 { font-size: 1.5rem; }
+      h2 { font-size: 1.25rem; }
+    }
+  </style>
+
+  <!-- MathJax for LaTeX rendering (matches the provided template structure) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <!-- If you have a local MathJax build, keep this path; otherwise swap to a CDN. -->
+  <script defer src="mathjax/tex-svg.js"></script>
+</head>
+
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="course-title">DER Data UROP</div>
+    <div class="course-meta">Research documentation • Distributed Energy Resources</div>
+    <button class="theme-toggle" type="button" id="theme-toggle">Dark mode</button>
+  </div>
+</header>
+
+<main>
+  <h1>DER Adoption Disparities in California ZIP Codes</h1>
+
+  <div class="author-block">
+    <span><strong>Author:</strong> Danielle Knutson</span>
+    <span><strong>Affiliation:</strong> MIT</span>
+    <span><strong>Last updated:</strong> <span id="last-updated">(auto)</span></span>
+  </div>
+
+  <div class="result-card">
+    <p><strong>Abstract.</strong> This project studies how race/ethnicity and socioeconomic factors relate to distributed energy resource (DER) adoption across California ZIP codes. The primary outcome is installed DER capacity per capita, modeled as a function of demographic and socioeconomic predictors while controlling for contextual factors such as urbanization, renewable resource potential, electricity rates, and utility territory.</p>
+  </div>
+
+  <div class="page-layout">
+    <div class="content-column">
+
+      <!-- 1. Introduction -->
+      <h2 id="sec1">1 Introduction</h2>
+      <p>
+        This document outlines an equity-focused analysis of DER adoption across California ZIP codes. The goal is to quantify whether disparities in DER deployment persist across racial/ethnic and socioeconomic groups after accounting for income, education, homeownership, and other contextual factors that could confound adoption.
+      </p>
+
+      <h3 id="sec1-1">1.1 Motivation and Problem</h3>
+      <p>
+        DERs (e.g., rooftop/community solar, batteries, EVs, flexible loads) are growing quickly, but the data needed to study their deployment,
+        equity impacts, and grid interactions is scattered across agencies, formats, and geographies. A core motivation of this work is to build a consistent,
+        analysis-ready dataset that can support DER-rich grid studies and adoption modeling.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Why this matters now:</strong> [policy/market trend driving DER growth in CA; e.g., electrification, incentives, grid constraints]</li>
+          <li><strong>Equity risk / concern:</strong> [who might be left behind + why]</li>
+          <li><strong>Practical stakes:</strong> [what changes if disparities persist—energy burden, resilience, emissions benefits, reliability]</li>
+          <li><strong>Data gap statement:</strong> [what exactly is fragmented/incomplete in existing public data]</li>
+          <li><strong>Why ZIP/ZCTA:</strong> [why this geography is the right compromise vs tract/county for this project]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec1-2">1.2 Research Question</h3>
+      <p>
+        <strong>Research question:</strong> How do race and socioeconomic factors affect the adoption rates of distributed energy resources (DERs) across California ZIP codes, after controlling for income, education, homeownership, and other contextual factors?
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Hypothesis (SES):</strong> [expected direction for income/education/homeownership]</li>
+          <li><strong>Hypothesis (race/ethnicity):</strong> [does race remain associated after SES controls?]</li>
+          <li><strong>Mechanisms:</strong> [financing access, housing tenure, information, installer markets, utility programs, interconnection barriers]</li>
+          <li><strong>What counts as “persistent disparity”:</strong> [definition in terms of effect size / sign / statistical significance]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec1-3">1.3 Variables and Definitions</h3>
+      <ul>
+        <li><strong>Outcome (Y):</strong> installed DER capacity per capita (and, in extensions, capacity per capita by DER type).</li>
+        <li><strong>Main predictors (X):</strong> socioeconomic and race/ethnicity indicators (e.g., median household income, % below poverty line, education attainment, % Black, % Hispanic, % Asian, homeownership rate).</li>
+        <li><strong>Controls (Z):</strong> urban/rural or population density, resource potential (solar irradiance, wind speeds/power density), electricity rates (if available), utility territory, and other contextual variables that may influence adoption.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Primary outcome definition:</strong> [exact formula for capacity per capita; units; per person vs per household]</li>
+          <li><strong>DER types included/excluded:</strong> [solar/storage/EV chargers/wind/etc.; what counts as “adoption” for each]</li>
+          <li><strong>Main predictors (X):</strong> [list the exact ACS fields / constructed variables used]</li>
+          <li><strong>Controls (Z):</strong> [how each control is measured + source (resource potential, rates, density, utility territory)]</li>
+          <li><strong>Time alignment:</strong> [DER year(s) vs ACS years; why the alignment is defensible]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec1-4">1.4 Scope and Definitions</h3>
+      <p>
+        The analysis focuses on California at the ZIP-code level and emphasizes distributed resources. To separate distributed resources from utility-scale projects, I plan to apply a capacity threshold (baseline: 5 MW) and repeat key results at a 10 MW threshold as a robustness check.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Geography definition:</strong> [ZIP vs ZCTA; how boundary mismatches are handled]</li>
+          <li><strong>Sample construction:</strong> [inclusion/exclusion rules; missing ZIP; invalid coordinates; duplicates]</li>
+          <li><strong>DER vs utility-scale rule:</strong> [exact threshold logic; field used; 5 MW baseline + 10 MW robustness]</li>
+          <li><strong>Double-counting risk:</strong> [which datasets might overlap and how you mitigate]</li>
+          <li><strong>Unit of analysis:</strong> [cross-section vs ZIP-year panel; what “as of” date means]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec1-5">1.5 Roadmap</h3>
+      <p>
+        Section 2 describes datasets and key measurement decisions. Section 3 describes preprocessing, feature engineering, and the modeling plan. Section 4 will contain results and figures. Section 5 discusses limitations, robustness checks, and next steps.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Section 2 preview:</strong> [datasets + measurement decisions]</li>
+          <li><strong>Section 3 preview:</strong> [pipeline + modeling strategy]</li>
+          <li><strong>Section 4 preview:</strong> [EDA figures + regression tables + robustness checks you will present]</li>
+          <li><strong>Section 5 preview:</strong> [limitations + sensitivity checks + extensions]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec1-6">1.6 Contributions</h3>
+      <ul>
+        <li>Construct a California ZIP/ZCTA-level DER adoption dataset by integrating multiple sources (PV, storage, EV chargers, wind, and power plants) into a single ZIP-level panel.</li>
+        <li>Implement spatial joins (lat/long → ZCTA) and standardized ZIP formatting to support consistent merges across datasets.</li>
+        <li>Engineer comparable adoption metrics (e.g., capacity per capita; installations per 1,000 households) and contextual controls (resource potential, utility territory, and large-scale infrastructure).</li>
+        <li>Estimate regression models testing whether race/ethnicity remains associated with DER adoption after controlling for income, education, homeownership, and other confounders.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Dataset contribution:</strong> [# ZIPs covered; # sources merged; what’s new about the combined panel]</li>
+          <li><strong>Method contribution:</strong> [spatial joins, fixed effects, threshold robustness, clustered SE]</li>
+          <li><strong>Substantive contribution:</strong> [the main equity estimate you aim to produce]</li>
+          <li><strong>Reproducibility:</strong> [repo structure, versioned downloads, pipeline entry point]</li>
+        </ul>
+      </div>
+      <!-- 2. Background and Related Work -->
+      <h2 id="sec2">2 Background and Related Work</h2>
+
+      <h3 id="sec2-1">2.1 DER Integration and Data Challenges</h3>
+      <p>
+        I compiled a literature review focusing on DER integration into the grid and the challenges of working with large-scale, heterogeneous datasets.
+        Key themes include data gaps, inconsistent reporting, and the importance of standardized geographic identifiers to enable merges across sources.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Key papers to cite:</strong> [3–6 canonical DER/data-integration papers + 1–2 CA-specific sources]</li>
+          <li><strong>Main data challenge themes:</strong> [inconsistent reporting, missing fields, different geographies, changing schemas, proprietary gaps]</li>
+          <li><strong>What those papers do about it:</strong> [crosswalks, harmonized units, dedupe rules, validation against utility/ISO totals]</li>
+          <li><strong>What’s still missing:</strong> [why ZIP/ZCTA + multi-source panel is not already available / why prior work can’t answer your exact question]</li>
+          <li><strong>Connection to this project:</strong> [how your pipeline addresses the identified gaps]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec2-2">2.2 DER Adoption and Equity Metrics</h3>
+      <p>
+        A recurring challenge in the literature is choosing adoption/deployment metrics that are comparable across geographies.
+        Depending on the question, studies use capacity per capita (kW/person), installations per capita, or adoption rates (e.g., fraction of buildings with PV).
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Metrics used in prior equity studies:</strong> [capacity per capita, installations per household, adoption rate (% homes), energy burden metrics]</li>
+          <li><strong>Why your primary metric is appropriate:</strong> [pros/cons of capacity per capita at ZIP level; interpretability]</li>
+          <li><strong>Alternative metrics you will test:</strong> [installations per 1,000 households; log(capacity+1); type-specific outcomes]</li>
+          <li><strong>Equity framing:</strong> [race/ethnicity controls, SES controls, what “disparity” means statistically]</li>
+          <li><strong>Comparability note:</strong> [how you align your metric choices with Sunter et al. / other key papers]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec2-3">2.3 Primary Data Sources</h3>
+      <ul>
+        <li><strong>Solar PV:</strong> currently sourced via Tracking the Sun–style deployment data (e.g., through the PSE Healthy Energy California Solar Map / LBNL Tracking the Sun lineage) for ZIP-level aggregation.</li>
+        <li><strong>CEC Energy Storage System Survey:</strong> storage nameplate capacity and system attributes (used for ZIP-level storage capacity features).</li>
+        <li><strong>CEC Electric Vehicle &amp; Infrastructure Statistics:</strong> EV charging infrastructure indicators (ZIP-level charger counts or capacity proxies).</li>
+        <li><strong>USGS Wind Turbine Database (USWTDB):</strong> wind turbine locations/capacity for wind context features.</li>
+        <li><strong>EIA Power Plants:</strong> utility-scale generation capacity by fuel type, used to build controls such as renewable capacity per capita and total capacity per capita (spatially assigned to ZIPs).</li>
+        <li><strong>Resource potential:</strong> solar irradiance / wind (e.g., NASA POWER or comparable gridded datasets) aggregated or joined to ZIPs.</li>
+      </ul>
+      <p>
+        <strong>Planned PV source swap:</strong> Some prior equity work used Tracking the Sun (TTS). For this project, I plan to test swapping the PV component to CA DG Stats (more recent/complete for California) when a clean ZIP-level extraction is available, and then re-run the same aggregation/merge pipeline to check robustness.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Dataset-by-dataset citation list:</strong> [official documentation links / reports for each dataset]</li>
+          <li><strong>Coverage + update frequency:</strong> [what year(s) each dataset covers; latest refresh date; why it matches your analysis year]</li>
+          <li><strong>Key fields and units:</strong> [capacity units (kW/MW), counts, dates, lat/long availability, sector/residential flags]</li>
+          <li><strong>Known limitations:</strong> [missing ZIPs, inconsistent coordinates, duplicated projects, reporting bias]</li>
+          <li><strong>Validation plan:</strong> [sanity checks vs statewide totals; cross-source comparisons; spot checks on large projects]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec2-4">2.4 Microgrids and Energy Resilience</h3>
+      <p>
+        I reviewed microgrid-focused work with emphasis on datasets, modeling approaches, and methodologies—especially as they relate to energy resilience and future projections.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Why microgrids matter here:</strong> [tie to equity/resilience; which communities benefit]</li>
+          <li><strong>Key papers/datasets:</strong> [2–5 microgrid/resilience sources you’ll cite]</li>
+          <li><strong>What variables you might add later:</strong> [outage risk, wildfire risk, critical facilities, resilience incentives]</li>
+          <li><strong>How this links to your outcomes:</strong> [whether to treat microgrids as DER subtype / control / future extension]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec2-5">2.5 Expanding Demand-Side Impacts</h3>
+      <p>
+        I explored how data centers can be treated as a major electricity-demand driver that interacts with DER-rich systems, especially as compute-intensive sectors grow.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Motivation:</strong> [why data centers/large loads matter for DER adoption or grid constraints]</li>
+          <li><strong>Potential proxies:</strong> [industrial/commercial load indicators; land-use; interconnection queue; substation proximity]</li>
+          <li><strong>Data sources:</strong> [which public datasets you could use (EIA, local permits, commercial providers, academic datasets)]</li>
+          <li><strong>How you would include it:</strong> [control variable vs separate analysis; expected direction]</li>
+          <li><strong>Scope note:</strong> [what you will NOT do in this version to keep the paper focused]</li>
+        </ul>
+      </div>
+
+      <!-- 3. Methods -->
+      <h2 id="sec3">3 Methods</h2>
+
+      <h3 id="sec3-1">3.1 Tools and Collaboration</h3>
+      <ul>
+        <li><strong>Dropbox</strong> for collaborative data storage.</li>
+        <li><strong>GitHub</strong> for version control and repository management.</li>
+        <li><strong>Visual Studio Code</strong> for code development and implementation.</li>
+      </ul>
+      <p>
+        I also explored the use of the <strong>MIT Supercloud</strong> (or comparable HPC resources) for compute and larger-scale storage.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Reproducibility:</strong> [repo layout; where raw vs processed data live; naming conventions]</li>
+          <li><strong>Environment:</strong> [Python version; key packages; pinned versions; OS assumptions]</li>
+          <li><strong>Pipeline entry point:</strong> [single notebook/script that rebuilds the ZIP panel end-to-end]</li>
+          <li><strong>Data provenance:</strong> [download dates + dataset versions; how you track updates]</li>
+          <li><strong>Randomness:</strong> [seeds for any stochastic steps (splits, models, clustering)]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-2">3.2 Data Collection and Integration</h3>
+      <ul>
+        <li><strong>Load source files:</strong> PV deployment data (Tracking the Sun–style input), storage (CEC Storage Survey-style extract), EV chargers (CEC infrastructure extract), wind turbines (USWTDB), power plants (EIA), and resource potential grids (e.g., NASA POWER).</li>
+        <li><strong>Standardize identifiers:</strong> clean and zero-pad <code>zip_code</code> to 5 digits; harmonize column names and units across sources.</li>
+        <li><strong>Spatial joins to ZCTAs:</strong> for datasets with latitude/longitude (e.g., wind turbines, EV chargers, power plants), assign ZIP/ZCTA using a Census ZCTA shapefile via <code>GeoPandas</code> <code>sjoin</code>.</li>
+        <li><strong>DER vs utility-scale separation:</strong> apply a configurable threshold (<code>DER_THRESHOLD</code> in MW; baseline 5 MW) to filter or split records based on total capacity.</li>
+        <li><strong>ZIP aggregation:</strong> aggregate to ZIP/ZCTA (sum capacities / counts) and merge all sources into a single ZIP-level panel for EDA and regression.</li>
+        <li><strong>Export artifacts:</strong> write cleaned per-source tables and the final merged ZIP panel to <code>Processed Datasets/</code> for reproducible downstream analysis.</li>
+      </ul>
+      <div class="todo">
+        PV source note: the current pipeline uses a Tracking the Sun–style PV input for ZIP aggregation. When a clean CA DG Stats ZIP-level extract is available, swap the PV component and re-run the same merge + model series as a robustness check.
+      </div>
+      <div class="todo">
+        <ul>
+          <li><strong>Exact unit harmonization:</strong> [kW vs MW; DC vs AC for PV; nameplate vs rated; where conversions happen]</li>
+          <li><strong>Time handling:</strong> [snapshot year vs panel; commissioning dates; how you treat missing dates]</li>
+          <li><strong>Spatial join details:</strong> [ZCTA shapefile vintage (e.g., 2020); CRS; join method; edge cases near borders]</li>
+          <li><strong>Aggregation rules:</strong> [sum vs mean; counts vs capacity; sector filters (residential vs all)]</li>
+          <li><strong>Validation checks:</strong> [compare aggregated totals to known statewide totals; spot-check top ZIPs/projects]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-2a">3.2a Handling Missing ZIP Codes</h3>
+      <p>
+        A small number of projects lack ZIP-code information and will be excluded. I will quantify the percentage of total capacity removed and report it in the paper; if the excluded share is very small (e.g., &lt; 1% of capacity), it is unlikely to materially affect results.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Quantify loss:</strong> [# records dropped; % of systems; % of capacity removed overall and by DER type]</li>
+          <li><strong>Bias check:</strong> [are missing-ZIP projects concentrated in certain counties/utility territories?]</li>
+          <li><strong>Sensitivity:</strong> [repeat key regressions with/without imputation approaches if feasible]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-2b">3.2b Duplicate Records and Double-Counting Risk</h3>
+      <p>
+        Because PV+storage systems may appear in more than one source (e.g., PV deployments vs the CEC Storage Survey, and distributed vs utility-scale sources), there is a risk of double-counting. I will check for duplicates across sources using project identifiers and/or location + commissioning date + capacity fingerprints, and remove duplicates based on a consistent source-of-truth rule.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Matching key:</strong> [exact ID fields used; fallback fingerprint = (lat/long + date + capacity)]</li>
+          <li><strong>Source-of-truth rule:</strong> [which dataset wins for PV/storage/EV when overlaps occur + why]</li>
+          <li><strong>Accounting:</strong> [# duplicates removed; capacity/count deltas before vs after dedupe]</li>
+          <li><strong>Edge cases:</strong> [PV+storage paired systems; retrofits/expansions; multi-meter sites]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-2c">3.2c Capacity Thresholding (DER vs Utility-Scale)</h3>
+      <p>
+        To distinguish distributed resources from utility-scale projects, I will filter installations using a total capacity threshold. The baseline threshold is <strong>5 MW</strong>, and I will repeat the analysis with a <strong>10 MW</strong> threshold as a robustness check. The threshold will be implemented as a configurable parameter.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Justification:</strong> [citation/rationale for 5 MW cut; how it aligns with literature or CA definitions]</li>
+          <li><strong>Implementation detail:</strong> [threshold applied per project vs per site vs per ZIP-aggregate]</li>
+          <li><strong>Robustness grid:</strong> [run 1/5/10 MW or 5/10 MW; report stability of key coefficients]</li>
+          <li><strong>Sector sensitivity:</strong> [residential-only models vs all sectors; rationale for main spec]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-3">3.3 Geographic Key Standardization</h3>
+      <p>
+        A major integration step is standardizing geography at the ZIP/ZCTA level. I ensure every table uses a clean 5-digit <code>zip_code</code>, and for point datasets I assign ZIPs via spatial join to Census ZCTA polygons. Where a crosswalk is required (e.g., ZIP → county/FIPS for certain contextual datasets), I document the mapping and validate coverage.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>ZIP vs ZCTA statement:</strong> [why ZCTAs are used for geometry; known mismatches with USPS ZIPs]</li>
+          <li><strong>Crosswalks:</strong> [if you use ZIP→county/utility mappings, document source + coverage]</li>
+          <li><strong>Quality checks:</strong> [share of records failing spatial join; how you handle PO boxes/invalid coords]</li>
+          <li><strong>Boundary sensitivity:</strong> [optional: test alternative assignment methods or buffer joins for points]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-4">3.4 Preprocessing and Feature Selection</h3>
+      <ul>
+        <li>Removed irrelevant columns, handled missing values, and standardized formats.</li>
+        <li>Reduced high-dimensional feature sets by keeping more representative indicators (e.g., natural change vs separate birth/death rates).</li>
+        <li>Selected a smaller feature set for interpretability and signal; integrated race and socioeconomic variables for equity analysis.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Missing data policy:</strong> [drop vs impute; thresholds; how you treat sentinel values like -1]</li>
+          <li><strong>Transformations:</strong> [log/standardize skewed variables; winsorize or trim outliers]</li>
+          <li><strong>Feature selection rationale:</strong> [theory-driven vs data-driven; avoid post-treatment controls]</li>
+          <li><strong>Multiple comparisons:</strong> [how you interpret many coefficients/tests; planned focus variables]</li>
+          <li><strong>Scaling:</strong> [standardize predictors for comparability; note whether coefficients are standardized]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-4a">3.4a Exploratory Data Analysis (EDA)</h3>
+      <ul>
+        <li>Distribution checks: histograms of DER capacity per capita and all predictors; identify skewness and potential log transforms (e.g., income).</li>
+        <li>Summary tables: <code>df.info()</code>, <code>df.describe()</code>, <code>df.isnull().sum()</code>.</li>
+        <li>Outliers: identify ZIP codes with unusually high adoption (capacity per capita) and test sensitivity to outlier handling.</li>
+        <li>Bivariate plots: adoption vs. income; adoption vs. % Black/Hispanic/Asian; repeat for DER subtypes where feasible.</li>
+        <li>Maps: geospatial plots of adoption to diagnose regional clustering and unobserved factors (policy, incentives, grid constraints).</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Outlier protocol:</strong> [rule for defining high adopters; report results with/without top X%]</li>
+          <li><strong>Spatial patterns:</strong> [Moran’s I or residual spatial autocorrelation; what you do if present]</li>
+          <li><strong>Distribution diagnostics:</strong> [zero-inflation; consider log(Y+1) or two-part models]</li>
+          <li><strong>Pre-model decisions:</strong> [which variables get transformed; which get dropped; document before modeling]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-5">3.5 Modeling Pipeline</h3>
+      <ul>
+        <li><strong>Per-capita engineering:</strong> Normalized key outcomes (e.g., installed capacity, net generation) by population, producing measures like capacity per capita and installations per 1,000 residents.</li>
+        <li><strong>Clustering:</strong> PCA/UMAP/t-SNE followed by K-means with $k \in \{3,4,5,6\}$. Saved cluster labels (e.g., <code>PCA_Cluster</code>, <code>tSNE_Cluster</code>, <code>UMAP_Cluster</code>) for mapping and interpretation.</li>
+        <li><strong>Regression:</strong> Modeled DER outcomes using socioeconomic predictors while controlling for resource potential (e.g., solar radiation, wind). Used OLS and expanded to regularized/ensemble methods when multicollinearity caused instability.</li>
+        <li><strong>Multicollinearity mitigation:</strong> VIF filtering (e.g., removing predictors with VIF $&gt; 10$) and Ridge regression comparisons for stability.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Main specification:</strong> [write the exact regression equation you will treat as “primary”]</li>
+          <li><strong>Functional form:</strong> [Y in levels vs log; linear vs non-linear; justification]</li>
+          <li><strong>Inference choice:</strong> [robust vs clustered SE; clustering level (utility/region)]</li>
+          <li><strong>Zero-heavy outcomes:</strong> [plan for hurdle/Poisson/negative binomial or two-part as sensitivity]</li>
+          <li><strong>Model reporting:</strong> [consistent table format; standardized coefficients; include N, R², FE indicators]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-5a">3.5a Multicollinearity Diagnostics</h3>
+      <ul>
+        <li>Compute pairwise correlations (Pearson and/or Spearman) among predictors to identify redundancy.</li>
+        <li>Compute Variance Inflation Factors (VIF) and prune/merge predictors when VIF indicates strong multicollinearity.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>VIF threshold:</strong> [e.g., 5 or 10; justify and apply consistently]</li>
+          <li><strong>Correlation threshold:</strong> [rule for dropping/combining variables; e.g., |r| &gt; 0.8]</li>
+          <li><strong>Documentation:</strong> [appendix table: original predictors → dropped/kept → reason]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-5b">3.5b Regression Model Series</h3>
+      <p>
+        The core approach is interpretable regression. Models will be built incrementally: start with bivariate/baseline effects, then add controls, then fixed effects and interactions.
+      </p>
+      <ul>
+        <li><strong>Baseline:</strong> $Y = \beta_0 + \beta_1 X + \epsilon$ (one predictor at a time).</li>
+        <li><strong>Full model (Income + Race + Controls):</strong> $Y = \beta_0 + \beta_1\text{Income} + \beta_2\%\text{Black} + \beta_3\%\text{Hispanic} + \beta_4\%\text{Asian} + Z + \epsilon$.</li>
+        <li><strong>Race × Income interactions:</strong> add terms like $\text{Income} \times \%\text{Black}$ to test whether income effects differ by race/ethnicity.</li>
+        <li><strong>Utility territory fixed effects:</strong> include dummies for PG&amp;E, SCE, SDG&amp;E, LADWP (and/or others) to capture policy/infrastructure differences.</li>
+        <li><strong>Infrastructure controls:</strong> add renewable capacity per capita and total power-plant capacity per capita (from EIA power plants) to test whether disparities persist even where infrastructure is strong.</li>
+        <li><strong>Clustered / robust SE:</strong> cluster standard errors by utility territory to address within-utility correlation.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Stepwise logic:</strong> [what each model adds and why; keep a single “moving part” per step]</li>
+          <li><strong>Fixed effects:</strong> [utility FE vs county FE; when included; how you interpret within-FE variation]</li>
+          <li><strong>Interactions:</strong> [which race×income terms you include; interpret via marginal effects plots]</li>
+          <li><strong>Comparability:</strong> [keep sample constant across models when possible; note when N changes]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-5c">3.5c Robustness and Sensitivity Checks</h3>
+      <ul>
+        <li>Threshold robustness: re-run key models with 5 MW and 10 MW DER thresholds.</li>
+        <li>Alternative outcomes: installations per 1,000 households and DER-type-specific outcomes (solar PV, storage, EV chargers) where variation supports it.</li>
+        <li>Alternative controls: include/exclude total capacity per capita; add latitude/longitude or county fixed effects.</li>
+        <li>Assumption checks: residuals vs. fitted (heteroskedasticity), normality; use robust SE or transform $Y$ if needed.</li>
+        <li>Variable pruning: drop highly correlated predictors (e.g., poverty vs. income) and compare coefficient stability.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Placebo/negative controls:</strong> [optional: outcome that should not respond similarly]</li>
+          <li><strong>Alternative geography:</strong> [optional: tract/county replication if feasible; or metro-only subset]</li>
+          <li><strong>Policy sensitivity:</strong> [if you add rate/incentive proxies later, report changes in race coefficients]</li>
+          <li><strong>Reporting:</strong> [single robustness table summarizing coefficient stability across checks]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-6">3.6 Causal Inference with EconML (LinearDML)</h3>
+      <p>
+        I estimated the causal effect of <strong>Median Household Income</strong> on <strong>EV Count per Capita</strong> using <code>LinearDML</code> from <code>econml</code>.
+      </p>
+      <ul>
+        <li><strong>Variables:</strong>
+          <ul>
+            <li>$Y$: EV count per capita (outcome)</li>
+            <li>$T$: median household income (treatment)</li>
+            <li>$X$: control covariates (e.g., selected features or PCA-reduced covariates)</li>
+          </ul>
+        </li>
+        <li><strong>Treatment scaling (as implemented in code):</strong></li>
+      </ul>
+
+      <div class="pre-wrapper">
+        <pre><code class="language-python">from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+T_scaled = scaler.fit_transform(T.values.reshape(-1, 1))</code></pre>
+      </div>
+
+      <ul>
+        <li><strong>Reported outputs (example from my run):</strong>
+          <ul>
+            <li>Estimated ATE: 0.0030</li>
+            <li>CATE intercept p-value: 0.026 (significant at $\alpha = 0.05$)</li>
+          </ul>
+        </li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Identification assumptions:</strong> [what must be true for income → EV adoption to be causal]</li>
+          <li><strong>Model choices:</strong> [what ML models for nuisance functions; cross-fitting folds; why]</li>
+          <li><strong>Overlap/positivity:</strong> [check treatment support; trim/extreme incomes if needed]</li>
+          <li><strong>Sensitivity:</strong> [try alternative control sets; report whether ATE is stable]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-7">3.7 Visualization</h3>
+      <ul>
+        <li>Choropleth maps of DER adoption and contextual variables across California ZIPs/ZCTAs.</li>
+        <li>Distribution plots and comparisons of per-capita adoption across DER categories and socioeconomic predictors.</li>
+        <li>Regression coefficient visualizations (dot-whisker plots) comparing specifications and robustness checks.</li>
+        <li>Spatial joins using <code>GeoPandas</code> with ZCTA shapefiles and standardized ZIP codes to enable reliable merges and mapping.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Map choices:</strong> [classification scheme; handling skew; consistent bins across figures]</li>
+          <li><strong>Uncertainty display:</strong> [CI bars/whiskers for key coefficients; annotate significance carefully]</li>
+          <li><strong>Figure standards:</strong> [units in titles; captions stating data year + sample; consistent color scales]</li>
+          <li><strong>Appendix figures:</strong> [correlation heatmap, VIF table, residual diagnostics, robustness plots]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec3-8">3.8 Rigor Templates and Expansion Checklist</h3>
+      <div>
+        <div class="todo">
+          Use this section as a running template for what to add to make the analysis publication-ready. Replace each placeholder with your actual content as you progress.
+        </div>
+
+        <details class="collapsible">
+          <summary id="sec3-8a">3.8a Data Documentation Template</summary>
+          <div class="collapsible-body">
+            <p>
+              Fill this in so readers can reproduce the dataset and understand key choices (years, exclusions, thresholds, merges).
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Dataset</th>
+                  <th>Unit of analysis</th>
+                  <th>Time coverage</th>
+                  <th>Key fields used</th>
+                  <th>Filters / exclusions</th>
+                  <th>Join key</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>CA DG Stats</td>
+                  <td>Project / system → ZIP aggregation</td>
+                  <td class="todo">(fill)</td>
+                  <td class="todo">(fill)</td>
+                  <td class="todo">(missing ZIP %, 5–10 MW threshold)</td>
+                  <td>ZIP</td>
+                </tr>
+                <tr>
+                  <td>ACS 2019–2023</td>
+                  <td>ZIP (ZCTA)</td>
+                  <td>2019–2023 (5-year)</td>
+                  <td class="todo">(income, poverty, education, race/ethnicity, homeownership, etc.)</td>
+                  <td class="todo">(fill)</td>
+                  <td>ZCTA / ZIP crosswalk</td>
+                </tr>
+                <tr>
+                  <td>EIA Power Plants</td>
+                  <td>Plant → spatial join → ZIP aggregation</td>
+                  <td class="todo">(fill)</td>
+                  <td>capacity (MW), fuel type</td>
+                  <td class="todo">(dedupe rules)</td>
+                  <td>lat/long → ZIP</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-caption">Template table: complete and extend for every dataset you use.</div>
+          </div>
+        </details>
+
+        <details class="collapsible">
+          <summary id="sec3-8b">3.8b Variable Construction Template</summary>
+          <div class="collapsible-body">
+            <ul>
+              <li><strong>Outcome:</strong> define <code>DER_capacity_per_capita</code> = (total installed DER kW in ZIP) / (ZIP population). Specify whether you use kWDC for solar and how you handle missing/sentinel values.</li>
+              <li><strong>Alternative outcomes:</strong> installations per 1,000 households; type-specific outcomes (solar/storage/EV) with exact field definitions.</li>
+              <li><strong>Controls:</strong> define each control precisely (units, source, and aggregation method).</li>
+              <li><strong>Threshold parameter:</strong> document the exact threshold logic (baseline 5 MW; robustness 10 MW) and whether you filter by project size, site size, or aggregated capacity.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="collapsible">
+          <summary id="sec3-8c">3.8c Duplicate Handling Template</summary>
+          <div class="collapsible-body">
+            <ul>
+              <li><strong>Within-source duplicates:</strong> define the dedupe key (project ID, address, coordinates, commissioning date, capacity).</li>
+              <li><strong>Across-source duplicates:</strong> state a source-of-truth rule (e.g., prefer DG Stats for PV; prefer CEC for storage) and the matching logic (exact ID match vs fuzzy match).</li>
+              <li><strong>Sensitivity:</strong> report how totals change with and without deduplication.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="collapsible">
+          <summary id="sec3-8d">3.8d Modeling and Reporting Template</summary>
+          <div class="collapsible-body">
+            <p>
+              Use this table to keep the paper rigorous: every model should have a clear purpose and consistent reporting.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Purpose</th>
+                  <th>Specification</th>
+                  <th>Key controls</th>
+                  <th>SE / inference</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>M1</td>
+                  <td>Baseline (one predictor)</td>
+                  <td>$Y = \beta_0 + \beta_1 X + \epsilon$</td>
+                  <td>None</td>
+                  <td class="todo">robust?</td>
+                  <td class="todo">(fill)</td>
+                </tr>
+                <tr>
+                  <td>M5</td>
+                  <td>Income + race + controls</td>
+                  <td class="todo">(full spec)</td>
+                  <td class="todo">(Z)</td>
+                  <td class="todo">cluster by utility?</td>
+                  <td class="todo">(fill)</td>
+                </tr>
+                <tr>
+                  <td>M7</td>
+                  <td>Utility fixed effects</td>
+                  <td class="todo">(add FE)</td>
+                  <td>Utility dummies</td>
+                  <td class="todo">cluster by utility</td>
+                  <td class="todo">(fill)</td>
+                </tr>
+                <tr>
+                  <td>M9</td>
+                  <td>Threshold robustness</td>
+                  <td>Repeat M5–M8</td>
+                  <td>Same as base</td>
+                  <td>Same as base</td>
+                  <td>Compare 5 MW vs 10 MW</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="table-caption">Template table: expand to cover every model you run (M1–M12).</div>
+          </div>
+        </details>
+
+        <details class="collapsible">
+          <summary id="sec3-8e">3.8e Diagnostics Template</summary>
+          <div class="collapsible-body">
+            <ul>
+              <li><strong>Multicollinearity:</strong> include correlation heatmap + VIF table in Appendix and document variables dropped.</li>
+              <li><strong>Model fit:</strong> report adjusted $R^2$ (or appropriate metrics), and compare across model series.</li>
+              <li><strong>Assumptions:</strong> residuals vs fitted; heteroskedasticity checks; log-transform $Y$ if needed; use robust/clustered SE accordingly.</li>
+              <li><strong>Spatial dependence:</strong> optional: Moran’s I on residuals; discuss whether clustering/FE addresses spatial correlation.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details class="collapsible">
+          <summary id="sec3-8f">3.8f Reproducibility Template</summary>
+          <div class="collapsible-body">
+            <ul>
+              <li>Provide a one-click pipeline entry point (notebook/script) with fixed random seeds.</li>
+              <li>Record dataset versions/download dates and any manual steps (crosswalks, shapefiles).</li>
+              <li>Store intermediate artifacts (cleaned ZIP panel, model-ready matrix, figures) with clear filenames.</li>
+            </ul>
+          </div>
+        </details>
+
+      </div>
+
+      <!-- 4. Results -->
+      <h2 id="sec4">4 Results</h2>
+
+      <div class="todo">
+        Results template: add (1) summary stats table, (2) distribution plots, (3) main regression table, (4) coefficient plot, and (5) robustness table.
+      </div>
+
+      <h3 id="sec4-0">4.0 Summary Tables and Figures (Template)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>What to include</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Table 1: Sample construction</td>
+            <td>ZIP count, total capacity, capacity dropped due to missing ZIP, time coverage, threshold used</td>
+            <td class="todo">(fill)</td>
+          </tr>
+          <tr>
+            <td>Table 2: Descriptive stats</td>
+            <td>Mean/median/IQR for outcome and predictors; missingness summary</td>
+            <td class="todo">(fill)</td>
+          </tr>
+          <tr>
+            <td>Figure 1: Outcome distribution</td>
+            <td>Histogram/ECDF of capacity per capita; highlight outliers</td>
+            <td class="todo">(add)</td>
+          </tr>
+          <tr>
+            <td>Figure 2: Adoption map</td>
+            <td>Choropleth by ZIP; optional inset for major metros</td>
+            <td class="todo">(add)</td>
+          </tr>
+          <tr>
+            <td>Figure 3: Bivariate relationships</td>
+            <td>Scatter + LOESS/fit for income, % Black, % Hispanic, etc.</td>
+            <td class="todo">(add)</td>
+          </tr>
+          <tr>
+            <td>Table 3: Main regression results</td>
+            <td>Model series (baseline → controls → FE → interactions) with consistent SE choice</td>
+            <td class="todo">(add)</td>
+          </tr>
+          <tr>
+            <td>Figure 4: Coefficient plot</td>
+            <td>Dot-whisker plot comparing key coefficients across models</td>
+            <td class="todo">(add)</td>
+          </tr>
+          <tr>
+            <td>Table 4: Robustness checks</td>
+            <td>5 MW vs 10 MW; alternative outcomes; alternative controls</td>
+            <td class="todo">(add)</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-caption">Template checklist: replace “(add)/(fill)” with completed items and links to figures.</div>
+
+      <h3 id="sec4-1">4.1 Descriptive Patterns</h3>
+      <p>
+        <span class="todo">Placeholder:</span> Summary statistics (counts, capacity totals, per-capita distributions) and statewide/regional comparisons.
+      </p>
+
+      <h3 id="sec4-2">4.2 Clustering Results</h3>
+      <p>
+        <span class="todo">Placeholder:</span> Cluster separation, geographic coherence, and representative feature profiles.
+      </p>
+
+      <h3 id="sec4-3">4.3 Regression Results</h3>
+      <p>
+        <span class="todo">Placeholder:</span> OLS vs regularized/ensemble performance, key predictors, and robustness to feature pruning.
+      </p>
+
+      <h3 id="sec4-4">4.4 Causal Estimates</h3>
+      <p>
+        <span class="todo">Placeholder:</span> LinearDML estimates (ATE/CATE), uncertainty intervals, and sensitivity checks.
+      </p>
+
+      <!-- 5. Discussion and Limitations -->
+      <h2 id="sec5">5 Discussion and Limitations</h2>
+
+      <h3 id="sec5-1">5.1 Interpretation</h3>
+      <p>
+        <span class="todo">Placeholder:</span> What the results suggest about DER deployment patterns, resource potential vs socioeconomic drivers, and equity implications.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Main finding:</strong> [one-sentence takeaway that answers the research question]</li>
+          <li><strong>Effect sizes:</strong> [translate key coefficients into a real-world delta (e.g., +$10k income, +10pp race share → ΔkW/person)]</li>
+          <li><strong>Stability across models:</strong> [does race remain after controls + utility FE + interactions?]</li>
+          <li><strong>Mechanisms:</strong> [financing, homeownership, info/installer markets, utility programs, interconnection barriers]</li>
+          <li><strong>Heterogeneity:</strong> [urban vs rural; utility territories; high vs low income ZIPs]</li>
+          <li><strong>Compare to prior work:</strong> [align/diverge vs Sunter et al.; explain data/metric/geography differences]</li>
+          <li><strong>Policy relevance:</strong> [what your results suggest; what you explicitly do NOT claim]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec5-2">5.2 Limitations</h3>
+      <ul>
+        <li>Missingness and inconsistent reporting across sources (treat sentinel values like -1 as missing where applicable).</li>
+        <li>Aggregation trade-offs (ZIP/ZCTA-level interpretability vs within-ZIP variation and boundary mismatches between USPS ZIPs and Census ZCTAs).</li>
+        <li>Potential confounding from policy, utility territory, and interconnection constraints not fully captured by available covariates.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Non-causal design:</strong> [state this clearly; list key confounders you can’t fully observe]</li>
+          <li><strong>Measurement error:</strong> [DC vs AC; nameplate vs rated; missing ZIP/coords; EV proxy choices]</li>
+          <li><strong>Geography mismatch:</strong> [ZIP vs ZCTA; spatial join error; who this might bias]</li>
+          <li><strong>Ecological inference:</strong> [ZIP demographics ≠ adopter demographics; interpret as area-level association]</li>
+          <li><strong>Missingness bias:</strong> [are missing ZIPs concentrated by utility/region/sector?]</li>
+          <li><strong>Duplicates/double-counting:</strong> [where overlap can happen; how much it could move totals]</li>
+          <li><strong>Spatial dependence:</strong> [clustering; justify clustered SE / FE / Moran’s I checks]</li>
+          <li><strong>External validity:</strong> [California-specific incentives + utility structure]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec5-3">5.3 Next Steps</h3>
+      <p>
+        This week, my primary goals were to scale and standardize relevant features for clustering, refine clustering methods across multiple $k$ values,
+        strengthen regression models for predicting energy outcomes from socioeconomic predictors, create geographic visualizations of clustering results,
+        and resolve formatting/merging issues (especially around FIPS and county identifiers).
+      </p>
+      <p>
+        Moving forward, I plan to deepen the interpretation of the cluster groupings, finalize figures/tables, and consolidate results into a presentation-ready narrative.
+      </p>
+      <div class="todo">
+        <ul>
+          <li><strong>Lock the dataset:</strong> [final ZIP count; dropped capacity from missing ZIP; dedupe summary]</li>
+          <li><strong>Finalize variable definitions:</strong> [exact outcome units + formulas; predictor/control sources]</li>
+          <li><strong>Run primary model series:</strong> [baseline → controls → utility FE → interactions → infra controls]</li>
+          <li><strong>Inference default:</strong> [robust vs clustered SE; clustering level; keep consistent]</li>
+          <li><strong>Robustness package:</strong> [5 vs 10 MW; alt outcomes; sector subsets; outlier rules]</li>
+          <li><strong>Deliverables:</strong> [main regression table + coef plot + maps + appendix diagnostics]</li>
+          <li><strong>Repro pass:</strong> [one-click pipeline + pinned versions + saved artifacts]</li>
+        </ul>
+      </div>
+
+      <h3 id="sec5-4">5.4 Future Work</h3>
+      <ul>
+        <li>Expand coverage to additional states and DER categories as data availability improves.</li>
+        <li>Improve modeling of demand-side drivers (e.g., data centers) and resilience-focused resources (e.g., microgrids).</li>
+        <li>Explore alternative geographic resolutions (ZIP, tract) for equity analyses where data supports it.</li>
+      </ul>
+      <div class="todo">
+        <ul>
+          <li><strong>Panel extension:</strong> [ZIP-year; commissioning dates; trend + policy-change analyses]</li>
+          <li><strong>Policy controls:</strong> [rate/incentive proxies; NEM changes; permitting friction]</li>
+          <li><strong>Interconnection constraints:</strong> [hosting capacity; queue; substation proximity]</li>
+          <li><strong>Resilience context:</strong> [outage/wildfire risk; critical facilities; microgrids]</li>
+          <li><strong>Causal designs:</strong> [DiD around policy shifts; IV ideas; sensitivity analyses]</li>
+          <li><strong>Alt geographies:</strong> [tract replication or metro-only subsets]</li>
+          <li><strong>Replication:</strong> [other states with comparable data sources]</li>
+        </ul>
+      </div>
+
+      <!-- 6. Conclusion -->
+      <h2 id="sec6">6 Conclusion</h2>
+      <p>
+        This project provides a data-driven look at DER deployment patterns and the socioeconomic and geographic factors associated with adoption in California.
+        By constructing a cleaned ZIP/ZCTA-level dataset from multiple energy and contextual sources and applying interpretable regression models with robustness checks,
+        the workflow supports equity-focused inference and extensibility for future modeling.
+      </p>
+
+      <!-- 7. References -->
+      <h2 id="sec7">7 References</h2>
+      <div class="todo">
+        Add your references here. (If you keep a BibTeX file, you can also link to it in this section.)
+      </div>
+      <ul>
+        <li>Placeholder: Add dataset/documentation citations (CEC Storage Survey; CEC EV infrastructure stats; USGS USWTDB; EIA Power Plants; Tracking the Sun / PSE Healthy Energy CA Solar Map lineage; NASA POWER) and relevant equity/DER adoption papers.</li>
+      </ul>
+
+    </div>
+
+    <aside class="toc-wrapper">
+      <nav class="toc">
+        <div class="toc-title">Table of contents</div>
+        <div class="toc-progress">
+          <div class="toc-progress-inner" id="toc-progress-inner"></div>
+        </div>
+        <ol>
+          <li><a href="#sec1">1 Introduction</a>
+            <ol>
+              <li><a href="#sec1-1">1.1 Motivation and Problem</a></li>
+              <li><a href="#sec1-2">1.2 Research Question</a></li>
+              <li><a href="#sec1-3">1.3 Variables and Definitions</a></li>
+              <li><a href="#sec1-4">1.4 Scope and Definitions</a></li>
+              <li><a href="#sec1-5">1.5 Roadmap</a></li>
+              <li><a href="#sec1-6">1.6 Contributions</a></li>
+            </ol>
+          </li>
+          <li><a href="#sec2">2 Background and Related Work</a>
+            <ol>
+              <li><a href="#sec2-1">2.1 DER Integration and Data Challenges</a></li>
+              <li><a href="#sec2-2">2.2 DER Adoption and Equity Metrics</a></li>
+              <li><a href="#sec2-3">2.3 Primary Data Sources</a></li>
+              <li><a href="#sec2-4">2.4 Microgrids and Energy Resilience</a></li>
+              <li><a href="#sec2-5">2.5 Expanding Demand-Side Impacts</a></li>
+            </ol>
+          </li>
+          <li><a href="#sec3">3 Methods</a>
+            <ol>
+              <li><a href="#sec3-1">3.1 Tools and Collaboration</a></li>
+
+              <li><a href="#sec3-2">3.2 Data Collection and Integration</a>
+                <ol>
+                  <li><a href="#sec3-2a">3.2a Handling Missing ZIP Codes</a></li>
+                  <li><a href="#sec3-2b">3.2b Duplicate Records and Double-Counting Risk</a></li>
+                  <li><a href="#sec3-2c">3.2c Capacity Thresholding (DER vs Utility-Scale)</a></li>
+                </ol>
+              </li>
+
+              <li><a href="#sec3-3">3.3 Geographic Key Standardization</a></li>
+
+              <li><a href="#sec3-4">3.4 Preprocessing and Feature Selection</a>
+                <ol>
+                  <li><a href="#sec3-4a">3.4a Exploratory Data Analysis (EDA)</a></li>
+                </ol>
+              </li>
+
+              <li><a href="#sec3-5">3.5 Modeling Pipeline</a>
+                <ol>
+                  <li><a href="#sec3-5a">3.5a Multicollinearity Diagnostics</a></li>
+                  <li><a href="#sec3-5b">3.5b Regression Model Series</a></li>
+                  <li><a href="#sec3-5c">3.5c Robustness and Sensitivity Checks</a></li>
+                </ol>
+              </li>
+
+              <li><a href="#sec3-6">3.6 Causal Inference with EconML (LinearDML)</a></li>
+              <li><a href="#sec3-7">3.7 Visualization</a></li>
+
+              <li><a href="#sec3-8">3.8 Rigor Templates and Expansion Checklist</a>
+                <ol>
+                  <li><a href="#sec3-8a">3.8a Data Documentation Template</a></li>
+                  <li><a href="#sec3-8b">3.8b Variable Construction Template</a></li>
+                  <li><a href="#sec3-8c">3.8c Duplicate Handling Template</a></li>
+                  <li><a href="#sec3-8d">3.8d Modeling and Reporting Template</a></li>
+                  <li><a href="#sec3-8e">3.8e Diagnostics Template</a></li>
+                  <li><a href="#sec3-8f">3.8f Reproducibility Template</a></li>
+                </ol>
+              </li>
+            </ol>
+          </li>
+          <li><a href="#sec4">4 Results</a>
+            <ol>
+              <li><a href="#sec4-0">4.0 Summary Tables and Figures (Template)</a></li>
+              <li><a href="#sec4-1">4.1 Descriptive Patterns</a></li>
+              <li><a href="#sec4-2">4.2 Clustering Results</a></li>
+              <li><a href="#sec4-3">4.3 Regression Results</a></li>
+              <li><a href="#sec4-4">4.4 Causal Estimates</a></li>
+            </ol>
+          </li>
+          <li><a href="#sec5">5 Discussion and Limitations</a>
+            <ol>
+              <li><a href="#sec5-1">5.1 Interpretation</a></li>
+              <li><a href="#sec5-2">5.2 Limitations</a></li>
+              <li><a href="#sec5-3">5.3 Next Steps</a></li>
+              <li><a href="#sec5-4">5.4 Future Work</a></li>
+            </ol>
+          </li>
+          <li><a href="#sec6">6 Conclusion</a></li>
+          <li><a href="#sec7">7 References</a></li>
+        </ol>
+      </nav>
+    </aside>
+  </div>
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Auto-fill last-updated with local date
+    const lastUpdated = document.getElementById('last-updated');
+    if (lastUpdated) {
+      const d = new Date();
+      lastUpdated.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    const headings = Array.from(document.querySelectorAll('h2[id], h3[id], summary[id]'));
+    const tocLinks = Array.from(document.querySelectorAll('.toc a[href^="#"]'));
+    const progressInner = document.getElementById('toc-progress-inner');
+    const themeToggle = document.getElementById('theme-toggle');
+    const tocRoot = document.querySelector('.toc');
+    const tocSections = [];
+
+    // Set up collapsible TOC sections
+    if (tocRoot) {
+      const tocItems = tocRoot.querySelectorAll('li');
+      tocItems.forEach(function (li) {
+        const childList = li.querySelector(':scope > ol');
+        if (childList) {
+          li.classList.add('has-children');
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'toc-toggle';
+          toggle.setAttribute('aria-label', 'Toggle subsections');
+          li.insertBefore(toggle, li.firstChild);
+
+          toggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            li.classList.toggle('expanded');
+          });
+
+          tocSections.push(li);
+        }
+      });
+    }
+
+    function setActive(id) {
+      tocLinks.forEach(function (link) {
+        link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+      });
+    }
+
+    function expandForActive(id) {
+      const targetHref = '#' + id;
+
+      // collapse all
+      tocSections.forEach(function (sectionLi) {
+        sectionLi.classList.remove('expanded');
+      });
+
+      // expand the chain for the active link
+      tocLinks.forEach(function (link) {
+        if (link.getAttribute('href') === targetHref) {
+          let li = link.closest('li');
+          while (li) {
+            if (li.classList && li.classList.contains('has-children')) {
+              li.classList.add('expanded');
+            }
+            li = li.parentElement ? li.parentElement.closest('li') : null;
+          }
+        }
+      });
+    }
+
+    function openDetailsForHash() {
+      const id = (location.hash || '').replace('#', '');
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      let el = target;
+      while (el) {
+        if (el.tagName && el.tagName.toLowerCase() === 'details') {
+          el.open = true;
+        }
+        el = el.parentElement;
+      }
+    }
+
+    function onScroll() {
+      const scrollPos = window.scrollY + 120; // offset for header
+      let current = headings[0] ? headings[0].id : null;
+
+      for (const h of headings) {
+        if (h.offsetTop <= scrollPos) current = h.id;
+        else break;
+      }
+
+      if (current) {
+        setActive(current);
+        expandForActive(current);
+      }
+
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = docHeight > 0 ? (window.scrollY / docHeight) : 0;
+      if (progressInner) progressInner.style.width = (ratio * 100).toFixed(1) + '%';
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    openDetailsForHash();
+
+    window.addEventListener('hashchange', function () {
+      openDetailsForHash();
+      onScroll();
+    });
+
+    tocLinks.forEach(function (link) {
+      link.addEventListener('click', function () {
+        // allow the browser to update the hash first
+        setTimeout(function () {
+          openDetailsForHash();
+          onScroll();
+        }, 0);
+      });
+    });
+
+    // Copy buttons for code blocks (wrap code blocks in .pre-wrapper)
+    document.querySelectorAll('.pre-wrapper').forEach(function (wrap) {
+      const pre = wrap.querySelector('pre');
+      if (!pre) return;
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.type = 'button';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', function () {
+        const text = pre.innerText;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.classList.add('copied');
+          btn.textContent = 'Copied';
+          setTimeout(function () {
+            btn.classList.remove('copied');
+            btn.textContent = 'Copy';
+          }, 1200);
+        }).catch(function () {});
+      });
+      wrap.appendChild(btn);
+    });
+
+    // Dark mode toggle with localStorage
+    const root = document.documentElement;
+    const storedTheme = localStorage.getItem('der-doc-theme');
+    if (storedTheme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      if (themeToggle) themeToggle.textContent = 'Light mode';
+    }
+
+    if (themeToggle) {
+      themeToggle.addEventListener('click', function () {
+        const isDark = root.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+          root.removeAttribute('data-theme');
+          localStorage.setItem('der-doc-theme', 'light');
+          themeToggle.textContent = 'Dark mode';
+        } else {
+          root.setAttribute('data-theme', 'dark');
+          localStorage.setItem('der-doc-theme', 'dark');
+          themeToggle.textContent = 'Light mode';
+        }
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
