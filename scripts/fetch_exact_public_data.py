@@ -4,7 +4,7 @@ Fetch exact public raw inputs that can be reproduced from stable upstream source
 
 This script intentionally covers only sources that could be tied to a specific,
 publicly accessible endpoint with enough confidence to reproduce the file that
-the current workflow expects.
+the current 2023-aligned workflow expects.
 
 It does not try to regenerate every file under data/raw/. Some dashboard exports
 and hand-cleaned workbooks in this repo still need a separate provenance pass.
@@ -29,12 +29,10 @@ RAW = ROOT / "data" / "raw"
 TIMEOUT = 300
 CHUNK_SIZE = 1024 * 1024
 
-TTS_2025_URL = "https://drive.usercontent.google.com/download?id=1NQh4TRC_IqDz2r5vfZuxDm6LGjEuexdu&confirm=t"
-DG_2025_01_31_URL = "https://www.californiadgstats.ca.gov/download/interconnection_rule21_projects/Interconnected_Project_Sites_2025-01-31.zip/"
+DG_2023_12_31_URL = "https://www.californiadgstats.ca.gov/download/interconnection_rule21_projects/Interconnected_Project_Sites_2023-12-31.zip/"
 USWTDB_CSV_ZIP_URL = "https://energy.usgs.gov/uswtdb/assets/data/uswtdbCSV.zip"
 COUNTY_2023_ZIP_URL = "https://www2.census.gov/geo/tiger/TIGER2023/COUNTY/tl_2023_us_county.zip"
 ZCTA_2023_ZIP_URL = "https://www2.census.gov/geo/tiger/TIGER2023/ZCTA520/tl_2023_us_zcta520.zip"
-ZCTA_2024_ZIP_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ZCTA520/tl_2024_us_zcta520.zip"
 CA_UTILITY_TERRITORIES_URL = (
     "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/"
     "California_Electric_Utility_Service_Territory_SCOUT/FeatureServer/0/query"
@@ -103,35 +101,31 @@ def extract_by_suffixes(zf: zipfile.ZipFile, suffixes: tuple[str, ...], out_dir:
             extract_member(zf, member, out_dir / name)
 
 
-def fetch_tts_2025(s: requests.Session, force: bool) -> None:
-    target = RAW / "solar" / "TTS_LBNL_public_file_29-Sep-2025_all.csv"
+def fetch_tts_2023_aligned(_: requests.Session, force: bool) -> None:
+    target = RAW / "solar" / "TTS_LBNL_public_file_21-Aug-2024_all.csv"
     if should_skip(target, force):
         print(f"skip {target.relative_to(ROOT)}")
         return
 
-    payload = download_bytes(s, TTS_2025_URL)
-    with zipfile.ZipFile(io.BytesIO(payload)) as zf:
-        csv_members = [m for m in zf.namelist() if m.lower().endswith(".csv")]
-        if not csv_members:
-            raise RuntimeError("Tracking the Sun archive did not contain a CSV file")
-        if len(csv_members) != 1:
-            raise RuntimeError(f"Expected 1 CSV in Tracking the Sun archive, found {len(csv_members)}")
-        extract_member(zf, csv_members[0], target)
-    print(f"wrote {target.relative_to(ROOT)}")
+    raise RuntimeError(
+        "The rebuild uses the 2024 Tracking the Sun release as the 2023-aligned snapshot, "
+        "but the exact stable public download URL has not been pinned in this script yet. "
+        "Use the existing local file or update the script once that URL is confirmed."
+    )
 
 
-def fetch_interconnection_2025_01_31(s: requests.Session, force: bool) -> None:
+def fetch_interconnection_2023_12_31(s: requests.Session, force: bool) -> None:
     targets = [
-        RAW / "interconnection" / "PGE_Interconnected_Project_Sites_2025-01-31.csv",
-        RAW / "interconnection" / "SCE_Interconnected_Project_Sites_2025-01-31.csv",
-        RAW / "interconnection" / "SDGE_Interconnected_Project_Sites_2025-01-31.csv",
+        RAW / "interconnection" / "PGE_Interconnected_Project_Sites_2023-12-31.csv",
+        RAW / "interconnection" / "SCE_Interconnected_Project_Sites_2023-12-31.csv",
+        RAW / "interconnection" / "SDGE_Interconnected_Project_Sites_2023-12-31.csv",
     ]
     if all(should_skip(path, force) for path in targets):
         for path in targets:
             print(f"skip {path.relative_to(ROOT)}")
         return
 
-    payload = download_bytes(s, DG_2025_01_31_URL)
+    payload = download_bytes(s, DG_2023_12_31_URL)
     with zipfile.ZipFile(io.BytesIO(payload)) as zf:
         members = {Path(m).name: m for m in zf.namelist()}
         for path in targets:
@@ -174,7 +168,6 @@ def fetch_boundary_zip(s: requests.Session, url: str, out_dir: Path, force: bool
 def fetch_boundaries(s: requests.Session, force: bool) -> None:
     fetch_boundary_zip(s, COUNTY_2023_ZIP_URL, RAW / "boundaries" / "tl_2023_us_county", force)
     fetch_boundary_zip(s, ZCTA_2023_ZIP_URL, RAW / "boundaries" / "tl_2023_us_zcta520", force)
-    fetch_boundary_zip(s, ZCTA_2024_ZIP_URL, RAW / "boundaries" / "tl_2024_us_zcta520", force)
 
 
 def fetch_ca_utility_territories(s: requests.Session, force: bool) -> None:
@@ -207,9 +200,9 @@ def main() -> None:
     s = session()
 
     if "tts" in groups:
-        fetch_tts_2025(s, args.force)
+        fetch_tts_2023_aligned(s, args.force)
     if "interconnection" in groups:
-        fetch_interconnection_2025_01_31(s, args.force)
+        fetch_interconnection_2023_12_31(s, args.force)
     if "wind" in groups:
         fetch_uswtdb(s, args.force)
     if "boundaries" in groups:
