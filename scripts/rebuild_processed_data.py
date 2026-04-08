@@ -242,14 +242,11 @@ def load_name_to_fips() -> dict[str, str]:
 
 
 def clean_zip(series: pd.Series) -> pd.Series:
-    return (
-        series.astype(str)
-        .str.strip()
-        .str.replace(r"\.0$", "", regex=True)
-        .str.replace(r"-.*$", "", regex=True)
-        .str[:5]
-        .str.zfill(5)
-    )
+    cleaned = series.astype("string").str.strip()
+    # Accept normal ZIPs, ZIP+4, and values that pandas may have coerced to xxxxx.0.
+    # Leave malformed strings like "9327." as invalid so they can be filtered out later.
+    cleaned = cleaned.str.extract(r"^(\d{1,5})(?:\.0+)?(?:-\d+)?$", expand=False)
+    return cleaned.str.zfill(5)
 
 
 def is_valid_zip(series: pd.Series) -> pd.Series:
@@ -260,7 +257,7 @@ def load_zcta_shapes() -> gpd.GeoDataFrame:
     zcta = gpd.read_file(ZCTA_SHP)
     zcta = zcta.rename(columns={"ZCTA5CE20": "zip_code"})
     zcta["zip_code"] = zcta["zip_code"].astype(str).str.zfill(5)
-    return zcta.to_crs("EPSG:4326")
+    return zcta
 
 
 def load_ca_zcta_centroids() -> pd.DataFrame:
@@ -271,11 +268,13 @@ def load_ca_zcta_centroids() -> pd.DataFrame:
     if ca.crs != zcta.crs:
         ca = ca.to_crs(zcta.crs)
     zcta_ca = gpd.overlay(zcta[["zip_code", "geometry"]], ca[["geometry"]], how="intersection")
-    zcta_ca = zcta_ca.to_crs("EPSG:3310")
-    zcta_ca["centroid"] = zcta_ca.geometry.centroid
-    zcta_ca = zcta_ca.set_geometry("centroid").to_crs("EPSG:4326")
-    zcta_ca["lat"] = zcta_ca.geometry.y
-    zcta_ca["lon"] = zcta_ca.geometry.x
+    zcta_ca = zcta[["zip_code", "INTPTLAT20", "INTPTLON20"]].merge(
+        zcta_ca[["zip_code"]].drop_duplicates(),
+        on="zip_code",
+        how="inner",
+    )
+    zcta_ca["lat"] = zcta_ca["INTPTLAT20"].astype(str).str.replace("+", "", regex=False).astype(float)
+    zcta_ca["lon"] = zcta_ca["INTPTLON20"].astype(str).astype(float)
     return zcta_ca[["zip_code", "lat", "lon"]].drop_duplicates("zip_code").reset_index(drop=True)
 
 
@@ -338,6 +337,8 @@ def build_wind_zip() -> tuple[pd.DataFrame, pd.DataFrame]:
         crs="EPSG:4326",
     )
     zip_shapes = load_zcta_shapes()
+    if gdf_wind.crs != zip_shapes.crs:
+        gdf_wind = gdf_wind.set_crs(zip_shapes.crs, allow_override=True)
     joined = gpd.sjoin(gdf_wind, zip_shapes[["zip_code", "geometry"]], how="left", predicate="intersects")
     joined["turbine_mw"] = pd.to_numeric(joined["turbine_capacity_kw"], errors="coerce") / 1000.0
     wind_zip = (
@@ -403,6 +404,7 @@ def build_power_plant_der(name_to_fips: dict[str, str]) -> pd.DataFrame:
     power_plant = power_plant[power_plant["state"] == "CA"].copy()
     power_plant["zip_code"] = clean_zip(power_plant["zip_code"])
     power_plant = power_plant[is_valid_zip(power_plant["zip_code"])].copy()
+    power_plant = power_plant[power_plant["zip_code"].str.startswith("9")].copy()
 
     btm_sectors = [
         "Commercial Non-CHP",
@@ -432,6 +434,7 @@ def build_ev_sources(name_to_fips: dict[str, str]) -> tuple[pd.DataFrame, pd.Dat
     )
     ev_cars["zip_code"] = clean_zip(ev_cars["zip_code"])
     ev_cars = ev_cars[is_valid_zip(ev_cars["zip_code"])].copy()
+    ev_cars = ev_cars[ev_cars["zip_code"].str.startswith("9")].copy()
 
     ev_chargers = pd.read_excel(RAW / "ev_chargers" / "Charger_County Map_Full Data_data_zip_lat-lon.xlsx")
     ev_chargers["County"] = ev_chargers["County"].astype(str).str.strip().str.lower()
@@ -466,14 +469,19 @@ def build_ev_sources(name_to_fips: dict[str, str]) -> tuple[pd.DataFrame, pd.Dat
         geometry=gpd.points_from_xy(ev_chargers["longitude"], ev_chargers["latitude"]),
         crs="EPSG:4326",
     )
-    zip_shapes = load_zcta_shapes().to_crs(gdf_ev.crs)
+    zip_shapes = load_zcta_shapes()
+    if gdf_ev.crs != zip_shapes.crs:
+        gdf_ev = gdf_ev.set_crs(zip_shapes.crs, allow_override=True)
     joined = gpd.sjoin(gdf_ev, zip_shapes[["zip_code", "geometry"]], how="left", predicate="within")
-    if "zip_code_left" in joined.columns:
-        ev_chargers["zip_code"] = clean_zip(joined["zip_code_left"])
+    if "zip_code_right" in joined.columns:
+        ev_chargers["zip_code"] = clean_zip(joined["zip_code_right"]).fillna(ev_chargers["zip_code"])
+    elif "zip_code" in joined.columns:
+        ev_chargers["zip_code"] = clean_zip(joined["zip_code"]).fillna(ev_chargers["zip_code"])
     for idx, zip_code in EV_CHARGER_ZIP_FIXES.items():
         if idx in ev_chargers.index:
             ev_chargers.loc[idx, "zip_code"] = zip_code
     ev_chargers = ev_chargers[is_valid_zip(ev_chargers["zip_code"])].copy()
+    ev_chargers = ev_chargers[ev_chargers["zip_code"].str.startswith("9")].copy()
 
     write_csv(ev_chargers, PROCESSED / "ev_chargers.csv")
     return ev_cars, ev_chargers
@@ -485,6 +493,8 @@ def build_tracking_the_sun() -> pd.DataFrame:
     tracking = tracking[tracking["state"] == "CA"].copy()
     bad = {"-0001", "-01.0", "000.0", "2399.", "831.0"}
     tracking = tracking[~tracking["zip_code"].isin(bad)].copy()
+    tracking = tracking[is_valid_zip(tracking["zip_code"])].copy()
+    tracking = tracking[tracking["zip_code"].str.startswith("9")].copy()
     tracking = tracking[tracking["PV_system_size_DC"] >= 0].copy()
     write_csv(tracking, PROCESSED / "tracking_the_sun.csv")
     return tracking

@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem Set: Full-Stack DER Decision-Support Tool</title>
+  <style>
+    :root {
+      --bg: #f7f5ef;
+      --paper: #fffdf8;
+      --ink: #18212a;
+      --muted: #5b6773;
+      --line: #d7d2c6;
+      --blue: #1d4ed8;
+      --blue-soft: #eff6ff;
+      --green: #047857;
+      --green-soft: #ecfdf5;
+      --orange: #c2410c;
+      --orange-soft: #fff7ed;
+      --red: #b91c1c;
+      --red-soft: #fef2f2;
+      --shadow: 0 18px 40px rgba(17, 24, 39, 0.06);
+      --mono: "SFMono-Regular", Menlo, Consolas, monospace;
+      --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, #f4eee2 0, var(--bg) 35%, #faf9f5 100%);
+      color: var(--ink);
+      font-family: var(--serif);
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+      background: rgba(255, 253, 248, 0.92);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar-inner {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0.95rem 1.4rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .course {
+      font-family: var(--sans);
+      font-size: 0.86rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .note {
+      font-family: var(--sans);
+      font-size: 0.93rem;
+      color: var(--muted);
+    }
+
+    .shell {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 1.8rem 1.4rem 3rem;
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 2rem;
+      align-items: start;
+    }
+
+    aside {
+      position: sticky;
+      top: 5.3rem;
+      background: rgba(255, 253, 248, 0.82);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1rem 1rem 1.1rem;
+      box-shadow: var(--shadow);
+    }
+
+    aside h2 {
+      margin: 0 0 0.7rem;
+      font-size: 1rem;
+      font-family: var(--sans);
+      color: var(--ink);
+    }
+
+    aside ol {
+      margin: 0;
+      padding-left: 1.1rem;
+      font-family: var(--sans);
+      font-size: 0.95rem;
+    }
+
+    aside li {
+      margin: 0.28rem 0;
+    }
+
+    .source-box {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      font-family: var(--sans);
+      font-size: 0.93rem;
+      color: var(--muted);
+    }
+
+    article {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 2.1rem 2.3rem 2.8rem;
+      box-shadow: var(--shadow);
+    }
+
+    h1, h2, h3 {
+      line-height: 1.22;
+      color: #16202a;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 2.5rem;
+    }
+
+    h2 {
+      margin: 2.3rem 0 0.75rem;
+      font-size: 1.8rem;
+      padding-bottom: 0.28rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h3 {
+      margin: 1.4rem 0 0.5rem;
+      font-size: 1.17rem;
+    }
+
+    p {
+      margin: 0.45rem 0 0.95rem;
+      font-size: 1.03rem;
+    }
+
+    ul, ol {
+      margin: 0.4rem 0 1rem 1.35rem;
+      padding: 0;
+    }
+
+    li {
+      margin: 0.22rem 0;
+    }
+
+    code, pre {
+      font-family: var(--mono);
+    }
+
+    pre {
+      margin: 0.9rem 0 1.1rem;
+      padding: 0.9rem 1rem;
+      overflow-x: auto;
+      background: #f5f2ea;
+      border: 1px solid #e5dcc8;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .hero {
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-meta {
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .callout {
+      background: var(--blue-soft);
+      border: 1px solid #a8c7ff;
+      border-left: 4px solid var(--blue);
+      border-radius: 16px;
+      padding: 0.95rem 1rem;
+      margin: 1rem 0 1.2rem;
+      font-family: var(--sans);
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    .task-box {
+      margin: 0.7rem 0 1rem;
+      padding: 0.8rem 0.95rem;
+      border-radius: 14px;
+      border: 1px solid #c7d7ff;
+      background: linear-gradient(180deg, #f7faff 0%, #fdfefe 100%);
+      font-family: var(--sans);
+      color: #1f3b7a;
+      font-size: 0.96rem;
+      line-height: 1.5;
+    }
+
+    .task-box strong {
+      color: var(--blue);
+    }
+
+    .toc-inline {
+      background: #fcfaf4;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1rem 1.1rem;
+      margin: 1rem 0 1.35rem;
+    }
+
+    .toc-inline h3 {
+      margin-top: 0;
+      font-family: var(--sans);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      margin: 1rem 0 1.2rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin: 1rem 0 1.2rem;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0.9rem 1rem;
+      background: #fffefb;
+    }
+
+    .card h4 {
+      margin: 0 0 0.35rem;
+      font-family: var(--sans);
+      font-size: 1rem;
+      color: #17202a;
+    }
+
+    .card p, .card ul {
+      margin-bottom: 0;
+      font-size: 0.98rem;
+    }
+
+    .soft-blue { background: var(--blue-soft); border-color: #a8c7ff; }
+    .soft-green { background: var(--green-soft); border-color: #8dd6bb; }
+    .soft-orange { background: var(--orange-soft); border-color: #f3bc95; }
+    .soft-red { background: var(--red-soft); border-color: #f1aaaa; }
+
+    .diagram {
+      margin: 1rem 0 1.3rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fcfbf7;
+    }
+
+    .diagram h4 {
+      margin: 0 0 0.8rem;
+      font-family: var(--sans);
+      font-size: 1rem;
+    }
+
+    .flow {
+      display: flex;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .node {
+      min-width: 130px;
+      max-width: 180px;
+      padding: 0.8rem 0.85rem;
+      border-radius: 14px;
+      border: 1.5px solid var(--line);
+      background: #ffffff;
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .node.blue { border-color: var(--blue); background: var(--blue-soft); }
+    .node.green { border-color: var(--green); background: var(--green-soft); }
+    .node.orange { border-color: var(--orange); background: var(--orange-soft); }
+
+    .arrow {
+      font-family: var(--sans);
+      font-size: 1.2rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .entity {
+      border: 1.4px solid var(--line);
+      border-radius: 16px;
+      padding: 0.85rem;
+      background: #fffefb;
+    }
+
+    .entity h4 {
+      margin: 0 0 0.45rem;
+      font-family: var(--sans);
+      font-size: 0.98rem;
+    }
+
+    .entity code {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .endpoint-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.8rem;
+      margin: 1rem 0 1.15rem;
+    }
+
+    .endpoint {
+      border: 1.4px solid var(--line);
+      border-radius: 14px;
+      padding: 0.8rem 0.85rem;
+      background: #fffefb;
+    }
+
+    .endpoint strong {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .endpoint span {
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.9rem;
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.1rem;
+      font-family: var(--sans);
+      font-size: 0.94rem;
+    }
+
+    .matrix th,
+    .matrix td {
+      border: 1px solid var(--line);
+      padding: 0.65rem 0.6rem;
+      text-align: center;
+      background: #fffefb;
+    }
+
+    .matrix th {
+      background: #f7f4ec;
+      font-weight: 700;
+    }
+
+    .matrix td:first-child,
+    .matrix th:first-child {
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .yes {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .deliverables {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin: 1rem 0 1.2rem;
+    }
+
+    .deliverable {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0.9rem 0.95rem;
+      background: #fffefb;
+      display: flex;
+      gap: 0.8rem;
+      align-items: flex-start;
+    }
+
+    .deliverable-number {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      background: #1f2937;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--sans);
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .rubric {
+      display: grid;
+      gap: 0.6rem;
+      margin: 1rem 0 1.15rem;
+    }
+
+    .rubric-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 0.8rem;
+      align-items: center;
+      font-family: var(--sans);
+      font-size: 0.94rem;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.45rem;
+    }
+
+    .bar span {
+      height: 0.95rem;
+      border-radius: 999px;
+      display: block;
+      border: 1px solid var(--line);
+    }
+
+    .bar .weak { background: var(--red-soft); }
+    .bar .mid { background: #fff3cd; }
+    .bar .strong { background: var(--green-soft); }
+
+    .reference-list li {
+      margin: 0.38rem 0;
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-family: var(--sans);
+      font-size: 0.92rem;
+    }
+
+    @media (max-width: 1080px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        position: static;
+      }
+
+      .entity-grid,
+      .endpoint-grid,
+      .grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      article {
+        padding: 1.35rem 1.05rem 2rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .grid-2,
+      .grid-3,
+      .deliverables,
+      .entity-grid,
+      .endpoint-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rubric-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="course">DER Systems Project Handout</div>
+      <div class="note">Static assignment page with markdown source</div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <aside>
+      <h2>Table of Contents</h2>
+      <ol>
+        <li><a href="#intro">Introduction</a></li>
+        <li><a href="#architecture">System Architecture</a></li>
+        <li><a href="#predictive">Predictive and Grounded Components</a></li>
+        <li><a href="#verification">Verification and Deployment</a></li>
+        <li><a href="#submission">Submission</a></li>
+      </ol>
+      <div class="source-box">
+        <div><strong>Markdown source:</strong></div>
+        <div><a href="./project-build-assignment.md">project-build-assignment.md</a></div>
+      </div>
+    </aside>
+
+    <article>
+      <div class="hero">
+        <div class="hero-meta">Problem Set Handout</div>
+        <h1>Problem Set: Full-Stack DER Decision-Support Tool</h1>
+        <p>This handout specifies the implementation target for a cloud-deployed application that explores distributed energy resource and demographic patterns across regions.</p>
+        <div class="callout">
+          You are not building a notebook demo. You are building a usable system with a data model, API, model outputs, grounded summaries, testing, deployment, and documentation.
+        </div>
+
+        <div class="toc-inline">
+          <h3>Quick Contents</h3>
+          <ol>
+            <li>Introduction</li>
+            <li>System Architecture</li>
+            <li>Predictive and Grounded Components</li>
+            <li>Verification and Deployment</li>
+            <li>Submission</li>
+          </ol>
+        </div>
+
+        <div class="diagram">
+          <h4>System at a glance</h4>
+          <div class="flow">
+            <div class="node blue">User</div>
+            <div class="arrow">→</div>
+            <div class="node green">Web app</div>
+            <div class="arrow">→</div>
+            <div class="node blue">Backend API</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Data + model store</div>
+            <div class="arrow">→</div>
+            <div class="node green">Grounded summary</div>
+          </div>
+        </div>
+      </div>
+
+      <section id="intro">
+        <h2>1) Introduction</h2>
+
+        <h3>1.1) Objectives</h3>
+        <div class="task-box"><strong>Task.</strong> Implement a short project brief that names the user, the regional unit of analysis, the core decision-support question, and the final system you are building.</div>
+        <ul>
+          <li>Design a region-centered data model for analytical applications.</li>
+          <li>Build a backend API that supports lookup, comparison, and summary generation.</li>
+          <li>Separate offline model computation from online application behavior.</li>
+          <li>Implement a grounded LLM workflow that retrieves evidence before generation.</li>
+          <li>Ship a tested, documented, deployable system instead of an analysis-only artifact.</li>
+        </ul>
+
+        <h3>1.2) Overview</h3>
+        <div class="task-box"><strong>Task.</strong> Implement one end-to-end user flow: select a region, retrieve metrics, view model-based insight, and request a grounded stakeholder summary.</div>
+        <p>Your application should let a user inspect one region, compare multiple regions, view DER and demographic indicators, access predictive or model-based insights, and request stakeholder-facing summaries backed by retrieved evidence.</p>
+        <p>The fastest way to fail this project is to design the interface first and improvise the rest. Start with the region entity, the schema, and the API contract. The frontend is downstream of those choices.</p>
+
+        <h3>1.3) File setup</h3>
+        <div class="task-box"><strong>Task.</strong> Implement a repository layout that separates data processing, backend services, frontend code, models, tests, deployment assets, and documentation.</div>
+        <div class="grid-2">
+          <div class="card">
+            <h4>Repository expectations</h4>
+            <ul>
+              <li>data processing</li>
+              <li>backend services</li>
+              <li>frontend code</li>
+              <li>model or scoring logic</li>
+              <li>tests</li>
+              <li>deployment assets</li>
+              <li>documentation</li>
+            </ul>
+          </div>
+          <div class="card soft-orange">
+            <h4>Suggested layout</h4>
+            <pre><code>project/
+|-- data/
+|-- backend/
+|   |-- api/
+|   |-- schemas/
+|   `-- services/
+|-- frontend/
+|-- models/
+|-- tests/
+|-- deploy/
+`-- docs/</code></pre>
+          </div>
+        </div>
+
+        <div class="diagram">
+          <h4>Recommended build order</h4>
+          <div class="flow">
+            <div class="node blue">Schema</div>
+            <div class="arrow">→</div>
+            <div class="node blue">API contract</div>
+            <div class="arrow">→</div>
+            <div class="node green">One working view</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Model service</div>
+            <div class="arrow">→</div>
+            <div class="node green">Grounded summary</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Tests + deploy</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <h2>2) System Architecture</h2>
+
+        <h3>2.1) Data model</h3>
+        <div class="task-box"><strong>Task.</strong> Implement a normalized schema with a stable <code>region_id</code> and dedicated tables or objects for metrics, model outputs, evidence, and summaries.</div>
+        <p>Use <strong>region</strong> as the stable organizing unit. Every metric observation, model output, evidence object, and summary record should tie back to a region identifier.</p>
+
+        <div class="diagram">
+          <h4>Region-centered entity model</h4>
+          <div class="entity-grid">
+            <div class="entity">
+              <h4>Region</h4>
+              <code>region_id</code>
+              <code>name</code>
+              <code>zcta</code>
+              <code>geometry_ref</code>
+            </div>
+            <div class="entity">
+              <h4>MetricObservation</h4>
+              <code>region_id</code>
+              <code>metric_name</code>
+              <code>value</code>
+              <code>source</code>
+            </div>
+            <div class="entity">
+              <h4>ModelOutput</h4>
+              <code>region_id</code>
+              <code>score_name</code>
+              <code>score_value</code>
+              <code>model_version</code>
+            </div>
+            <div class="entity">
+              <h4>EvidenceChunk</h4>
+              <code>evidence_id</code>
+              <code>region_id</code>
+              <code>text</code>
+              <code>source_url</code>
+            </div>
+            <div class="entity">
+              <h4>SummaryResponse</h4>
+              <code>summary_id</code>
+              <code>region_id</code>
+              <code>evidence_ids[]</code>
+              <code>generated_at</code>
+            </div>
+          </div>
+        </div>
+
+        <pre><code>Region(region_id, name, zcta, geometry_ref)
+MetricObservation(region_id, metric_name, value, source, observed_at)
+ModelOutput(region_id, score_name, score_value, model_version, assumptions)
+EvidenceChunk(evidence_id, region_id, text, source_name, source_url)
+SummaryResponse(summary_id, region_id, summary_text, evidence_ids, generated_at)</code></pre>
+
+        <div class="grid-3">
+          <div class="card soft-blue">
+            <h4>Store separately</h4>
+            <p>Keep metric observations distinct from model outputs.</p>
+          </div>
+          <div class="card soft-green">
+            <h4>Track evidence</h4>
+            <p>Every evidence record needs source metadata and a stable ID.</p>
+          </div>
+          <div class="card soft-orange">
+            <h4>Persist summaries</h4>
+            <p>Generated outputs should carry timestamps and evidence references.</p>
+          </div>
+        </div>
+
+        <h3>2.2) Backend API</h3>
+        <div class="task-box"><strong>Task.</strong> Implement the required endpoint surface with typed responses and documented request and response contracts.</div>
+        <p>Define the API contract before you build every page. A strong system returns structured, typed responses. A weak system returns ad hoc JSON shaped around one UI component.</p>
+
+        <div class="endpoint-grid">
+          <div class="endpoint"><strong>GET /regions</strong><span>List searchable regions.</span></div>
+          <div class="endpoint"><strong>GET /regions/{id}</strong><span>Return region metrics and metadata.</span></div>
+          <div class="endpoint"><strong>GET /compare</strong><span>Return comparison output for 2 or more regions.</span></div>
+          <div class="endpoint"><strong>GET /model-output/{id}</strong><span>Return stored predictive outputs.</span></div>
+          <div class="endpoint"><strong>POST /summaries</strong><span>Generate a grounded stakeholder summary.</span></div>
+          <div class="endpoint"><strong>GET /health</strong><span>Readiness and smoke endpoint.</span></div>
+        </div>
+
+        <h3>2.3) Frontend contract</h3>
+        <div class="task-box"><strong>Task.</strong> Implement a frontend that renders region exploration, comparison, model outputs, and grounded summaries directly from structured API payloads.</div>
+        <p>The frontend should consume structured responses directly. At minimum, it should support region exploration, detail inspection, comparison, model display, and grounded summaries with visible evidence or citations.</p>
+
+        <div class="diagram">
+          <h4>Region request path</h4>
+          <div class="flow">
+            <div class="node blue">Select region</div>
+            <div class="arrow">→</div>
+            <div class="node green">Frontend query</div>
+            <div class="arrow">→</div>
+            <div class="node blue">API service</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Join metrics, model, evidence</div>
+            <div class="arrow">→</div>
+            <div class="node green">Render map, cards, summary</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="predictive">
+        <h2>3) Predictive and Grounded Components</h2>
+
+        <h3>3.1) Model pipeline</h3>
+        <div class="task-box"><strong>Task.</strong> Implement an offline feature engineering and scoring pipeline, persist the outputs, and expose those outputs through the application.</div>
+        <p>If you use predictive or model-based insights, compute them offline and store the outputs. Do not train or re-score large artifacts inside request handlers.</p>
+
+        <div class="diagram">
+          <h4>Offline model pipeline</h4>
+          <div class="flow">
+            <div class="node blue">Processed regional data</div>
+            <div class="arrow">→</div>
+            <div class="node green">Feature engineering</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Train or score</div>
+            <div class="arrow">→</div>
+            <div class="node blue">Persist outputs</div>
+            <div class="arrow">→</div>
+            <div class="node green">Serve by API</div>
+          </div>
+        </div>
+
+        <h3>3.2) Retrieval and summaries</h3>
+        <div class="task-box"><strong>Task.</strong> Implement a retrieval-first summary endpoint that returns generated text together with evidence IDs or citations.</div>
+        <p>A grounded summary feature is a retrieval pipeline with generation attached at the end.</p>
+
+        <div class="diagram">
+          <h4>Grounded summary flow</h4>
+          <div class="flow">
+            <div class="node blue">Receive summary request</div>
+            <div class="arrow">→</div>
+            <div class="node green">Build retrieval query</div>
+            <div class="arrow">→</div>
+            <div class="node blue">Retrieve evidence</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Assemble evidence set</div>
+            <div class="arrow">→</div>
+            <div class="node green">Generate from evidence</div>
+            <div class="arrow">→</div>
+            <div class="node blue">Return citations</div>
+          </div>
+        </div>
+
+        <h3>3.3) Guardrails</h3>
+        <div class="task-box"><strong>Task.</strong> Implement checks that block unsupported summaries, surface low-evidence cases, and preserve traceability from output text back to evidence.</div>
+        <div class="grid-3">
+          <div class="card soft-green">
+            <h4>Required behavior</h4>
+            <ul>
+              <li>Persist evidence IDs in the response.</li>
+              <li>Expose model or prompt version metadata.</li>
+              <li>Return a fallback when retrieval is weak.</li>
+              <li>Surface uncertainty or missing data.</li>
+            </ul>
+          </div>
+          <div class="card soft-red">
+            <h4>Do not do this</h4>
+            <ul>
+              <li>Do not let the model invent evidence.</li>
+              <li>Do not call vague text a metric.</li>
+              <li>Do not hide missing values behind polished prose.</li>
+              <li>Do not treat the LLM as a database.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Minimum summary fields</h4>
+            <pre><code>summary_id
+region_id
+summary_text
+evidence_ids[]
+metric_snapshot
+model_version
+generated_at</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="verification">
+        <h2>4) Verification and Deployment</h2>
+
+        <h3>4.1) Testing</h3>
+        <div class="task-box"><strong>Task.</strong> Implement unit, integration, smoke, and regression tests that cover schema assumptions, API structure, UI-critical paths, and grounding behavior.</div>
+        <p>Your tests should cover both correctness and system integrity. If a summary can be produced without retrieved evidence, your tests are not strong enough.</p>
+
+        <table class="matrix">
+          <thead>
+            <tr>
+              <th>Test type</th>
+              <th>Schema</th>
+              <th>API</th>
+              <th>UI</th>
+              <th>Grounding</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Unit</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes</td>
+              <td>No</td>
+              <td class="yes">Yes</td>
+            </tr>
+            <tr>
+              <td>Integration</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes</td>
+            </tr>
+            <tr>
+              <td>Smoke</td>
+              <td>No</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td>Regression</td>
+              <td class="yes">Yes</td>
+              <td class="yes">Yes</td>
+              <td>No</td>
+              <td class="yes">Yes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>4.2) Deployment</h3>
+        <div class="task-box"><strong>Task.</strong> Implement a containerized cloud deployment with explicit configuration, a health endpoint, and a repeatable release path.</div>
+        <p>This project is a product, not only an analysis. Containerize it, deploy it to a stable cloud target, keep environment configuration explicit, and expose a smoke-check or health endpoint.</p>
+
+        <div class="diagram">
+          <h4>Deployment path</h4>
+          <div class="flow">
+            <div class="node blue">Push code</div>
+            <div class="arrow">→</div>
+            <div class="node green">Run tests</div>
+            <div class="arrow">→</div>
+            <div class="node blue">Build image</div>
+            <div class="arrow">→</div>
+            <div class="node orange">Deploy service</div>
+            <div class="arrow">→</div>
+            <div class="node green">Smoke check</div>
+          </div>
+        </div>
+
+        <h3>4.3) Documentation</h3>
+        <div class="task-box"><strong>Task.</strong> Implement documentation for setup, environment variables, API behavior, model assumptions, grounded summary behavior, and known failure modes.</div>
+        <div class="grid-2">
+          <div class="card">
+            <h4>Documentation must cover</h4>
+            <ul>
+              <li>local setup</li>
+              <li>environment variables</li>
+              <li>API surface or OpenAPI specification</li>
+              <li>model assumptions and limitations</li>
+              <li>grounded summary behavior</li>
+              <li>known failure modes</li>
+            </ul>
+          </div>
+          <div class="card soft-green">
+            <h4>Definition of done</h4>
+            <ul>
+              <li>Deployed URL works.</li>
+              <li>Tests run from a clean clone.</li>
+              <li>API is documented.</li>
+              <li>Summary output exposes evidence.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="submission">
+        <h2>5) Submission</h2>
+
+        <h3>5.1) Deliverables</h3>
+        <div class="task-box"><strong>Task.</strong> Assemble the deployed URL, repository, schema documentation, API documentation, model write-up, summary explanation, test command, and deployment notes.</div>
+        <div class="deliverables">
+          <div class="deliverable"><div class="deliverable-number">1</div><div>Deployed application URL</div></div>
+          <div class="deliverable"><div class="deliverable-number">2</div><div>Source repository with setup instructions</div></div>
+          <div class="deliverable"><div class="deliverable-number">3</div><div>Documented data model or schema diagram</div></div>
+          <div class="deliverable"><div class="deliverable-number">4</div><div>API documentation or OpenAPI file</div></div>
+          <div class="deliverable"><div class="deliverable-number">5</div><div>Short write-up of the model layer</div></div>
+          <div class="deliverable"><div class="deliverable-number">6</div><div>Grounded summary explanation, test command, and deployment notes</div></div>
+        </div>
+
+        <h3>5.2) Evaluation</h3>
+        <div class="task-box"><strong>Task.</strong> Perform a self-audit against the rubric and close any gap that would make the project feel like a notebook demo instead of a usable system.</div>
+        <p>Strong work has clear separation between data, API, modeling, and presentation; interpretable model outputs; grounded summaries with evidence traceability; reproducible testing and deployment; and documentation that another person can follow without asking for clarification.</p>
+        <p>Weak work collapses all logic into a notebook or one script, depends on undocumented joins, returns unsupported LLM output, or works only on the original author's machine.</p>
+
+        <div class="rubric">
+          <div class="rubric-row">
+            <strong>Architecture</strong>
+            <div class="bar"><span class="weak"></span><span class="mid"></span><span class="strong"></span></div>
+          </div>
+          <div class="rubric-row">
+            <strong>Data model</strong>
+            <div class="bar"><span class="weak"></span><span class="mid"></span><span class="strong"></span></div>
+          </div>
+          <div class="rubric-row">
+            <strong>API</strong>
+            <div class="bar"><span class="weak"></span><span class="mid"></span><span class="strong"></span></div>
+          </div>
+          <div class="rubric-row">
+            <strong>Model integration</strong>
+            <div class="bar"><span class="weak"></span><span class="mid"></span><span class="strong"></span></div>
+          </div>
+          <div class="rubric-row">
+            <strong>Grounding</strong>
+            <div class="bar"><span class="weak"></span><span class="mid"></span><span class="strong"></span></div>
+          </div>
+          <div class="rubric-row">
+            <strong>Operations</strong>
+            <div class="bar"><span class="weak"></span><span class="mid"></span><span class="strong"></span></div>
+          </div>
+        </div>
+
+        <div class="card soft-red">
+          <h4>Common failure modes</h4>
+          <ul>
+            <li>Region identifiers drift across layers.</li>
+            <li>Summary generation runs without evidence.</li>
+            <li>The application works only on the author's machine.</li>
+          </ul>
+        </div>
+
+        <h3>5.3) References</h3>
+        <div class="task-box"><strong>Task.</strong> Use the official references below whenever a subsystem is unclear, especially for API specification, deployment, testing, and grounded retrieval.</div>
+        <ul class="reference-list">
+          <li><a href="https://spec.openapis.org/oas/latest.html">OpenAPI Specification</a></li>
+          <li><a href="https://fastapi.tiangolo.com/tutorial/first-steps/">FastAPI First Steps</a></li>
+          <li><a href="https://react.dev/learn/start-a-new-react-project">React: Start a New React Project</a></li>
+          <li><a href="https://docs.docker.com/get-started/">Docker Get Started</a></li>
+          <li><a href="https://docs.pytest.org/en/stable/getting-started.html">pytest Get Started</a></li>
+          <li><a href="https://platform.openai.com/docs/guides/tools-file-search">OpenAI File Search</a></li>
+          <li><a href="https://platform.openai.com/docs/guides/retrieval">OpenAI Retrieval</a></li>
+        </ul>
+
+        <div class="footer-note">
+          The markdown source for this page lives in <a href="./project-build-assignment.md">project-build-assignment.md</a>.
+        </div>
+      </section>
+    </article>
+  </main>
+</body>
+</html>
