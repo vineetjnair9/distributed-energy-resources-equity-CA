@@ -1,4 +1,2 @@
-Datasets/
-Graphs and Plots/
-*.pkl
-*.xlsx
+data/
+outputs/

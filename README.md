@@ -24,6 +24,7 @@ The main places to look are:
 - `data/raw/`: raw source files
 - `data/processed/`: processed intermediate and final analysis files
 - `outputs/`: exported tables, figures, and the methodology report
+- `outputs/executed_notebooks/`: executed notebook copies produced by the rerun scripts
 
 For most analysis work, the key final dataset is:
 
@@ -83,6 +84,27 @@ python scripts/rebuild_processed_data.py --skip-external
 - The script uses the local file `data/raw/boundaries/ca_utility_territories.geojson` for the ZIP-to-utility crosswalk.
 - The final analysis notebooks read `data/processed/combined_der_dataset_w_controls_predictors.csv`, so if that file is unchanged, previously generated regression results should remain unchanged.
 - `data/processed/combined_der_dataset_full.csv` in the current workspace is a reconstructed base artifact derived from the base columns embedded in `combined_der_dataset_w_controls_predictors.csv`, because the earlier historical full-base file had been overwritten before this cleanup.
+
+## Rerunning models and syncing figures
+
+To rerun the main regression notebook and refresh the saved figure assets in one step:
+
+```bash
+python scripts/run_regression_notebook.py
+```
+
+This script:
+
+- executes `notebooks/regression.ipynb`
+- saves an executed copy to `outputs/executed_notebooks/regression.executed.ipynb`
+- regenerates the standardized paper figures
+- mirrors figure outputs into `site/assets/figures/` so they remain easy to access later
+
+If you only want to refresh the figure copies under the site assets folder without rerunning models:
+
+```bash
+python scripts/sync_figure_assets.py
+```
 
 ## Recommended workflow
 
