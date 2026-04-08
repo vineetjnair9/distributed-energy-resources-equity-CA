@@ -1,6 +1,5 @@
-Datasets/
-Graphs and Plots/
-*.pkl
-*.xlsx
-*.csv
-
+data/
+outputs/
+__pycache__/
+*.py[cod]
+.DS_Store
