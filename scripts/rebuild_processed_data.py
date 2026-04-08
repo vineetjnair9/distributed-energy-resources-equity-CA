@@ -33,6 +33,9 @@ Notes
 -----
 - ACS and NASA POWER calls are live network calls, matching the current methodology.
 - The Census API key should be provided via --census-api-key or CENSUS_API_KEY.
+- This rebuild is intended to be 2023-aligned. Raw inputs should therefore be
+  snapshots through 2023 or the first subsequent public release that explicitly
+  covers data through the end of 2023.
 """
 
 from __future__ import annotations
@@ -65,6 +68,7 @@ SLEEP_S = 0.2
 ZCTA_SHP = RAW / "boundaries" / "tl_2023_us_zcta520" / "tl_2023_us_zcta520.shp"
 COUNTY_SHP = RAW / "boundaries" / "tl_2023_us_county" / "tl_2023_us_county.shp"
 CA_UTILITY_GEOJSON = RAW / "boundaries" / "ca_utility_territories.geojson"
+TRACKING_THE_SUN_CSV = RAW / "solar" / "TTS_LBNL_public_file_21-Aug-2024_all.csv"
 
 LOGGER = logging.getLogger("rebuild_processed_data")
 
@@ -488,7 +492,8 @@ def build_ev_sources(name_to_fips: dict[str, str]) -> tuple[pd.DataFrame, pd.Dat
 
 
 def build_tracking_the_sun() -> pd.DataFrame:
-    tracking = pd.read_csv(RAW / "solar" / "TTS_LBNL_public_file_29-Sep-2025_all.csv", low_memory=False)
+    # The 2024 public release is the 2023-aligned Tracking the Sun snapshot.
+    tracking = pd.read_csv(TRACKING_THE_SUN_CSV, low_memory=False)
     tracking["zip_code"] = clean_zip(tracking["zip_code"])
     tracking = tracking[tracking["state"] == "CA"].copy()
     bad = {"-0001", "-01.0", "000.0", "2399.", "831.0"}
