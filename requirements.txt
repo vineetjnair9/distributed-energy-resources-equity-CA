@@ -13,7 +13,7 @@ patsy==1.0.2
 xgboost==3.2.0
 umap-learn==0.5.7
 
-geopandas==0.14.4
+geopandas==1.1.2
 shapely==2.0.5
 
 jupyter==1.1.1
