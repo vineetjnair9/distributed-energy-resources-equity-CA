@@ -97,7 +97,7 @@ def main() -> None:
     generated = []
 
     generated.append(
-        FIG_DIR / "main_dot_whisker_across_outcomes.png"
+        FIG_DIR / "baseline_der_outcomes_dot_whisker.png"
     )
     plot_dot_whisker_from_csvs(
         all_coefs=all_coefs,
