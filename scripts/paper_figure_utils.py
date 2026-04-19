@@ -92,6 +92,7 @@ def apply_paper_style() -> None:
             "axes.grid": False,
             "axes.spines.top": False,
             "axes.spines.right": False,
+            "svg.hashsalt": "der-paper-figures",
         }
     )
 
@@ -168,6 +169,8 @@ def _finish_figure(fig: plt.Figure, save_path: str | Path | None = None) -> None
         save_path = Path(save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         fig.savefig(save_path, dpi=320, bbox_inches="tight")
+        if save_path.suffix.lower() != ".svg":
+            fig.savefig(save_path.with_suffix(".svg"), bbox_inches="tight", metadata={"Date": None})
 
 
 def plot_dot_whisker_from_csvs(
@@ -501,4 +504,7 @@ def sync_site_figure(src: str | Path, site_fig_dir: str | Path) -> Path:
     site_fig_dir.mkdir(parents=True, exist_ok=True)
     dst = site_fig_dir / src.name
     dst.write_bytes(src.read_bytes())
+    svg_src = src.with_suffix(".svg")
+    if svg_src.exists():
+        (site_fig_dir / svg_src.name).write_bytes(svg_src.read_bytes())
     return dst

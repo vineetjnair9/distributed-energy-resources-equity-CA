@@ -28,6 +28,11 @@ DATASET = ROOT / "data" / "processed" / "combined_der_dataset_w_controls_predict
 OUTPUT_TABLES = ROOT / "outputs" / "tables"
 SITE_FIGURES = ROOT / "site" / "assets" / "figures"
 GENERATED = SITE_FIGURES / "generated"
+LOWESS_SEED = 42
+LOWESS_FRAC = 0.35
+LOWESS_BOOTSTRAPS = 300
+LOWESS_GRID_SIZE = 200
+LOWESS_METRIC_PERCENTILES = (5, 95)
 
 
 def derive_analysis_frame() -> pd.DataFrame:
@@ -50,13 +55,71 @@ def derive_analysis_frame() -> pd.DataFrame:
     df["y_dc_fast_chargers"] = np.log1p(df["dc_fast_chargers_per_1k"])
     df["y_pv"] = np.log1p(df["pv_kw_per_1k"])
     df["y_storage"] = np.log1p(df["storage_mw_per_100k"])
+    df["combined_nonwhite_share"] = df[["pct_black", "pct_hispanic", "pct_asian"]].sum(axis=1, min_count=1)
     return df
 
 
 def _save(fig: plt.Figure, name: str) -> None:
     GENERATED.mkdir(parents=True, exist_ok=True)
-    fig.savefig(GENERATED / name, dpi=320, bbox_inches="tight")
+    path = GENERATED / name
+    fig.savefig(path, dpi=320, bbox_inches="tight")
+    if path.suffix.lower() != ".svg":
+        fig.savefig(path.with_suffix(".svg"), bbox_inches="tight", metadata={"Date": None})
     plt.close(fig)
+
+
+def lowess_with_bootstrap_ci(
+    df: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    *,
+    frac: float = LOWESS_FRAC,
+    n_boot: int = LOWESS_BOOTSTRAPS,
+    grid_size: int = LOWESS_GRID_SIZE,
+    seed: int = LOWESS_SEED,
+) -> pd.DataFrame:
+    d = df[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna().copy()
+    d = d.sort_values([x_col, y_col], kind="mergesort")
+    x = d[x_col].to_numpy(dtype=float)
+    y = d[y_col].to_numpy(dtype=float)
+    x_grid = np.linspace(float(x.min()), float(x.max()), grid_size)
+
+    fit = sm.nonparametric.lowess(y, x, frac=frac, return_sorted=True)
+    y_hat = np.interp(x_grid, fit[:, 0], fit[:, 1])
+
+    rng = np.random.default_rng(seed)
+    boot_preds = np.zeros((n_boot, grid_size))
+    n = len(d)
+    for idx_boot in range(n_boot):
+        idx = rng.integers(0, n, n)
+        xb = x[idx]
+        yb = y[idx]
+        order = np.lexsort((yb, xb))
+        fit_b = sm.nonparametric.lowess(yb[order], xb[order], frac=frac, return_sorted=True)
+        boot_preds[idx_boot, :] = np.interp(x_grid, fit_b[:, 0], fit_b[:, 1])
+
+    return pd.DataFrame(
+        {
+            "x_grid": x_grid,
+            "lowess": y_hat,
+            "ci_low": np.percentile(boot_preds, 2.5, axis=0),
+            "ci_high": np.percentile(boot_preds, 97.5, axis=0),
+        }
+    )
+
+
+def summarize_lowess_gradient(lowess_df: pd.DataFrame, predictor: str, outcome: str) -> dict[str, float | str]:
+    low, high = np.percentile(lowess_df["x_grid"], LOWESS_METRIC_PERCENTILES)
+    y_low = float(np.interp(low, lowess_df["x_grid"], lowess_df["lowess"]))
+    y_high = float(np.interp(high, lowess_df["x_grid"], lowess_df["lowess"]))
+    endpoint_change = y_high - y_low
+    span = high - low
+    return {
+        "predictor": predictor,
+        "outcome": outcome,
+        "endpoint_change": endpoint_change,
+        "average_slope_mid90": endpoint_change / span if span else np.nan,
+    }
 
 
 def build_geography_panel() -> None:
@@ -107,9 +170,9 @@ def build_geography_panel() -> None:
 def build_income_small_multiples(df: pd.DataFrame) -> None:
     apply_paper_style()
     panels = [
-        ("pv_kw_per_1k", "Solar PV (kW per 1,000 residents)", TERM_COLORS["log_median_household_income"], "#B45309"),
-        ("storage_mw_per_100k", "Storage (MW per 100,000 residents)", "#7C3AED", "#7C3AED"),
-        ("chargers_per_1k", "Chargers (per 1,000 residents)", "#0F766E", "#0F766E"),
+        ("y_pv", "Solar PV", TERM_COLORS["log_median_household_income"], "#B45309"),
+        ("y_storage", "Storage", "#7C3AED", "#7C3AED"),
+        ("y_chargers", "EV Chargers", "#0F766E", "#0F766E"),
     ]
 
     fig, axes = plt.subplots(1, 3, figsize=(15.2, 4.8), facecolor=PAPER_BG)
@@ -123,18 +186,16 @@ def build_income_small_multiples(df: pd.DataFrame) -> None:
 
     for col, *_ in panels:
         sub = df[["median_household_income", col]].dropna().copy()
-        y = sub[col]
-        y_std = (y - y.mean()) / y.std(ddof=0)
-        transformed[col] = (sub["median_household_income"] / 1000.0, y_std)
-        standardized_ranges.append(np.nanpercentile(y_std, [1, 99]))
+        transformed[col] = (sub["median_household_income"] / 1000.0, sub[col])
+        standardized_ranges.append(np.nanpercentile(sub[col], [1, 99]))
 
     y_min = min(r[0] for r in standardized_ranges)
     y_max = max(r[1] for r in standardized_ranges)
 
     for ax, (col, title, line_color, scatter_color) in zip(axes, panels):
-        x, y_std = transformed[col]
-        ax.scatter(x, y_std, s=10, alpha=0.12, color=scatter_color, edgecolors="none")
-        smooth = lowess(y_std, x, frac=0.22, return_sorted=True)
+        x, y = transformed[col]
+        ax.scatter(x, y, s=10, alpha=0.12, color=scatter_color, edgecolors="none")
+        smooth = lowess(y, x, frac=0.22, return_sorted=True)
         ax.plot(smooth[:, 0], smooth[:, 1], color=line_color, linewidth=3)
         ax.set_title(title, fontsize=13, fontweight="bold", pad=8)
         ax.grid(axis="y", linestyle="-", linewidth=0.7)
@@ -144,12 +205,12 @@ def build_income_small_multiples(df: pd.DataFrame) -> None:
         ax.set_xlim(x_limits)
         ax.set_ylim(y_min, y_max)
 
-    axes[0].set_ylabel("Standardized outcome level")
+    axes[0].set_ylabel("Outcome, log(1 + rate)")
     fig.suptitle("Figure B. Adoption intensity rises with income, but not equally across technologies", fontsize=17, fontweight="bold", y=0.99)
     fig.text(
         0.5,
         0.94,
-        "Points are ZIP/ZCTAs; curves are LOWESS fits. Outcomes are standardized within technology so the vertical scale is directly comparable across panels.",
+        "Points are ZIP/ZCTAs; curves are LOWESS fits. Outcomes use the same log-transformed deployment variables reported in the regressions.",
         ha="center",
         va="top",
         fontsize=10.25,
@@ -201,6 +262,68 @@ def build_eda_panel(df: pd.DataFrame) -> None:
     )
     fig.tight_layout(rect=[0.02, 0.04, 0.985, 0.92])
     _save(fig, "eda_distribution_panel.png")
+
+
+def build_predictor_lowess_small_multiples(
+    df: pd.DataFrame,
+    *,
+    x_col: str,
+    x_label: str,
+    title: str,
+    subtitle: str,
+    output_name: str,
+    metrics_name: str,
+) -> None:
+    apply_paper_style()
+    panels = [
+        ("y_pv", "Solar PV", "#B45309"),
+        ("y_storage", "Storage", "#7C3AED"),
+        ("y_chargers", "EV Chargers", "#0F766E"),
+    ]
+
+    fig, axes = plt.subplots(1, 3, figsize=(15.2, 4.9), facecolor=PAPER_BG)
+    metric_rows = []
+    smooths = {}
+    y_ranges = []
+
+    for y_col, _, _ in panels:
+        smooth = lowess_with_bootstrap_ci(df, x_col, y_col)
+        smooths[y_col] = smooth
+        metric_rows.append(summarize_lowess_gradient(smooth, x_col, y_col))
+        y_ranges.append(np.nanpercentile(smooth[["ci_low", "ci_high"]].to_numpy(), [1, 99]))
+
+    y_min = min(r[0] for r in y_ranges)
+    y_max = max(r[1] for r in y_ranges)
+    x_values = df[x_col].replace([np.inf, -np.inf], np.nan).dropna()
+    x_limits = (
+        float(np.nanpercentile(x_values, 1)),
+        float(np.nanpercentile(x_values, 99)),
+    )
+
+    for ax, (y_col, panel_title, color) in zip(axes, panels):
+        sub = df[[x_col, y_col]].replace([np.inf, -np.inf], np.nan).dropna().sort_values([x_col, y_col])
+        smooth = smooths[y_col]
+        ax.scatter(sub[x_col], sub[y_col], s=10, alpha=0.12, color=color, edgecolors="none")
+        ax.plot(smooth["x_grid"], smooth["lowess"], color=color, linewidth=3)
+        ax.fill_between(smooth["x_grid"], smooth["ci_low"], smooth["ci_high"], color=color, alpha=0.18, linewidth=0)
+        ax.set_title(panel_title, fontsize=13, fontweight="bold", pad=8)
+        ax.grid(axis="y", linestyle="-", linewidth=0.7)
+        ax.spines["left"].set_color(GRID)
+        ax.spines["bottom"].set_color(GRID)
+        ax.set_xlabel(x_label)
+        ax.set_xlim(x_limits)
+        ax.set_ylim(y_min, y_max)
+        if x_values.max() <= 1.5:
+            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.0%}"))
+
+    axes[0].set_ylabel("Outcome, log(1 + rate)")
+    fig.suptitle(title, fontsize=17, fontweight="bold", y=0.99)
+    fig.text(0.5, 0.94, subtitle, ha="center", va="top", fontsize=10.25, color=MUTED)
+    fig.tight_layout(rect=[0.02, 0.05, 0.985, 0.9])
+    _save(fig, output_name)
+
+    OUTPUT_TABLES.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(metric_rows).to_csv(OUTPUT_TABLES / metrics_name, index=False)
 
 
 def load_coef(path: Path) -> pd.DataFrame:
@@ -296,6 +419,24 @@ def main() -> None:
     build_geography_panel()
     build_eda_panel(df)
     build_income_small_multiples(df)
+    build_predictor_lowess_small_multiples(
+        df,
+        x_col="combined_nonwhite_share",
+        x_label="Combined non-white share",
+        title="Descriptive DER gradients by combined non-white share",
+        subtitle="Curves are deterministic LOWESS fits with seeded bootstrap 95% confidence intervals.",
+        output_name="nonwhite_lowess_small_multiples.png",
+        metrics_name="nonwhite_lowess_small_multiples_metrics.csv",
+    )
+    build_predictor_lowess_small_multiples(
+        df,
+        x_col="pct_bachelors_plus",
+        x_label="Adults with bachelor's degree or higher",
+        title="Descriptive DER gradients by educational attainment",
+        subtitle="Curves are deterministic LOWESS fits with seeded bootstrap 95% confidence intervals.",
+        output_name="education_lowess_small_multiples.png",
+        metrics_name="education_lowess_small_multiples_metrics.csv",
+    )
     build_coefficient_path()
 
 
