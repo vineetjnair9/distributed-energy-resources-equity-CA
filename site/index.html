@@ -127,6 +127,8 @@
                 <tr><td><code>cdd65_2023</code></td><td>Cooling degree days relative to 65°F</td><td>Climate control</td></tr>
                 <tr><td><code>hdd65_2023</code></td><td>Heating degree days relative to 65°F</td><td>Climate control</td></tr>
                 <tr><td><code>log_kwh</code></td><td>Logged annual electricity consumption</td><td>Demand/load proxy</td></tr>
+                <tr><td><code>energy_burden_pct</code></td><td>Household energy burden</td><td>ZIP-level energy costs as a share of income; used in the energy-burden extension model</td></tr>
+                <tr><td><code>log_energy_gap_per_capita</code></td><td>Logged per-capita energy affordability gap</td><td>Scale-adjusted burden-gap measure used alongside <code>energy_burden_pct</code></td></tr>
               </tbody>
             </table>
             <div class="table-note">The same variable names are used in the regression formulas and coefficient tables. Outcome variables are transformed intensity measures, while demographic and socioeconomic variables are ZIP/ZCTA-level ACS predictors.</div>
@@ -157,9 +159,11 @@
                 <tr><td><code>pct_bachelors_plus</code></td><td>1,418</td><td>0.359</td><td>0.324</td><td>0.188</td><td>0.506</td></tr>
                 <tr><td><code>ghi_mean_kwh_m2_day_2023</code></td><td>1,418</td><td>5.118</td><td>5.158</td><td>4.855</td><td>5.339</td></tr>
                 <tr><td><code>log_kwh</code></td><td>1,240</td><td>8.329</td><td>0.000</td><td>0.000</td><td>18.231</td></tr>
+                <tr><td><code>energy_burden_pct</code></td><td>1,370</td><td>0.022</td><td>0.020</td><td>0.015</td><td>0.028</td></tr>
+                <tr><td><code>log_energy_gap_per_capita</code></td><td>1,370</td><td>3.791</td><td>4.351</td><td>1.072</td><td>5.650</td></tr>
               </tbody>
             </table>
-            <div class="table-note">Sample restricted to ZIP/ZCTAs with total population of at least 1,000. Outcome variables are log-transformed intensity measures constructed from the processed 2023 cross-section.</div>
+            <div class="table-note">Sample restricted to ZIP/ZCTAs with total population of at least 1,000. Outcome variables are log-transformed intensity measures constructed from the processed 2023 cross-section. Energy-burden rows come from the ZIP-level raw energy-burden exports and are matched by ZIP code.</div>
           </div>
         </section>
 
@@ -297,6 +301,7 @@
           <h3>4.9 Robustness and Diagnostic Checks</h3>
           <p>In addition to the main regression ladder, I conduct several supporting checks. I examine variance inflation factors (VIFs) to monitor multicollinearity across specifications, compare alternative climate and resource control blocks to test the stability of the results, estimate county-clustered standard errors to assess whether statistical significance is sensitive to local spatial clustering, and generate descriptive maps, distribution plots, and coefficient comparison figures to visualize both the raw patterns and the modeled results.</p>
           <p>VIF screening informs the model inventory, but it is not used as a rigid mechanical inclusion rule. Some richer specifications show elevated VIF values, especially once multiple SES and contextual controls are introduced. I retain predictors when they correspond to substantively distinct constructs that are central to the modeling objective rather than treating any moderate VIF increase as evidence that the model is unusable. The relevant question for this paper is therefore whether the coefficients of interest remain interpretable and stable, not whether every rich specification minimizes collinearity by design.</p>
+          <p>I also estimate an energy-burden extension model, <code>Model 8E</code>, for PV, storage, and aggregate charging. This specification builds on the demand-proxy robustness model by adding <code>energy_burden_pct</code> and <code>log_energy_gap_per_capita</code>. The purpose is to test whether DER disparities are partly explained by household utility-cost stress and affordability pressure. I treat <code>energy_affordability_index</code> as a sensitivity-only predictor because it is closely related to income and poverty in the merged sample.</p>
           <p>In exploratory analysis, I compare linear specifications to more flexible predictive models, including polynomial regression, random forest, and gradient-boosted trees, using cross-validation. These models are not the basis for the paper’s main claims. Instead, they serve as a diagnostic check on whether simple linear models are missing strong nonlinear structure. The substantive conclusions remain grounded in the interpretable OLS results.</p>
 
           <h3>4.10 Methodological Limitations</h3>
@@ -592,6 +597,7 @@
 
           <h3>6.2 Plausible mechanisms</h3>
           <p>Several mechanisms are consistent with the observed patterns, though the analysis does not identify them causally. For rooftop PV, the persistence of negative coefficients after controlling for income is consistent with barriers beyond household income alone, including roof access, housing tenure, installer market penetration, credit constraints, or permitting and interconnection frictions. For storage, the larger and more stable disparities are consistent with the fact that storage often involves higher capital costs, stronger dependence on bundled solar-plus-storage adoption pathways, and programmatic complexity that may advantage already well-positioned households and communities.</p>
+          <p>The energy-burden extension adds a household stress mechanism to this interpretation. Higher burden can indicate that communities face less disposable income, weaker financing capacity, or greater exposure to bill volatility even when median income and poverty are already included. If the race coefficients remain stable in <code>Model 8E</code>, that supports the interpretation that racialized DER disparities are not reducible to energy burden alone. If burden measures are independently significant, they point to an additional affordability pathway through which clean-energy benefits may be unevenly distributed.</p>
           <p>The EV charging results point to a different mechanism story. The positive poverty association in the aggregate charging outcome is not visible for Level 1 charging and appears to be driven primarily by Level 2 charging. That pattern is more consistent with commercial, workplace, corridor, municipal, or multifamily siting than with broad household-serving access. A key implication is that aggregate charger counts are not neutral measures of equitable access. They may capture infrastructure abundance in ways that overstate practical charging access for residents, especially where charger types and host settings differ.</p>
           <p>The clustering exercise adds another descriptive layer to this story. More affluent clusters with higher residual white/other shares and lower poverty tend to have stronger charger and storage outcomes, while the high-Hispanic, high-poverty cluster shows the weakest charging outcomes. Those spatial profiles are descriptive, but they are consistent with the broader argument that race, income, and existing energy-system context are jointly structuring where DER benefits accumulate.</p>
 

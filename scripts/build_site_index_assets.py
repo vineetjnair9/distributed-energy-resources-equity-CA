@@ -26,8 +26,11 @@ from paper_figure_utils import (
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "processed" / "combined_der_dataset_w_controls_predictors.csv"
 OUTPUT_TABLES = ROOT / "outputs" / "tables"
+STANDARDIZED_TABLES = ROOT / "outputs" / "standardized_tables"
+OUTPUT_FIGURES = ROOT / "outputs" / "figures"
 SITE_FIGURES = ROOT / "site" / "assets" / "figures"
-GENERATED = SITE_FIGURES / "generated"
+GENERATED = OUTPUT_FIGURES / "generated"
+SITE_GENERATED = SITE_FIGURES / "generated"
 LOWESS_SEED = 42
 LOWESS_FRAC = 0.35
 LOWESS_BOOTSTRAPS = 300
@@ -48,6 +51,7 @@ def derive_analysis_frame() -> pd.DataFrame:
     df["dc_fast_chargers_per_1k"] = (df["dc_fast_chargers"].fillna(0) * 1000.0) / pop
     df["pv_kw_per_1k"] = (df["PV_system_size_DC"].fillna(0) * 1000.0) / pop
     df["storage_mw_per_100k"] = (df["storage_capacity_mw"].fillna(0) * 100000.0) / pop
+    df["wind_mw_per_100k"] = (df["wind_capacity_mw"].fillna(0) * 100000.0) / pop
 
     df["y_chargers"] = np.log1p(df["chargers_per_1k"])
     df["y_level1_chargers"] = np.log1p(df["level1_chargers_per_1k"])
@@ -55,6 +59,7 @@ def derive_analysis_frame() -> pd.DataFrame:
     df["y_dc_fast_chargers"] = np.log1p(df["dc_fast_chargers_per_1k"])
     df["y_pv"] = np.log1p(df["pv_kw_per_1k"])
     df["y_storage"] = np.log1p(df["storage_mw_per_100k"])
+    df["y_wind_mw"] = np.log1p(df["wind_mw_per_100k"])
     df["combined_nonwhite_share"] = df[["pct_black", "pct_hispanic", "pct_asian"]].sum(axis=1, min_count=1)
     return df
 
@@ -65,6 +70,11 @@ def _save(fig: plt.Figure, name: str) -> None:
     fig.savefig(path, dpi=320, bbox_inches="tight")
     if path.suffix.lower() != ".svg":
         fig.savefig(path.with_suffix(".svg"), bbox_inches="tight", metadata={"Date": None})
+    SITE_GENERATED.mkdir(parents=True, exist_ok=True)
+    (SITE_GENERATED / path.name).write_bytes(path.read_bytes())
+    svg_path = path.with_suffix(".svg")
+    if svg_path.exists():
+        (SITE_GENERATED / svg_path.name).write_bytes(svg_path.read_bytes())
     plt.close(fig)
 
 
@@ -360,7 +370,7 @@ def build_coefficient_path() -> None:
     frames = []
     for outcome in outcomes:
         for short, label in model_map:
-            path = OUTPUT_TABLES / f"{outcome} | {label}.csv"
+            path = STANDARDIZED_TABLES / f"{outcome} | {label}.csv"
             df = load_coef(path)
             df = df[df["term"].isin(terms)].copy()
             df["outcome"] = outcome
@@ -393,7 +403,7 @@ def build_coefficient_path() -> None:
         ax.set_title(title, fontsize=14, fontweight="bold", loc="left", pad=8)
         ax.spines["left"].set_color(GRID)
         ax.spines["bottom"].set_color(GRID)
-        ax.set_ylabel("Coefficient")
+        ax.set_ylabel("Standardized coefficient")
 
     axes[-1].set_xticks(x)
     axes[-1].set_xticklabels([m[0] for m in model_map])
@@ -404,7 +414,7 @@ def build_coefficient_path() -> None:
     fig.text(
         0.5,
         0.885,
-        "The same five predictors are traced from the baseline through richer socioeconomic, geographic, and infrastructure specifications.",
+        "The same five predictors are traced from the standardized baseline through richer socioeconomic, geographic, and infrastructure specifications.",
         ha="center",
         va="top",
         fontsize=10.25,

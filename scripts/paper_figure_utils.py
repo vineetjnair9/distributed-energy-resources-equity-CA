@@ -508,3 +508,17 @@ def sync_site_figure(src: str | Path, site_fig_dir: str | Path) -> Path:
     if svg_src.exists():
         (site_fig_dir / svg_src.name).write_bytes(svg_src.read_bytes())
     return dst
+
+
+def sync_site_tree(src_dir: str | Path, site_dir: str | Path, patterns: Iterable[str] = ("*.png", "*.svg")) -> list[Path]:
+    src_dir = Path(src_dir)
+    site_dir = Path(site_dir)
+    site_dir.mkdir(parents=True, exist_ok=True)
+
+    copied: list[Path] = []
+    for pattern in patterns:
+        for src in sorted(src_dir.glob(pattern)):
+            dst = site_dir / src.name
+            dst.write_bytes(src.read_bytes())
+            copied.append(dst)
+    return copied

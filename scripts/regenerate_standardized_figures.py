@@ -25,7 +25,6 @@ PAPER_MAIN_MODELS = {
     "y_chargers": "Model 1 baseline (climate controls)",
     "y_storage": "Model 1 baseline (climate controls)",
     "y_wind_mw": "Model 1 baseline (climate controls)",
-    "any_turbines": "Model 1 baseline (climate controls)",
 }
 
 PAPER_ROBUSTNESS_MODELS = [
@@ -46,7 +45,7 @@ TERMS_MAIN = [
     "poverty_rate",
 ]
 
-HEATMAP_OUTCOMES = ["y_pv", "y_chargers", "y_storage", "y_wind_mw", "any_turbines"]
+HEATMAP_OUTCOMES = ["y_pv", "y_chargers", "y_storage", "y_wind_mw"]
 HEATMAP_MODELS = ["Model 1 baseline (climate controls)"]
 TERMS_HEATMAP = TERMS_MAIN
 
@@ -75,13 +74,6 @@ ROBUSTNESS_TERMS_BY_OUTCOME = {
         "hdd65_2023",
     ],
     "y_wind_mw": [
-        "log_median_household_income",
-        "pct_black",
-        "pct_hispanic",
-        "poverty_rate",
-        "wind_ws50m_mean_2023",
-    ],
-    "any_turbines": [
         "log_median_household_income",
         "pct_black",
         "pct_hispanic",
