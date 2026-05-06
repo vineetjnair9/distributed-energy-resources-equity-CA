@@ -14,21 +14,50 @@ from nbclient import NotebookClient
 ROOT = Path(__file__).resolve().parents[1]
 NOTEBOOK = ROOT / "notebooks" / "regression.ipynb"
 EXECUTED_DIR = ROOT / "outputs" / "executed_notebooks"
-DEFAULT_OUTCOMES = ["y_pv", "y_storage", "y_chargers", "y_wind_mw"]
+DEFAULT_OUTCOMES = [
+    "y_pv",
+    "y_storage",
+    "y_chargers",
+    "y_wind_mw",
+    "y_level1_chargers",
+    "y_level2_chargers",
+    "y_dc_fast_chargers",
+    "energy_burden_pct",
+    "log_energy_gap_per_capita",
+]
 
 
-def _patched_source(source: str, *, outcome: str) -> str:
+def _patched_source(source: str, *, outcomes: list[str]) -> str:
     lines = source.splitlines()
-    for idx, line in enumerate(lines):
+    patched = []
+    skipping_assignment = False
+    bracket_depth = 0
+    replaced = False
+
+    for line in lines:
         stripped = line.strip()
-        if stripped.startswith("y = "):
-            lines[idx] = f'y = "{outcome}"'
-    return "\n".join(lines) + ("\n" if source.endswith("\n") else "")
+        if skipping_assignment:
+            bracket_depth += stripped.count("[") - stripped.count("]")
+            if bracket_depth <= 0:
+                skipping_assignment = False
+            continue
+        if stripped.startswith("OUTCOMES_TO_RUN = "):
+            patched.append(f"OUTCOMES_TO_RUN = {outcomes!r}")
+            replaced = True
+            rhs = stripped.split("=", 1)[1].strip()
+            bracket_depth = rhs.count("[") - rhs.count("]")
+            skipping_assignment = bracket_depth > 0
+            continue
+        patched.append(line)
+
+    if not replaced:
+        raise ValueError("Could not find OUTCOMES_TO_RUN in regression.ipynb cell 1.")
+    return "\n".join(patched) + ("\n" if source.endswith("\n") else "")
 
 
-def run_notebook(outcome: str, timeout: int) -> Path:
+def run_notebook(outcomes: list[str], timeout: int) -> Path:
     nb = nbformat.read(NOTEBOOK, as_version=4)
-    nb.cells[1].source = _patched_source(nb.cells[1].source, outcome=outcome)
+    nb.cells[1].source = _patched_source(nb.cells[1].source, outcomes=outcomes)
 
     client = NotebookClient(
         nb,
@@ -40,7 +69,7 @@ def run_notebook(outcome: str, timeout: int) -> Path:
     client.execute()
 
     EXECUTED_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = EXECUTED_DIR / f"regression.{outcome}.executed.ipynb"
+    out_path = EXECUTED_DIR / "regression.executed.ipynb"
     nbformat.write(nb, out_path)
     return out_path
 
@@ -63,9 +92,7 @@ def main() -> None:
 
     os.environ.setdefault("MPLBACKEND", "Agg")
 
-    executed = []
-    for outcome in args.outcomes:
-        executed.append(run_notebook(outcome, timeout=args.timeout))
+    executed = [run_notebook(list(args.outcomes), timeout=args.timeout)]
 
     print("Executed notebooks:")
     for path in executed:

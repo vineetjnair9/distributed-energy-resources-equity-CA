@@ -37,6 +37,10 @@ PAPER_ROBUSTNESS_MODELS = [
     "Model 8 add demand proxy",
 ]
 
+ROBUSTNESS_MODELS_BY_OUTCOME = {
+    "y_storage": PAPER_ROBUSTNESS_MODELS + ["Model 9 + pv control (most controlled)"],
+}
+
 TERMS_MAIN = [
     "log_median_household_income",
     "pct_black",
@@ -104,7 +108,7 @@ def main() -> None:
         plot_stability_from_csvs(
             all_coefs=all_coefs,
             outcome=outcome,
-            models_keep=PAPER_ROBUSTNESS_MODELS,
+            models_keep=ROBUSTNESS_MODELS_BY_OUTCOME.get(outcome, PAPER_ROBUSTNESS_MODELS),
             terms_keep=ROBUSTNESS_TERMS_BY_OUTCOME[outcome],
             outcome_display=OUTCOME_DISPLAY,
             save_path=save_path,

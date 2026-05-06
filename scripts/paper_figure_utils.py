@@ -432,10 +432,10 @@ def plot_charger_subtype_comparison(
     apply_paper_style()
     table_dir = Path(table_dir)
     files = {
-        "Aggregate chargers": table_dir / "y_chargers | Model 1 baseline (CDD+HDD).csv",
-        "Level 1 chargers": table_dir / "y_level1_chargers | Model 1 baseline (CDD+HDD).csv",
-        "Level 2 chargers": table_dir / "y_level2_chargers | Model 1 baseline (CDD+HDD).csv",
-        "DC fast chargers": table_dir / "y_dc_fast_chargers | Model 1 baseline (CDD+HDD).csv",
+        "Aggregate chargers": table_dir / "y_chargers | Model 1 baseline (climate controls).csv",
+        "Level 1 chargers": table_dir / "y_level1_chargers | Model 1 baseline (climate controls).csv",
+        "Level 2 chargers": table_dir / "y_level2_chargers | Model 1 baseline (climate controls).csv",
+        "DC fast chargers": table_dir / "y_dc_fast_chargers | Model 1 baseline (climate controls).csv",
     }
     var_order = [
         "log_median_household_income",

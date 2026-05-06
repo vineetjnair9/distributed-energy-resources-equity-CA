@@ -64,6 +64,18 @@ END = f"{YEAR}1231"
 DER_THRESHOLD = 5
 BASE_F = 65.0
 SLEEP_S = 0.2
+DER_ZERO_COLUMNS = [
+    "PV_system_size_DC",
+    "total_chargers",
+    "level1_chargers",
+    "level2_chargers",
+    "dc_fast_chargers",
+    "zev_count",
+    "plant_capacity_mw",
+    "storage_capacity_mw",
+    "wind_capacity_mw",
+    "wind_turbine_count",
+]
 
 ZCTA_SHP = RAW / "boundaries" / "tl_2023_us_zcta520" / "tl_2023_us_zcta520.shp"
 COUNTY_SHP = RAW / "boundaries" / "tl_2023_us_county" / "tl_2023_us_county.shp"
@@ -251,6 +263,11 @@ def clean_zip(series: pd.Series) -> pd.Series:
     # Leave malformed strings like "9327." as invalid so they can be filtered out later.
     cleaned = cleaned.str.extract(r"^(\d{1,5})(?:\.0+)?(?:-\d+)?$", expand=False)
     return cleaned.str.zfill(5)
+
+
+def clean_source_zip(series: pd.Series) -> pd.Series:
+    cleaned = series.astype("string").str.strip()
+    return cleaned.str.extract(r"^(\d{5})(?:\.0+)?(?:-\d+)?$", expand=False)
 
 
 def is_valid_zip(series: pd.Series) -> pd.Series:
@@ -466,7 +483,17 @@ def build_ev_sources(name_to_fips: dict[str, str]) -> tuple[pd.DataFrame, pd.Dat
         }
     )
     ev_chargers["fips"] = ev_chargers["fips"].astype(str).str.zfill(5)
-    ev_chargers["zip_code"] = clean_zip(ev_chargers["zip_code"])
+    source_zip_raw = ev_chargers["zip_code"].copy()
+    ev_chargers["zip_code"] = clean_source_zip(source_zip_raw)
+    invalid_source_zip = ~is_valid_zip(ev_chargers["zip_code"])
+    ev_chargers_unknown_location = ev_chargers.loc[invalid_source_zip].copy()
+    ev_chargers_unknown_location.insert(
+        0,
+        "source_zip_raw",
+        source_zip_raw.loc[invalid_source_zip].astype("string"),
+    )
+    write_csv(ev_chargers_unknown_location, PROCESSED / "ev_chargers_unknown_location.csv")
+    ev_chargers = ev_chargers.loc[~invalid_source_zip].copy()
 
     gdf_ev = gpd.GeoDataFrame(
         ev_chargers,
@@ -565,6 +592,9 @@ def build_combined_der_dataset_full(aggregated: dict[str, pd.DataFrame]) -> pd.D
         merged = pd.merge(merged, df, on="zip_code", how="outer")
     merged["zip_code"] = clean_zip(merged["zip_code"])
     merged = merged[merged["zip_code"].str.fullmatch(r"\d{5}")].copy()
+    for col in DER_ZERO_COLUMNS:
+        if col in merged.columns:
+            merged[col] = pd.to_numeric(merged[col], errors="coerce").fillna(0)
     merged = merged.sort_values("zip_code").reset_index(drop=True)
     write_csv(merged, PROCESSED / "combined_der_dataset_full.csv")
     write_csv(merged, PROCESSED / "combined_der_dataset.csv")
@@ -865,17 +895,19 @@ def build_final_analysis_dataset(
     wind_means: pd.DataFrame,
     zip_to_utility: pd.DataFrame,
     demand: pd.DataFrame,
+    energy_burden: pd.DataFrame,
 ) -> pd.DataFrame:
     df = df_full.copy()
     df["zip_code"] = clean_zip(df["zip_code"])
-    for d in [acs, ghi, temp, wind_means, zip_to_utility, demand]:
+    for d in [acs, ghi, temp, wind_means, zip_to_utility, demand, energy_burden]:
         d = d.copy()
         d["zip_code"] = clean_zip(d["zip_code"])
+        d = d.drop(columns=["Unnamed: 0"], errors="ignore")
         df = pd.merge(df, d, on="zip_code", how="left")
 
-    for col in ["wind_capacity_mw", "wind_turbine_count", "plant_capacity_mw"]:
+    for col in DER_ZERO_COLUMNS:
         if col in df.columns:
-            df[col] = df[col].fillna(0)
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
     zcta = gpd.read_file(ZCTA_SHP)
     county = gpd.read_file(COUNTY_SHP)
@@ -917,7 +949,18 @@ def build_final_analysis_dataset(
     return df
 
 
-def read_or_fetch_external(args: argparse.Namespace, df_full: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def read_energy_burden() -> pd.DataFrame:
+    path = PROCESSED / "energy_burden.csv"
+    if not path.exists():
+        LOGGER.warning("No existing energy burden file found at %s.", path.relative_to(ROOT))
+        return pd.DataFrame({"zip_code": pd.Series(dtype="string")})
+    return pd.read_csv(path)
+
+
+def read_or_fetch_external(
+    args: argparse.Namespace,
+    df_full: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     if args.skip_external:
         LOGGER.warning("Using existing external-derived processed files because --skip-external was provided.")
         acs = pd.read_csv(PROCESSED / "acs_predictors_ca_zip.csv")
@@ -926,19 +969,21 @@ def read_or_fetch_external(args: argparse.Namespace, df_full: pd.DataFrame) -> t
         wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
         zip_to_utility = pd.read_csv(PROCESSED / "zip_to_utility.csv")
         demand = pd.read_csv(PROCESSED / "demand.csv")
+        energy_burden = read_energy_burden()
         if (PROCESSED / "combined_der_dataset_acs_matched.csv").exists():
             df_acs = pd.read_csv(PROCESSED / "combined_der_dataset_acs_matched.csv")
         else:
             matched = set(acs["zip_code"].astype(str).str.zfill(5))
             df_acs = df_full[df_full["zip_code"].isin(matched)].copy()
             write_csv(df_acs, PROCESSED / "combined_der_dataset_acs_matched.csv")
-        return acs, df_acs, ghi, temp, wind, zip_to_utility, demand
+        return acs, df_acs, ghi, temp, wind, zip_to_utility, demand, energy_burden
 
     acs, df_acs = fetch_acs_predictors(df_full, args.census_api_key)
     wind, ghi, temp = build_nasa_outputs()
     zip_to_utility = build_zip_to_utility()
     demand = build_demand_controls()
-    return acs, df_acs, ghi, temp, wind, zip_to_utility, demand
+    energy_burden = read_energy_burden()
+    return acs, df_acs, ghi, temp, wind, zip_to_utility, demand, energy_burden
 
 
 def main() -> None:
@@ -954,8 +999,8 @@ def main() -> None:
     tracking = build_tracking_the_sun()
     aggregated = aggregate_sources(tracking, ev_chargers, ev_cars, power_plant_der, storage_der, wind_zip)
     df_full = build_combined_der_dataset_full(aggregated)
-    acs, _, ghi, temp, wind_means, zip_to_utility, demand = read_or_fetch_external(args, df_full)
-    build_final_analysis_dataset(df_full, acs, ghi, temp, wind_means, zip_to_utility, demand)
+    acs, _, ghi, temp, wind_means, zip_to_utility, demand, energy_burden = read_or_fetch_external(args, df_full)
+    build_final_analysis_dataset(df_full, acs, ghi, temp, wind_means, zip_to_utility, demand, energy_burden)
     LOGGER.info("Processed dataset rebuild completed.")
 
 
