@@ -8,6 +8,8 @@ from paper_figure_utils import (
     load_all_coefs,
     plot_charger_subtype_comparison,
     plot_dot_whisker_from_csvs,
+    plot_energy_burden_der_m9_from_csvs,
+    plot_energy_burden_model_ladder_from_csvs,
     plot_heatmap_from_csvs,
     plot_stability_from_csvs,
     sync_site_figure,
@@ -129,6 +131,14 @@ def main() -> None:
     subtype_path = FIG_DIR / "charger_subtype_comparison.png"
     plot_charger_subtype_comparison(TAB_DIR, save_path=subtype_path)
     generated.append(subtype_path)
+
+    burden_der_path = FIG_DIR / "energy_burden_der_m9.png"
+    plot_energy_burden_der_m9_from_csvs(all_coefs=all_coefs, save_path=burden_der_path)
+    generated.append(burden_der_path)
+
+    burden_ladder_path = FIG_DIR / "energy_burden_model_ladder.png"
+    plot_energy_burden_model_ladder_from_csvs(all_coefs=all_coefs, save_path=burden_ladder_path)
+    generated.append(burden_ladder_path)
 
     for path in generated:
         sync_site_figure(path, SITE_FIG_DIR)

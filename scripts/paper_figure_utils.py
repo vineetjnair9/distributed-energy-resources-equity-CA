@@ -28,6 +28,7 @@ TERM_LABELS = {
     "wind_ws50m_mean_2023": "Wind speed (50m)",
     "log_kwh": "Log annual electricity demand",
     "y_pv": "Solar PV adoption",
+    "y_storage": "Storage deployment",
     "y_chargers": "EV charger adoption",
 }
 
@@ -51,16 +52,36 @@ OUTCOME_COLORS = {
 
 
 TERM_COLORS = {
-    "log_median_household_income": "#1D4ED8",
-    "pct_black": "#7C3AED",
-    "pct_hispanic": "#C2410C",
-    "pct_asian": "#0F766E",
-    "poverty_rate": "#B45309",
+    "log_median_household_income": "#0072B2",
+    "pct_black": "#7A3E9D",
+    "pct_hispanic": "#E69F00",
+    "pct_asian": "#009E73",
+    "poverty_rate": "#D55E00",
     "ghi_mean_kwh_m2_day_2023": "#D97706",
     "cdd65_2023": "#DC2626",
     "hdd65_2023": "#2563EB",
     "wind_ws50m_mean_2023": "#0284C7",
+    "y_pv": "#8C6D1F",
+    "y_storage": "#CC79A7",
+    "y_chargers": "#008B8B",
 }
+
+
+ENERGY_BURDEN_OUTCOME_LABELS = {
+    "energy_burden_pct": "Energy burden",
+    "log_energy_gap_per_capita": "Log affordability gap",
+}
+
+
+ENERGY_BURDEN_LADDER_MODELS = [
+    ("Model 1 baseline (climate controls)", "M1\nBaseline"),
+    ("Model 2 (add bachelors)", "M2\n+ Education"),
+    ("Model 2 (add housing value)", "M2\n+ Housing"),
+    ("Model 5C clustered SEs by county", "M5C\nCounty SEs"),
+    ("Model 7 (infrastructure controls, outcome-safe)", "M7\nInfrastructure"),
+    ("Model 8 add demand proxy", "M8\nDemand"),
+    ("Model 9 (predicting burden)", "M9\nDER terms"),
+]
 
 
 PAPER_BG = "#F8F5EF"
@@ -349,6 +370,176 @@ def plot_stability_from_csvs(
         color=MUTED,
     )
     fig.tight_layout(rect=[0.08, 0.04, 0.985, 0.955])
+    _finish_figure(fig, save_path)
+    return fig
+
+
+def plot_energy_burden_der_m9_from_csvs(
+    all_coefs: pd.DataFrame,
+    save_path: str | Path | None = None,
+) -> plt.Figure:
+    apply_paper_style()
+    outcomes = list(ENERGY_BURDEN_OUTCOME_LABELS)
+    terms_keep = ["y_pv", "y_storage", "y_chargers"]
+    model = "Model 9 (predicting burden)"
+
+    fig, axes = plt.subplots(len(outcomes), 1, figsize=(9.8, 6.8))
+    if len(outcomes) == 1:
+        axes = [axes]
+
+    for ax, outcome in zip(axes, outcomes):
+        sub = all_coefs[
+            (all_coefs["outcome"] == outcome)
+            & (all_coefs["model"] == model)
+            & (all_coefs["term"].isin(terms_keep))
+        ].copy()
+        sub["term"] = pd.Categorical(sub["term"], categories=terms_keep, ordered=True)
+        sub = sub.sort_values("term")
+        y = np.arange(len(sub))[::-1]
+
+        xmins: list[float] = []
+        xmaxs: list[float] = []
+        for yi, (_, row) in zip(y, sub.iterrows()):
+            color = TERM_COLORS.get(row["term"], "#374151")
+            ax.hlines(yi, row["conf_low"], row["conf_high"], color=color, lw=2.7, alpha=0.95)
+            ax.plot(row["coef"], yi, "o", color=color, ms=8, mec="white", mew=0.9, zorder=3)
+            if row["stars"]:
+                span = max(float(row["conf_high"] - row["conf_low"]), 1e-9)
+                ax.text(
+                    row["conf_high"] + span * 0.08,
+                    yi,
+                    row["stars"],
+                    va="center",
+                    ha="left",
+                    fontsize=10,
+                    color=TEXT,
+                    fontweight="bold",
+                )
+            xmins.append(float(row["conf_low"]))
+            xmaxs.append(float(row["conf_high"]))
+
+        margin = max((max(xmaxs) - min(xmins)) * 0.16, 1e-6)
+        ax.set_xlim(min(xmins) - margin, max(xmaxs) + margin)
+        ax.axvline(0, linestyle="--", linewidth=1.2, color=MUTED, alpha=0.9)
+        ax.grid(axis="x", linestyle="-", linewidth=0.7)
+        ax.set_yticks(y)
+        ax.set_yticklabels([TERM_LABELS.get(t, t) for t in sub["term"]])
+        ax.set_title(ENERGY_BURDEN_OUTCOME_LABELS[outcome], loc="left", fontweight="bold", pad=8)
+        ax.tick_params(axis="y", length=0)
+        ax.spines["left"].set_visible(False)
+        ax.spines["bottom"].set_color(GRID)
+
+    axes[-1].set_xlabel("Coefficient estimate")
+    fig.suptitle("DER predictors in the burden-outcome M9 model", fontsize=16, y=0.99, fontweight="bold")
+    fig.text(
+        0.5,
+        0.94,
+        "Points show Model 9 coefficients; horizontal lines show 95% confidence intervals.",
+        ha="center",
+        va="top",
+        fontsize=10.25,
+        color=MUTED,
+    )
+    fig.text(
+        0.5,
+        0.018,
+        "Significance: *** p < 0.001, ** p < 0.01, * p < 0.05, · p < 0.10",
+        ha="center",
+        fontsize=9.5,
+        color=MUTED,
+    )
+    fig.tight_layout(rect=[0.08, 0.06, 0.98, 0.915])
+    _finish_figure(fig, save_path)
+    return fig
+
+
+def plot_energy_burden_model_ladder_from_csvs(
+    all_coefs: pd.DataFrame,
+    save_path: str | Path | None = None,
+) -> plt.Figure:
+    apply_paper_style()
+    outcomes = list(ENERGY_BURDEN_OUTCOME_LABELS)
+    models_keep = [model for model, _ in ENERGY_BURDEN_LADDER_MODELS]
+    model_labels = [label for _, label in ENERGY_BURDEN_LADDER_MODELS]
+    terms_keep = [
+        "log_median_household_income",
+        "poverty_rate",
+        "pct_black",
+        "pct_hispanic",
+        "pct_asian",
+        "y_pv",
+        "y_storage",
+        "y_chargers",
+    ]
+
+    sub = all_coefs[
+        (all_coefs["outcome"].isin(outcomes))
+        & (all_coefs["model"].isin(models_keep))
+        & (all_coefs["term"].isin(terms_keep))
+    ].copy()
+    sub["model"] = pd.Categorical(sub["model"], categories=models_keep, ordered=True)
+    sub["term"] = pd.Categorical(sub["term"], categories=terms_keep, ordered=True)
+
+    fig, axes = plt.subplots(len(outcomes), 1, figsize=(12.4, 8.2), sharex=True)
+    if len(outcomes) == 1:
+        axes = [axes]
+    x = np.arange(len(models_keep))
+    model_to_x = {model: idx for idx, model in enumerate(models_keep)}
+
+    for ax, outcome in zip(axes, outcomes):
+        outcome_sub = sub[sub["outcome"] == outcome].copy()
+        for term in terms_keep:
+            s = outcome_sub[outcome_sub["term"] == term].copy().sort_values("model")
+            if s.empty:
+                continue
+            s["x"] = s["model"].map(model_to_x).astype(float)
+            color = TERM_COLORS.get(term, "#374151")
+            ax.vlines(s["x"], s["conf_low"], s["conf_high"], color=color, alpha=0.22, linewidth=2)
+            ax.plot(s["x"], s["coef"], color=color, lw=2.1, marker="o", ms=6.2, label=TERM_LABELS.get(term, term))
+            sig = s["pval"] < 0.05
+            ax.scatter(s.loc[sig, "x"], s.loc[sig, "coef"], s=60, facecolor=color, edgecolor="white", linewidth=1, zorder=4)
+            ax.scatter(
+                s.loc[~sig, "x"],
+                s.loc[~sig, "coef"],
+                s=60,
+                facecolor=PANEL_BG,
+                edgecolor=color,
+                linewidth=1.5,
+                zorder=4,
+            )
+
+        ax.axhline(0, linestyle="--", linewidth=1.1, color=MUTED, alpha=0.9)
+        ax.grid(axis="y", linestyle="-", linewidth=0.7)
+        ax.set_title(ENERGY_BURDEN_OUTCOME_LABELS[outcome], loc="left", fontweight="bold", pad=8)
+        ax.set_ylabel("Coefficient estimate")
+        ax.spines["left"].set_color(GRID)
+        ax.spines["bottom"].set_color(GRID)
+
+    axes[-1].set_xticks(x)
+    axes[-1].set_xticklabels(model_labels)
+    axes[-1].set_xlabel("Specification")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, 0.015))
+    fig.suptitle("Burden-outcome coefficients across the model ladder", fontsize=16, y=0.995, fontweight="bold")
+    fig.text(
+        0.5,
+        0.952,
+        "The x-axis uses exact exported model names; M2 is split by added education versus housing-value controls.",
+        ha="center",
+        va="top",
+        fontsize=10.25,
+        color=MUTED,
+    )
+    fig.text(
+        0.5,
+        0.925,
+        "Filled markers indicate p < 0.05; hollow markers indicate p >= 0.05. Vertical lines show 95% confidence intervals.",
+        ha="center",
+        va="top",
+        fontsize=9.75,
+        color=MUTED,
+    )
+    fig.tight_layout(rect=[0.055, 0.14, 0.985, 0.9])
     _finish_figure(fig, save_path)
     return fig
 
