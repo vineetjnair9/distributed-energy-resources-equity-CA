@@ -158,6 +158,65 @@ territories are unobserved.
 
 ---
 
+### 1.7 The demand control silently discarded ~85% of PG&E consumption
+
+Found late, while auditing the manuscript against the regenerated tables — not by
+reading the pipeline, which looks reasonable. `Table 2` of the draft reports `log_kwh`
+with **median 0.000 and P25 0.000**. A median of zero for annual electricity
+consumption is physically impossible, and it sat in the manuscript uncommented.
+
+Cause, two silent failures compounding:
+
+1. `TOTALKWH` in the PG&E usage CSVs is a **text column with thousands separators**
+   (`"4,504,370"`). `pd.to_numeric(..., errors="coerce")` turned every comma-formatted
+   value into `NaN`.
+2. `groupby("zip_code").sum()` defaults to `min_count=0`, so a group whose values are
+   all `NaN` sums to **0.0**, not `NaN` — converting "failed to parse" into "consumed
+   zero electricity".
+
+| File | Rows zeroed | Share of total kWh lost |
+|---|---|---|
+| PGE 2023 Q1 | 3,112 / 7,529 | **85.2%** |
+| PGE 2023 Q2 | 3,267 / 7,557 | 82.5% |
+| PGE 2023 Q3 | 3,341 / 7,549 | 84.9% |
+| PGE 2023 Q4 | 3,083 / 7,501 | 77.1% |
+| SDG&E, SCE | 0 | 0.0% |
+
+**The loss was systematic in three compounding ways.** Only values ≥ 1,000 carry a
+separator, so it destroyed precisely the largest consumers. It hit PG&E but not SDG&E or
+SCE, making it geographically patterned — northern California specifically. And the
+fabricated zeros were indistinguishable downstream from genuine zero consumption.
+
+In the analysis sample, `log_kwh` was exactly 0 for **645 of 1,218** non-missing ZIPs.
+After the fix: 37 of 1,193, and ZIPs with usable demand data went **573 → 1,156**.
+
+**Effect on results** (Model 1, which has no `log_kwh` term, is byte-identical before and
+after — confirming only demand-dependent models moved):
+
+| Model 8, `log_kwh` | Before | After |
+|---|---|---|
+| Solar PV | **−0.045\*\*\*** | **+0.060\*\*\*** |
+| Storage | +0.056\* | **+0.209\*\*\*** |
+
+The PV coefficient **flipped sign** — significantly negative became significantly
+positive, which is what one would expect when the largest consumers are zeroed. In
+Model 9 the demand term went **0.426\*\*\* → 0.097 (n.s.)**, and `y_storage` on the
+affordability gap went **−0.188\* → −0.158 (n.s.)**, so that association was an artifact
+of the broken control.
+
+Race coefficients moved by at most 0.04 with no significance changes, so the paper's
+central disparity findings are robust to this. It is the demand-control interpretation
+that was wrong.
+
+**Fixed** by stripping separators before coercion, using `min_count=1` so all-NaN groups
+stay `NaN`, warning on any remaining exact zeros, and aborting if more than 10% of ZIPs
+report zero. The three duplicated per-utility blocks were folded into one helper so the
+fix cannot drift between them.
+
+**This is the strongest argument in the audit for the assertions proposed in §3.3.** A
+single sanity check — "no processed control may have an implausible median of zero" —
+would have caught it at the source instead of via a table in a draft manuscript.
+
 ## Severity 2 — pipeline correctness
 
 ### 2.1 Coordinate columns are triplicated by a merge collision

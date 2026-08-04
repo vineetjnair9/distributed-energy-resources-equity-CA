@@ -940,45 +940,79 @@ def annualize_utility(df: pd.DataFrame, util: str, cust_col_base: str) -> pd.Dat
     return out
 
 
+def parse_numeric_column(series: pd.Series, *, label: str) -> pd.Series:
+    """Numeric coercion that survives thousands separators, and complains if it cannot.
+
+    The PG&E usage CSVs store kWh as text with thousands separators ("4,504,370"). A
+    bare pd.to_numeric(errors="coerce") turned every such value into NaN, which then
+    became 0.0 at the groupby (pandas' groupby sum defaults to min_count=0, so an
+    all-NaN group sums to zero rather than NaN). The result was ~85% of PG&E's annual
+    kWh silently discarded, and discarded non-randomly: only values >= 1,000 carry a
+    separator, so precisely the largest consumers were zeroed. SDG&E and SCE were
+    unaffected, which made the damage geographically systematic as well.
+    """
+    cleaned = (
+        series.astype("string")
+        .str.strip()
+        .str.replace(",", "", regex=False)
+        .str.replace("$", "", regex=False)
+        .replace({"": pd.NA, "-": pd.NA, "N/A": pd.NA, "NA": pd.NA})
+    )
+    parsed = pd.to_numeric(cleaned, errors="coerce")
+    lost = int((parsed.isna() & series.notna() & (series.astype("string").str.strip() != "")).sum())
+    if lost:
+        LOGGER.warning(
+            "%s: %s of %s values could not be parsed as numeric and are NaN.",
+            label, lost, len(series),
+        )
+    return parsed
+
+
+def load_quarterly_demand(
+    filename_template: str,
+    *,
+    util: str,
+    zip_col: str,
+    numeric_cols: list[str],
+    drop_cols: list[str],
+    excel: bool = False,
+) -> pd.DataFrame:
+    """Read one utility's four quarterly files into a single ZIP-indexed frame."""
+    merged = None
+    for q in [1, 2, 3, 4]:
+        path = RAW / "demand" / filename_template.format(q=q)
+        temp = pd.read_excel(path, skiprows=[0, 1]) if excel else pd.read_csv(path)
+        temp.columns = temp.columns.str.strip().str.lower()
+        temp = temp.drop(columns=drop_cols, errors="ignore")
+        temp = temp.rename(columns={zip_col: "zip_code"})
+        temp["zip_code"] = clean_zip(temp["zip_code"])
+        for col in numeric_cols:
+            if col in temp.columns:
+                temp[col] = parse_numeric_column(temp[col], label=f"{util} Q{q} {col}")
+        keep = ["zip_code"] + [c for c in numeric_cols if c in temp.columns]
+        # min_count=1 so a ZIP whose values are all NaN stays NaN instead of becoming a
+        # spurious zero that is indistinguishable from genuine zero consumption.
+        temp = temp[keep].groupby("zip_code").sum(min_count=1).add_suffix(f"_q{q}")
+        merged = temp if merged is None else merged.join(temp, how="outer")
+    return merged
+
+
 def build_demand_controls() -> pd.DataFrame:
-    pge = None
-    for q in [1, 2, 3, 4]:
-        temp = pd.read_csv(RAW / "demand" / f"PGE_2023_Q{q}_ElectricUsageByZip.csv")
-        temp.columns = temp.columns.str.strip().str.lower()
-        temp = temp.drop(columns=["month", "year", "customerclass", "combined"], errors="ignore")
-        temp = temp.rename(columns={"zipcode": "zip_code"})
-        temp["zip_code"] = clean_zip(temp["zip_code"])
-        for col in ["totalcustomers", "totalkwh", "averagekwh"]:
-            if col in temp.columns:
-                temp[col] = pd.to_numeric(temp[col], errors="coerce")
-        temp = temp.groupby("zip_code").sum(numeric_only=True).add_suffix(f"_q{q}")
-        pge = temp if pge is None else pge.join(temp, how="outer")
-
-    sce = None
-    for q in [1, 2, 3, 4]:
-        temp = pd.read_excel(RAW / "demand" / f"SCE_2023_Q{q}_ElectricUsageByZip.xlsx", skiprows=[0, 1])
-        temp.columns = temp.columns.str.strip().str.lower()
-        temp = temp.drop(columns=["month", "year", "customer\nclass", "combined"], errors="ignore")
-        temp = temp.rename(columns={"zip\ncode": "zip_code"})
-        temp["zip_code"] = clean_zip(temp["zip_code"])
-        for col in ["totalaccounts", "totalkwh", "averagekwh"]:
-            if col in temp.columns:
-                temp[col] = pd.to_numeric(temp[col], errors="coerce")
-        temp = temp.groupby("zip_code").sum(numeric_only=True).add_suffix(f"_q{q}")
-        sce = temp if sce is None else sce.join(temp, how="outer")
-
-    sdge = None
-    for q in [1, 2, 3, 4]:
-        temp = pd.read_csv(RAW / "demand" / f"SDGE-ELEC-2023-Q{q}.csv")
-        temp.columns = temp.columns.str.strip().str.lower()
-        temp = temp.drop(columns=["month", "year", "customerclass", "combined"], errors="ignore")
-        temp = temp.rename(columns={"zipcode": "zip_code"})
-        temp["zip_code"] = clean_zip(temp["zip_code"])
-        for col in ["totalaccounts", "totalkwh", "averagekwh"]:
-            if col in temp.columns:
-                temp[col] = pd.to_numeric(temp[col], errors="coerce")
-        temp = temp.groupby("zip_code").sum(numeric_only=True).add_suffix(f"_q{q}")
-        sdge = temp if sdge is None else sdge.join(temp, how="outer")
+    pge = load_quarterly_demand(
+        "PGE_2023_Q{q}_ElectricUsageByZip.csv", util="PG&E", zip_col="zipcode",
+        numeric_cols=["totalcustomers", "totalkwh", "averagekwh"],
+        drop_cols=["month", "year", "customerclass", "combined"],
+    )
+    sce = load_quarterly_demand(
+        "SCE_2023_Q{q}_ElectricUsageByZip.xlsx", util="SCE", zip_col="zip\ncode",
+        numeric_cols=["totalaccounts", "totalkwh", "averagekwh"],
+        drop_cols=["month", "year", "customer\nclass", "combined"], excel=True,
+    )
+    sdge = load_quarterly_demand(
+        "SDGE-ELEC-2023-Q{q}.csv", util="SDG&E", zip_col="zipcode",
+        numeric_cols=["totalaccounts", "totalkwh", "averagekwh"],
+        drop_cols=["month", "year", "customerclass", "combined"],
+    )
 
     demand = annualize_utility(pge, "pge", "totalcustomers").join(
         annualize_utility(sce, "sce", "totalaccounts"), how="outer"
@@ -995,6 +1029,21 @@ def build_demand_controls() -> pd.DataFrame:
     demand = demand.reset_index()
     demand_control = demand[["zip_code", "kwh_annual_total"]].copy()
     demand_control["log_kwh"] = np.log1p(demand_control["kwh_annual_total"])
+
+    # A ZIP reporting exactly zero annual consumption is not a real observation, it is a
+    # parsing or coverage failure. Guard against silently shipping it as a valid control.
+    n_zero = int((demand_control["kwh_annual_total"] == 0).sum())
+    if n_zero:
+        LOGGER.warning(
+            "demand: %s of %s ZIPs have kwh_annual_total == 0. Treat as unreported, not "
+            "as zero consumption.", n_zero, len(demand_control),
+        )
+    if n_zero > 0.1 * len(demand_control):
+        raise ValueError(
+            f"demand: {n_zero} of {len(demand_control)} ZIPs report exactly zero annual "
+            "kWh, which is implausible and indicates the usage columns are not parsing. "
+            "Check for thousands separators in the raw files."
+        )
     write_csv(demand_control, PROCESSED / "demand.csv")
     return demand_control
 
