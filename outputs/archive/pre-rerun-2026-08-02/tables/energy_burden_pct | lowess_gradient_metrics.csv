@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+log_median_household_income,energy_burden_pct,-0.045669927935708295,-0.01914886832594
+combined_nonwhite_share,energy_burden_pct,-0.0020182468046838833,-0.0022752334299122
+pct_bachelors_plus,energy_burden_pct,-0.028277641955683053,-0.03455955282186401

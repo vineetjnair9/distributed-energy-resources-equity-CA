@@ -1,0 +1,10 @@
+feature,VIF
+log_median_household_income_c,2.0904551840391328
+pct_hispanic_c,1.916184503095956
+log_median_household_income_c:pct_asian_c,1.7893142266798672
+pct_asian_c,1.768299035933554
+log_median_household_income_c:pct_hispanic_c,1.755401409422722
+cdd65_2023,1.7210776331786652
+hdd65_2023,1.6546575925202724
+log_median_household_income_c:pct_black_c,1.3092480643808528
+pct_black_c,1.2726332733277828

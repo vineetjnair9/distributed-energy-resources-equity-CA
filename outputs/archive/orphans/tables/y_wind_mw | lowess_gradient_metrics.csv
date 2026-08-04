@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+log_median_household_income,y_wind_mw,0.0,0.0
+combined_nonwhite_share,y_wind_mw,-0.09028419985805843,-0.10178023284030578
+pct_bachelors_plus,y_wind_mw,0.0,0.0

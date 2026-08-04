@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+log_median_household_income,y_pv,0.19826420316689305,0.08312986886107665
+combined_nonwhite_share,y_pv,-0.26975282566377645,-0.30410088862230755
+pct_bachelors_plus,y_pv,-0.11485024841314256,-0.14036436393312862

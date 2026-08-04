@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+log_median_household_income,log_energy_gap_per_capita,-8.245483283630806,-3.457235008214973
+combined_nonwhite_share,log_energy_gap_per_capita,1.546109334073662,1.742977932639249
+pct_bachelors_plus,log_energy_gap_per_capita,-6.117468493624454,-7.47647119490506

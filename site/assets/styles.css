@@ -34,26 +34,48 @@ header {
   max-width: 1180px;
   margin: 0 auto;
   padding: 0.95rem 1.4rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1.5rem;
-  align-items: baseline;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) auto;
+  gap: 0.35rem 1.5rem;
+  align-items: end;
+}
+
+.site-author {
+  grid-column: 1 / -1;
+  justify-self: end;
+  line-height: 1.2;
+}
+
+.site-brand {
+  min-width: 0;
 }
 
 .nav-top {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
-  gap: 1.0rem 2.5rem;
+  gap: 0.45rem;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-top li {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+.nav-top li a {
+  display: block;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+}
+
+.nav-top li a:hover {
+  background-color: #9a3412;
+  color: white;
 }
 
 .nav-link {
@@ -82,12 +104,13 @@ main {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  gap: 2.5rem;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+  gap: 2rem;
   align-items: start;
 }
 
 article {
+  min-width: 0;
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -97,7 +120,7 @@ article {
 
 aside {
   position: sticky;
-  top: 5.4rem;
+  top: 5.75rem;
   align-self: start;
   background: rgba(255, 253, 248, 0.78);
   border: 1px solid var(--line);
@@ -109,6 +132,7 @@ h1, h2, h3 {
   line-height: 1.25;
   font-weight: 600;
   color: #17202a;
+  overflow-wrap: anywhere;
 }
 
 h1 {
@@ -131,6 +155,7 @@ h3 {
 p {
   margin: 0.45rem 0 1rem;
   font-size: 1.03rem;
+  overflow-wrap: break-word;
 }
 
 ul {
@@ -345,7 +370,7 @@ figure.compact-figure {
 
 .model-card {
   display: grid;
-  grid-template-columns: 3.2rem minmax(0, 1fr);
+  grid-template-columns: 3rem minmax(0, 1fr);
   gap: 0.9rem;
   align-items: start;
   border: 1px solid var(--line);
@@ -383,6 +408,7 @@ figure.compact-figure {
 .model-formula {
   margin-top: 0.55rem;
   display: block;
+  max-width: 100%;
   padding: 0.55rem 0.7rem;
   background: #f6f2e8;
   border: 1px solid #e5dcc8;
@@ -392,6 +418,7 @@ figure.compact-figure {
   line-height: 1.55;
   color: #24303b;
   overflow-x: auto;
+  white-space: nowrap;
 }
 
 .figure-note {
@@ -410,6 +437,7 @@ figure.paper-figure {
   border-radius: 14px;
   padding: 0.8rem;
   background: #fffaf2;
+  max-width: 100%;
 }
 
 figure.paper-figure img {
@@ -434,6 +462,8 @@ figcaption {
   padding: 0.9rem 0.95rem 0.8rem;
   background: #fffaf2;
   overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table-title {
@@ -577,6 +607,7 @@ code {
   padding: 0.08rem 0.28rem;
   font-family: "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 0.9em;
+  overflow-wrap: anywhere;
 }
 
 .refs {
@@ -587,9 +618,33 @@ code {
   margin-bottom: 0.55rem;
 }
 
+@media (max-width: 1180px) {
+  main {
+    padding: 1.8rem 1.1rem 2.6rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.25rem;
+  }
+
+  article {
+    padding: 1.85rem 1.75rem 2.25rem;
+  }
+
+  aside {
+    padding: 0.85rem;
+  }
+
+  .paper-table {
+    font-size: 0.88rem;
+  }
+}
+
 @media (max-width: 980px) {
   .layout {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .home-hero,
@@ -605,10 +660,48 @@ code {
   aside {
     position: static;
     order: -1;
+    border-radius: 14px;
+  }
+
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.7rem;
+  }
+
+  .toc li {
+    margin: 0;
+  }
+
+  .toc a {
+    display: inline-block;
+    padding: 0.16rem 0;
   }
 }
 
 @media (max-width: 720px) {
+  .header-inner {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+    padding: 0.75rem 0.85rem 0.85rem;
+    align-items: start;
+  }
+
+  .site-author {
+    justify-self: start;
+    order: -1;
+  }
+
+  .nav-top {
+    justify-content: flex-start;
+    gap: 0.35rem;
+  }
+
+  .nav-top li a {
+    padding: 0.32rem 0.52rem;
+    font-size: 0.9rem;
+  }
+
   main {
     padding: 1.2rem 0.8rem 2rem;
   }
@@ -618,17 +711,123 @@ code {
     border-radius: 14px;
   }
 
+  h1 {
+    font-size: 1.7rem;
+  }
+
+  h2 {
+    font-size: 1.28rem;
+    margin: 1.85rem 0 0.7rem;
+  }
+
+  h3 {
+    font-size: 1.02rem;
+    margin: 1.2rem 0 0.4rem;
+  }
+
+  p {
+    font-size: 0.99rem;
+  }
+
+  .abstract,
+  .highlight,
+  .placeholder-figure {
+    border-radius: 12px;
+    padding: 0.82rem 0.85rem;
+  }
+
+  .model-card {
+    grid-template-columns: 2.65rem minmax(0, 1fr);
+    gap: 0.7rem;
+    padding: 0.78rem;
+  }
+
+  .model-number {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.86rem;
+  }
+
+  .model-formula {
+    font-size: 0.82rem;
+    padding: 0.48rem 0.55rem;
+  }
+
+  figure.paper-figure,
+  .table-wrap,
+  .appendix-card {
+    border-radius: 12px;
+    padding: 0.62rem;
+  }
+
+  figcaption,
+  .figure-note,
+  .table-note {
+    font-size: 0.88rem;
+  }
+
+  .paper-table {
+    min-width: 560px;
+    font-size: 0.84rem;
+  }
+
+  .paper-table th,
+  .paper-table td {
+    padding: 0.45rem 0.5rem;
+  }
+
   .home-hero-copy,
   .home-section {
     padding: 1.35rem 1.05rem 1.55rem;
     border-radius: 14px;
   }
 
-  h1 {
-    font-size: 1.7rem;
-  }
-
   .appendix-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  main {
+    padding: 0.85rem 0.55rem 1.6rem;
+  }
+
+  article {
+    padding: 1rem 0.78rem 1.35rem;
+    border-radius: 12px;
+  }
+
+  aside {
+    padding: 0.7rem;
+  }
+
+  .title-block {
+    margin-bottom: 0.9rem;
+  }
+
+  h1 {
+    font-size: 1.48rem;
+  }
+
+  .author-line {
+    font-size: 0.9rem;
+  }
+
+  .model-card {
+    grid-template-columns: 1fr;
+  }
+
+  .model-number {
+    margin-bottom: 0.1rem;
+  }
+
+  figure.paper-figure,
+  .table-wrap {
+    margin-left: -0.15rem;
+    margin-right: -0.15rem;
+  }
+
+  .paper-table {
+    min-width: 500px;
   }
 }
