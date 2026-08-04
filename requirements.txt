@@ -1,3 +1,9 @@
+# SYSTEM DEPENDENCY: xgboost below needs an OpenMP runtime that pip cannot provide.
+#   macOS:         brew install libomp
+#   Debian/Ubuntu: apt-get install libgomp1
+# Without it `import xgboost` raises XGBoostError and the model-comparison figures
+# silently lose their XGBoost bar.
+
 numpy==1.26.4
 pandas==2.3.3
 requests==2.32.5

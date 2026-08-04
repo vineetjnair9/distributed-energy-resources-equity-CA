@@ -19,6 +19,7 @@ DEFAULT_OUTCOMES = [
     "y_storage",
     "y_chargers",
     "y_wind_mw",
+    "any_turbines",
     "y_level1_chargers",
     "y_level2_chargers",
     "y_dc_fast_chargers",

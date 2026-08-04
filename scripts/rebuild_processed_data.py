@@ -76,6 +76,12 @@ DER_ZERO_COLUMNS = [
     "wind_capacity_mw",
     "wind_turbine_count",
 ]
+HOUSING_STRUCTURE_SHARE_COLUMNS = [
+    "pct_single_family_units",
+    "pct_multifamily_units",
+    "pct_mobile_home_units",
+    "owner_occupied_rate",
+]
 
 ZCTA_SHP = RAW / "boundaries" / "tl_2023_us_zcta520" / "tl_2023_us_zcta520.shp"
 COUNTY_SHP = RAW / "boundaries" / "tl_2023_us_county" / "tl_2023_us_county.shp"
@@ -240,6 +246,16 @@ def parse_args() -> argparse.Namespace:
         help="Reuse existing external outputs (ACS/NASA) instead of making live requests.",
     )
     parser.add_argument(
+        "--reuse-nasa",
+        action="store_true",
+        help=(
+            "Pull ACS live but reuse the existing NASA POWER files. NASA POWER for a "
+            "completed year is a fixed historical reanalysis, so re-pulling it returns "
+            "identical values at the cost of ~5,500 requests (~1 hour). The local "
+            "utility, demand and geo steps still rebuild. Ignored with --skip-external."
+        ),
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -375,7 +391,12 @@ def build_wind_zip() -> tuple[pd.DataFrame, pd.DataFrame]:
 def build_power_plant_der(name_to_fips: dict[str, str]) -> pd.DataFrame:
     power_plant = pd.read_csv(RAW / "plants" / "Power_Plants.csv")
     power_plant["County"] = power_plant["County"].astype(str).str.strip().str.lower()
+    # These fixes are keyed to row positions in the raw file. Guard against a raw-file
+    # update shifting rows: a bare .loc on a missing label would silently append a row.
     for idx, updates in POWER_PLANT_FIXES.items():
+        if idx not in power_plant.index:
+            LOGGER.warning("Power plant fix for row %s skipped: index not in raw file.", idx)
+            continue
         for col, val in updates.items():
             power_plant.loc[idx, col] = val
 
@@ -520,14 +541,44 @@ def build_ev_sources(name_to_fips: dict[str, str]) -> tuple[pd.DataFrame, pd.Dat
 
 def build_tracking_the_sun() -> pd.DataFrame:
     # The 2024 public release is the 2023-aligned Tracking the Sun snapshot.
-    tracking = pd.read_csv(TRACKING_THE_SUN_CSV, low_memory=False)
+    if TRACKING_THE_SUN_CSV.exists():
+        tracking = pd.read_csv(TRACKING_THE_SUN_CSV, low_memory=False)
+    else:
+        fallback = PROCESSED / "tracking_the_sun.csv"
+        if not fallback.exists():
+            raise FileNotFoundError(f"Missing raw and processed Tracking the Sun files: {TRACKING_THE_SUN_CSV}")
+        LOGGER.warning("Raw Tracking the Sun file is missing; reusing %s.", fallback.relative_to(ROOT))
+        tracking = pd.read_csv(fallback, low_memory=False)
+    # Drop the known-malformed source values BEFORE normalising. Running this filter
+    # after clean_zip() never matched anything, because clean_zip has already turned
+    # e.g. "831.0" into "00831" and "2399." into NA.
+    bad = {"-0001", "-01.0", "000.0", "2399.", "831.0"}
+    raw_zip = tracking["zip_code"].astype("string").str.strip()
+    tracking = tracking[~raw_zip.isin(bad)].copy()
     tracking["zip_code"] = clean_zip(tracking["zip_code"])
     tracking = tracking[tracking["state"] == "CA"].copy()
-    bad = {"-0001", "-01.0", "000.0", "2399.", "831.0"}
-    tracking = tracking[~tracking["zip_code"].isin(bad)].copy()
     tracking = tracking[is_valid_zip(tracking["zip_code"])].copy()
     tracking = tracking[tracking["zip_code"].str.startswith("9")].copy()
     tracking = tracking[tracking["PV_system_size_DC"] >= 0].copy()
+
+    # Enforce the 2023 alignment the module docstring claims. Without this the outcome
+    # is cumulative capacity through whatever the snapshot date happens to be, while
+    # every control (ACS, NASA POWER) is 2023. The Aug-2024 release has a reporting lag
+    # so this currently drops well under 0.01% of CA rows, but it stops a future TTS
+    # refresh silently contaminating the cross-section.
+    installed = pd.to_datetime(tracking["installation_date"], errors="coerce", format="mixed")
+    after_cutoff = installed > pd.Timestamp(f"{YEAR}-12-31")
+    undated = installed.isna()
+    if after_cutoff.any() or undated.any():
+        LOGGER.info(
+            "Tracking the Sun date filter: dropping %s installs after %s-12-31; "
+            "%s rows have an unparseable installation_date and are retained.",
+            int(after_cutoff.sum()),
+            YEAR,
+            int(undated.sum()),
+        )
+    tracking = tracking[~after_cutoff].copy()
+
     write_csv(tracking, PROCESSED / "tracking_the_sun.csv")
     return tracking
 
@@ -622,6 +673,16 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B01003_001E",
         "B19013_001E",
         "B25077_001E",
+        "B25024_001E",
+        "B25024_002E",
+        "B25024_003E",
+        "B25024_004E",
+        "B25024_005E",
+        "B25024_006E",
+        "B25024_007E",
+        "B25024_008E",
+        "B25024_009E",
+        "B25024_010E",
         "B03002_001E",
         "B03002_003E",
         "B03002_004E",
@@ -629,6 +690,15 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B03002_012E",
         "B17001_001E",
         "B17001_002E",
+        # B25003 TENURE. Distinct from B25024 (units in structure): a single-family
+        # home can be rented and a high-rise condo can be owner-occupied. Rooftop PV
+        # and home storage face both a structural barrier (does the unit control a
+        # roof?) and a tenure barrier (may the occupant modify the property, and can
+        # they claim the incentives?). Only ~62% of tenure variation is explained by
+        # single-family share, so this is not redundant.
+        "B25003_001E",
+        "B25003_002E",
+        "B25003_003E",
     ] + edu_vars
 
     resp = requests.get(
@@ -649,6 +719,16 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B01003_001E": "total_population",
         "B19013_001E": "median_household_income",
         "B25077_001E": "median_housing_value",
+        "B25024_001E": "housing_units_total",
+        "B25024_002E": "single_family_detached_units",
+        "B25024_003E": "single_family_attached_units",
+        "B25024_004E": "duplex_units",
+        "B25024_005E": "three_four_unit_structures",
+        "B25024_006E": "five_nine_unit_structures",
+        "B25024_007E": "ten_nineteen_unit_structures",
+        "B25024_008E": "twenty_fortynine_unit_structures",
+        "B25024_009E": "fifty_plus_unit_structures",
+        "B25024_010E": "mobile_home_units",
         "B03002_001E": "raceeth_total",
         "B03002_003E": "white_not_hispanic",
         "B03002_004E": "black_not_hispanic",
@@ -656,6 +736,9 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B03002_012E": "hispanic_any_race",
         "B17001_001E": "poverty_universe",
         "B17001_002E": "below_poverty",
+        "B25003_001E": "occupied_units_total",
+        "B25003_002E": "owner_occupied_units",
+        "B25003_003E": "renter_occupied_units",
         "B15003_001E": "edu_25plus_total",
         "B15003_017E": "hs_diploma",
         "B15003_018E": "ged",
@@ -675,6 +758,7 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
     race_den = acs["raceeth_total"].replace({0: pd.NA})
     pov_den = acs["poverty_universe"].replace({0: pd.NA})
     edu_den = acs["edu_25plus_total"].replace({0: pd.NA})
+    housing_den = acs["housing_units_total"].replace({0: pd.NA})
     acs["pct_black"] = acs["black_not_hispanic"] / race_den
     acs["pct_hispanic"] = acs["hispanic_any_race"] / race_den
     acs["pct_asian"] = acs["asian_not_hispanic"] / race_den
@@ -682,6 +766,28 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
     acs["pct_bachelors_plus"] = (
         acs[["bachelors", "masters", "professional_school", "doctorate"]].sum(axis=1) / edu_den
     )
+    acs["pct_single_family_units"] = (
+        acs[["single_family_detached_units", "single_family_attached_units"]].sum(axis=1) / housing_den
+    )
+    acs["pct_multifamily_units"] = (
+        acs[
+            [
+                "duplex_units",
+                "three_four_unit_structures",
+                "five_nine_unit_structures",
+                "ten_nineteen_unit_structures",
+                "twenty_fortynine_unit_structures",
+                "fifty_plus_unit_structures",
+            ]
+        ].sum(axis=1)
+        / housing_den
+    )
+    acs["pct_mobile_home_units"] = acs["mobile_home_units"] / housing_den
+    # Owner share only: owner + renter sum to 1 by construction, so entering both
+    # alongside an intercept would repeat the compositional trap that made the housing
+    # structure shares uninterpretable (VIFs above 1000). Renters are the reference.
+    tenure_den = acs["occupied_units_total"].replace({0: pd.NA})
+    acs["owner_occupied_rate"] = acs["owner_occupied_units"] / tenure_den
     acs_model = acs[
         [
             "zip_code",
@@ -692,6 +798,10 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
             "pct_hispanic",
             "pct_asian",
             "median_housing_value",
+            "pct_single_family_units",
+            "pct_multifamily_units",
+            "pct_mobile_home_units",
+            "owner_occupied_rate",
             "total_population",
         ]
     ].copy()
@@ -823,7 +933,9 @@ def annualize_utility(df: pd.DataFrame, util: str, cust_col_base: str) -> pd.Dat
     out[f"{util}_kwh_annual"] = df.reindex(columns=kwh_cols).sum(axis=1, min_count=1)
     cust_cols = [f"{cust_col_base}_q{i}" for i in range(1, 5)]
     cust_q_sum = df.reindex(columns=cust_cols).sum(axis=1, min_count=1)
-    out[f"{util}_cust_months"] = 3 * cust_q_sum
+    # The quarterly raw files are monthly; the per-quarter groupby already summed over
+    # the three months, so cust_q_sum is customer-months. Multiplying by 3 tripled it.
+    out[f"{util}_cust_months"] = cust_q_sum
     out[f"{util}_kwh_per_cust_month"] = out[f"{util}_kwh_annual"] / out[f"{util}_cust_months"].replace(0, np.nan)
     return out
 
@@ -903,6 +1015,11 @@ def build_final_analysis_dataset(
         d = d.copy()
         d["zip_code"] = clean_zip(d["zip_code"])
         d = d.drop(columns=["Unnamed: 0"], errors="ignore")
+        # GHI, temperature and wind tables each carry the same ZCTA centroid lat/lon.
+        # Merging all three unsuffixed produced lat_x/lat_y/lon_x/lon_y duplicates in
+        # the published dataset. Keep the coordinates from the first table only.
+        if "lat" in df.columns and "lon" in df.columns:
+            d = d.drop(columns=["lat", "lon"], errors="ignore")
         df = pd.merge(df, d, on="zip_code", how="left")
 
     for col in DER_ZERO_COLUMNS:
@@ -941,10 +1058,20 @@ def build_final_analysis_dataset(
     df["log_pop_density"] = np.log1p(df["pop_density_km2"])
 
     min_n = 5
-    df["county_geoid"] = df["county_geoid"].astype(str).str.strip()
-    counts = df["county_geoid"].value_counts()
+    # astype(str) turns NaN into the string "nan", which then passes the min_n filter
+    # as if it were a real county and creates a pseudo-county in the FE and cluster
+    # specifications. Keep missing counties as NA and count them separately.
+    df["county_geoid"] = df["county_geoid"].astype("string").str.strip()
+    unmatched = df["county_geoid"].isna().sum()
+    if unmatched:
+        LOGGER.warning(
+            "%s ZIPs have no county match (no ZCTA geometry); they carry no county, "
+            "area or climate controls.",
+            unmatched,
+        )
+    counts = df["county_geoid"].value_counts(dropna=True)
     keep = counts[counts >= min_n].index
-    df = df[df["county_geoid"].isin(keep)].copy()
+    df = df[df["county_geoid"].isin(keep) | df["county_geoid"].isna()].copy()
     write_csv(df, PROCESSED / "combined_der_dataset_w_controls_predictors.csv")
     return df
 
@@ -960,10 +1087,38 @@ def read_energy_burden() -> pd.DataFrame:
 def read_or_fetch_external(
     args: argparse.Namespace,
     df_full: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
     if args.skip_external:
         LOGGER.warning("Using existing external-derived processed files because --skip-external was provided.")
         acs = pd.read_csv(PROCESSED / "acs_predictors_ca_zip.csv")
+        # Previously these columns were created filled with NA and written back to
+        # disk. That is silently destructive: an all-NaN column is dropped without
+        # comment by the notebook's `nunique() > 1` guard, so "Model 2C (add housing
+        # structure)" degenerated into a copy of Model 1 while still exporting a table
+        # that looked like a real robustness check. Fail loudly instead.
+        missing_structure = [c for c in HOUSING_STRUCTURE_SHARE_COLUMNS if c not in acs.columns]
+        empty_structure = [
+            c
+            for c in HOUSING_STRUCTURE_SHARE_COLUMNS
+            if c in acs.columns and acs[c].notna().sum() == 0
+        ]
+        if missing_structure or empty_structure:
+            raise ValueError(
+                "acs_predictors_ca_zip.csv has no usable housing-structure shares "
+                f"(missing: {missing_structure}; all-NaN: {empty_structure}). "
+                "Rerun without --skip-external and with a Census API key so ACS table "
+                "B25024 is pulled. Continuing would silently disable the housing-"
+                "structure robustness check."
+            )
         ghi = pd.read_csv(PROCESSED / "ca_zip_ghi_mean_2023.csv")
         temp = pd.read_csv(PROCESSED / "ca_zip_temperature_controls_2023.csv")
         wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
@@ -979,7 +1134,16 @@ def read_or_fetch_external(
         return acs, df_acs, ghi, temp, wind, zip_to_utility, demand, energy_burden
 
     acs, df_acs = fetch_acs_predictors(df_full, args.census_api_key)
-    wind, ghi, temp = build_nasa_outputs()
+    if args.reuse_nasa:
+        LOGGER.warning(
+            "Reusing existing NASA POWER files (--reuse-nasa). 2023 is a completed "
+            "year, so these values are fixed; re-pulling would return the same numbers."
+        )
+        ghi = pd.read_csv(PROCESSED / "ca_zip_ghi_mean_2023.csv")
+        temp = pd.read_csv(PROCESSED / "ca_zip_temperature_controls_2023.csv")
+        wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
+    else:
+        wind, ghi, temp = build_nasa_outputs()
     zip_to_utility = build_zip_to_utility()
     demand = build_demand_controls()
     energy_burden = read_energy_burden()

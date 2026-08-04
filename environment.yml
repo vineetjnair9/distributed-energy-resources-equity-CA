@@ -20,6 +20,7 @@ dependencies:
   - scikit-learn=1.7.2
   - statsmodels=0.14.6
   - patsy=1.0.2
+  - llvm-openmp  # OpenMP runtime required by xgboost (pip users: brew install libomp)
   - xgboost=3.2.0
   - umap-learn=0.5.7
   - geopandas=0.14.4

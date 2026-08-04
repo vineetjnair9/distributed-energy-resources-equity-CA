@@ -1,6 +1,6 @@
 import sqlite3
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -23,6 +23,9 @@ METRIC_COLUMNS = {
     "pct_hispanic": ("share", "demographic", "ACS 5-year"),
     "pct_asian": ("share", "demographic", "ACS 5-year"),
     "median_housing_value": ("dollars", "housing", "ACS 5-year"),
+    "pct_single_family_units": ("share", "housing", "ACS 5-year"),
+    "pct_multifamily_units": ("share", "housing", "ACS 5-year"),
+    "pct_mobile_home_units": ("share", "housing", "ACS 5-year"),
     "PV_system_size_DC": ("kW", "der_observed", "LBNL Tracking the Sun processed"),
     "storage_capacity_mw": ("MW", "der_observed", "CEC Energy Storage System Survey export"),
     "total_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
@@ -444,7 +447,7 @@ def populate_evidence_chunks_table(conn):
     This creates short factual evidence statements that can later support
     generated summaries.
     """
-    created_at = datetime.utcnow().isoformat()
+    created_at = datetime.now(timezone.utc).isoformat()
 
     # Changing generated evidence invalidates summary citations, so clear
     # summaries and links before replacing evidence chunks.

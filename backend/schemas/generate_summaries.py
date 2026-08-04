@@ -1,7 +1,7 @@
 import argparse
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -366,7 +366,7 @@ def insert_summary_response(
     metric_snapshot,
     model_version=SUMMARY_VERSION,
 ):
-    generated_at = datetime.utcnow().isoformat()
+    generated_at = datetime.now(timezone.utc).isoformat()
 
     cursor = conn.execute(
         """

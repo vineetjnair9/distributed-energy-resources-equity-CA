@@ -1,6 +1,9 @@
-data/
-outputs/
+# NOTE: data/ and outputs/ are intentionally tracked (via Git LFS, see .gitattributes).
+# They were previously listed here, which was misleading: it did nothing for the files
+# already tracked, but silently prevented `git add` from picking up NEW processed files
+# and figures.
 __pycache__/
 *.py[cod]
 .DS_Store
 .env
+*.bak
