@@ -60,7 +60,11 @@ TERM_COLORS = {
     "pct_black": "#7A3E9D",
     "pct_hispanic": "#E69F00",
     "pct_asian": "#009E73",
-    "poverty_rate": "#D55E00",
+    # Was #D55E00 (vermillion), which sits in the same hue range as % Hispanic
+    # (#E69F00) - the pair a reviewer flagged as indistinguishable, and the two whose
+    # divergence carries the EV-charging argument. Achromatic, so it cannot collide
+    # with any hue under colour-vision deficiency (deltaE 33 -> 48 vs its nearest).
+    "poverty_rate": "#333333",
     "pct_single_family_units": "#2F6F4E",
     "pct_multifamily_units": "#5B6C99",
     "pct_mobile_home_units": "#A15C38",
@@ -88,13 +92,14 @@ ENERGY_BURDEN_LADDER_MODELS = [
     ("Model 5C clustered SEs by county", "M5C\nCounty SEs"),
     ("Model 7 (infrastructure controls, outcome-safe)", "M7\nInfrastructure"),
     ("Model 8 add demand proxy", "M8\nDemand"),
-    ("Model 9 (predicting burden)", "M9\nDER terms"),
+    ("Model 9A (predicting burden)", "M9A\nDER terms"),
 ]
 
 
-# Figure background. Journals expect an opaque white canvas, so that is the default.
-# Set FIGURE_BG=transparent for figures destined for a coloured web background.
-_BG_CHOICE = os.environ.get("FIGURE_BG", "white").strip().lower()
+# Figure background. Transparent by default, per the collaborators' preference so
+# figures drop onto any page or slide background. Set FIGURE_BG=white for submission
+# to a journal that requires an opaque canvas.
+_BG_CHOICE = os.environ.get("FIGURE_BG", "transparent").strip().lower()
 TRANSPARENT_BG = _BG_CHOICE in {"none", "transparent"}
 PAPER_BG = "none" if TRANSPARENT_BG else "white"
 PANEL_BG = PAPER_BG
@@ -429,7 +434,7 @@ def plot_energy_burden_der_m9_from_csvs(
     apply_paper_style()
     outcomes = list(ENERGY_BURDEN_OUTCOME_LABELS)
     terms_keep = ["y_pv", "y_storage", "y_chargers"]
-    model = "Model 9 (predicting burden)"
+    model = "Model 9A (predicting burden)"
     # This figure needs a model the current notebook does not emit. It used to be drawn
     # from an orphaned table left over from an older notebook version, which meant it
     # displayed results that could not be reproduced. Fail with an actionable message
@@ -507,7 +512,7 @@ def plot_energy_burden_model_ladder_from_csvs(
     apply_paper_style()
     outcomes = list(ENERGY_BURDEN_OUTCOME_LABELS)
     # Restrict the ladder to specifications that actually exist in the tables. The
-    # configured list still names "Model 9 (predicting burden)", which no current code
+    # configured list still names "Model 9A (predicting burden)", which no current code
     # path emits; keeping it would add an empty rung to the figure.
     available = set(all_coefs["model"].unique())
     ladder = [(m, l) for m, l in ENERGY_BURDEN_LADDER_MODELS if m in available]

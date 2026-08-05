@@ -316,6 +316,15 @@ def build_predictor_lowess_small_multiples(
 
 def load_coef(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path).rename(columns={"Unnamed: 0": "term", "Coef.": "coef", "Std.Err.": "std_err", "P>|z|": "pval", "P>|t|": "pval"})
+    # The interaction model (Model 4R) mean-centers its predictors, so its terms are
+    # named pct_black_c rather than pct_black. The coefficient-path figure matches on
+    # the uncentered names, so its M4 column came out blank. Normalise the suffix: for a
+    # centered variable the main effect is the effect at the mean of the interacting
+    # term, which is exactly the quantity the ladder is meant to show. Interaction rows
+    # (containing ':') keep their own names and are simply not selected by the figure.
+    df["term"] = df["term"].astype(str).apply(
+        lambda t: t[:-2] if t.endswith("_c") and ":" not in t else t
+    )
     df["file"] = path.name
     return df
 

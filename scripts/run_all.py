@@ -30,7 +30,7 @@ Stages
 Environment
 -----------
     CENSUS_API_KEY   required unless --skip-data or --skip-external
-    FIGURE_BG        'white' (default, journal-ready) or 'transparent'
+    FIGURE_BG        'transparent' (default) or 'white' (opaque, for journals)
 """
 
 from __future__ import annotations
@@ -125,7 +125,7 @@ def main() -> None:
         )
 
     os.environ.setdefault("MPLBACKEND", "Agg")
-    os.environ.setdefault("FIGURE_BG", "white")
+    os.environ.setdefault("FIGURE_BG", "transparent")
 
     print(f"Stages: {' -> '.join(selected)}")
     print(f"Figure background: {os.environ['FIGURE_BG']}")
