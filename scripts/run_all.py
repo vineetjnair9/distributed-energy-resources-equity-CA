@@ -25,11 +25,24 @@ Stages
     clustering run_notebook.py clustering      -> outputs/tables/pca_kmeans_*.csv
     figures    regenerate_standardized_figures.py
                build_site_index_assets.py
-               sync_figure_assets.py           -> outputs/**/*.png|svg|pdf, site/assets
+               sync_figure_assets.py           -> outputs/**/*.png, site/assets
+    database   backend/schemas/create_db.py
+               backend/schemas/populate_tables.py
+               backend/schemas/generate_summaries.py  -> data/der_tool.db
+
+The database stage is NOT run by default: it takes a while and the last step makes
+OpenAI calls. Run it explicitly with --only database.
+
+data/der_tool.db is deliberately not version-controlled. It is ~300MB, exceeds
+GitHub's 100MB per-file limit, and is fully rebuildable from the processed CSVs. Of its
+ten tables only summary_responses is LLM-generated, and that is five rows -- everything
+else, including the 246k evidence_chunks, is deterministic string formatting over
+metric_observations and model_outputs.
 
 Environment
 -----------
     CENSUS_API_KEY   required unless --skip-data or --skip-external
+    OPENAI_API_KEY   required for the database stage's summary step
     FIGURE_BG        'transparent' (default) or 'white' (opaque, for journals)
 """
 
@@ -46,7 +59,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 
-STAGES = ["data", "models", "clustering", "figures"]
+STAGES = ["data", "models", "clustering", "figures", "database"]
 
 
 def _run(cmd: list[str], label: str) -> None:
@@ -86,11 +99,25 @@ def stage_figures(args: argparse.Namespace) -> None:
         _run([sys.executable, str(SCRIPTS / script)], f"figures:{script.replace('.py', '')}")
 
 
+def stage_database(args: argparse.Namespace) -> None:
+    """Rebuild data/der_tool.db from the processed CSVs."""
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("[database] OPENAI_API_KEY not set - schema and tables will be rebuilt, "
+              "but the five LLM summaries will be skipped.", flush=True)
+    scripts = ["create_db.py", "populate_tables.py"]
+    if os.environ.get("OPENAI_API_KEY"):
+        scripts.append("generate_summaries.py")
+    for script in scripts:
+        _run([sys.executable, str(ROOT / "backend" / "schemas" / script)],
+             f"database:{script.replace('.py', '')}")
+
+
 RUNNERS = {
     "data": stage_data,
     "models": stage_models,
     "clustering": stage_clustering,
     "figures": stage_figures,
+    "database": stage_database,
 }
 
 
@@ -114,7 +141,9 @@ def main() -> None:
     parser.add_argument("--outcomes", nargs="+", help="Restrict the model stage to these outcomes.")
     args = parser.parse_args()
 
-    selected = args.only or [s for s in STAGES if not getattr(args, f"skip_{s}")]
+    # "database" is opt-in only: it is slow and its last step costs OpenAI calls.
+    default_stages = [s for s in STAGES if s != "database"]
+    selected = args.only or [s for s in default_stages if not getattr(args, f"skip_{s}")]
 
     if "data" in selected and not args.skip_external and not os.environ.get("CENSUS_API_KEY"):
         raise SystemExit(

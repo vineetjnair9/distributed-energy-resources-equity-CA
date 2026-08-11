@@ -7,3 +7,7 @@ __pycache__/
 .DS_Store
 .env
 *.bak
+
+# Generated SQLite database (~300MB, over GitHub's 100MB file limit).
+# Rebuild with: python scripts/run_all.py --only database
+data/der_tool.db
