@@ -6,6 +6,61 @@ correctness, code quality/reproducibility, repo hygiene and security.
 Every finding below was verified by executing code against the actual data in this
 repo, not inferred from reading. Reproduction commands are given where useful.
 
+## Release remediation update — 2026-08-12
+
+The numbered findings below are retained as the historical audit record. They do not
+all describe the current tree. The release pass on 2026-08-12 rebuilt the pipeline,
+executed the regression and clustering notebooks, regenerated the figures, refreshed
+the manuscript/site/database, and added behavioral and data-contract tests.
+
+### Current housing-data state
+
+- The exact 2023 ACS five-year B25024 and B25003 API response is preserved at
+  `data/raw/acs/acs_2023_5yr_housing_ca_zcta.csv`; its manifest records 1,787 rows,
+  estimates and margins of error, retrieval time, source endpoint, and SHA-256
+  `a36862e97afd05b7cc47895df3318b25888b953083a38f775fb4d44cdc3d6a3f`.
+- The final shared dataset has 2,549 rows and 50 columns. Housing structure is complete
+  for 1,717 rows and owner occupancy for 1,713. The four exhaustive structure shares
+  (single-family, multifamily, mobile home, and boat/RV/van/other) sum to one within
+  floating-point tolerance. No unnamed CSV-index column remains.
+- California geography is now enforced at both layers: source records must fall in the
+  state's postal ZIP range, and ACS/clustering rows must match a California ZCTA
+  geometry. This removed the mis-keyed Seattle ZIP 98125 that had expanded the cluster
+  map extent and visually displaced California.
+- Model 2C now uses the exhaustive B25024 composition with single-family housing as the
+  omitted reference. Model 2D adds B25003 owner occupancy, with renters as the omitted
+  reference. Missing or constant housing variables now stop execution instead of
+  silently collapsing the specification.
+- The global five-ZIP county-size filter was removed from the shared data build. The
+  minimum cluster-size rule now applies only to county-clustered standard errors. Valid
+  ZCTAs 95023, 95045, 95223, and 96120 are present again.
+
+### Resolution summary
+
+| Historical finding | Release state |
+|---|---|
+| 1.1 inert housing controls | **Fixed and tested.** Live ACS data, the residual B25024 category, and tenure are incorporated and the analysis fails loudly on schema drift. |
+| 1.2 duplicate Model 4/4R | **Fixed.** Model 4R is explicitly the no-poverty restricted interaction model. |
+| 1.3 clustering missing-data artifact | **Fixed.** Clustering uses the regression sample and stable cluster IDs ordered by mean household income. |
+| 1.4 rare wind/Level-1 outcomes | **Mitigated, not eliminated.** Level 1 is a subtype diagnostic; wind is presented as contextual rather than a headline DER result. |
+| 1.5 utility-scale wind definition | **Mitigated by scope.** The manuscript labels wind as utility-scale contextual evidence, not a household DER outcome. |
+| 1.6 incomplete utility crosswalk | **Open, documented limitation.** Utility FE and demand results still cover the three investor-owned utilities rather than all California load-serving entities. |
+| 1.7 PG&E demand parsing | **Fixed and rebuilt.** Thousands separators are parsed, all-missing groups remain missing, and zero-rate sanity checks run. |
+| 2.1–2.5 pipeline defects | **Fixed.** Coordinate collisions, missing-county handling, positional guardrails, ZIP filtering, and customer-month annualization were corrected. |
+| 2.6 exact end-to-end source reconstruction | **Partly open.** Housing now has exact raw-response provenance; energy-burden and several legacy source acquisitions are documented but are not all downloaded from one script. |
+| 3.1 broken environment | **Fixed in declarations and verified in a clean bundled runtime.** |
+| 3.2 orphan result artifacts | **Reduced but not fully eliminated.** Release consumers should use the current model labels and the executed notebook; automatic run-scoped artifact cleanup remains future work. |
+| 3.3 no tests | **Fixed for release-critical behavior.** Tests cover housing invariants/provenance, ZIP retention, credential redaction, VIF construction, and clustered-SE sample rules. |
+| 3.4 duplicated notebook logic | **Reduced.** Regression diagnostics share `scripts/model_helpers.py`; legacy data notebooks are explicitly noncanonical references. Further packaging remains maintainability work. |
+
+### Residual interpretation risks
+
+The release remains a cross-sectional, area-level observational study. It does not
+identify household-level tenure, roof suitability, or causal effects. Residual spatial
+autocorrelation remains statistically detectable; the release therefore reports Conley
+spatial-HAC sensitivity estimates. Utility coverage and exact reconstruction of some
+legacy non-ACS inputs remain the two main data-provenance limitations.
+
 This audit is code- and data-level. It complements `site/review_memo.md`, which is a
 manuscript-level review. Where the two overlap it is noted explicitly — in two cases
 (§1.3 and §2.1 of that memo) the code-level evidence resolves an open question there.

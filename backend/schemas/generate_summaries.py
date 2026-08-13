@@ -43,6 +43,8 @@ MODEL_VERSION_PRIORITIES = {
     "Model 5 utility FE": 20,
     "Model 2 (add bachelors)": 15,
     "Model 2 (add housing value)": 15,
+    "Model 2C (add housing structure)": 20,
+    "Model 2D (add housing structure and tenure)": 25,
 }
 
 COMPARISON_MODEL_MARKERS = [
@@ -54,6 +56,8 @@ COMPARISON_MODEL_MARKERS = [
     "Model 5 utility FE",
     "Model 2 (add bachelors)",
     "Model 2 (add housing value)",
+    "Model 2C (add housing structure)",
+    "Model 2D (add housing structure and tenure)",
 ]
 
 

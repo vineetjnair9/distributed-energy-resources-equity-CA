@@ -26,6 +26,8 @@ METRIC_COLUMNS = {
     "pct_single_family_units": ("share", "housing", "ACS 5-year"),
     "pct_multifamily_units": ("share", "housing", "ACS 5-year"),
     "pct_mobile_home_units": ("share", "housing", "ACS 5-year"),
+    "pct_other_housing_units": ("share", "housing", "ACS 5-year"),
+    "owner_occupied_rate": ("share", "housing", "ACS 5-year"),
     "PV_system_size_DC": ("kW", "der_observed", "LBNL Tracking the Sun processed"),
     "storage_capacity_mw": ("MW", "der_observed", "CEC Energy Storage System Survey export"),
     "total_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),

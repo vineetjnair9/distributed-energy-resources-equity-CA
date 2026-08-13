@@ -12,6 +12,13 @@ The fetch script below only covers category 1:
 python scripts/fetch_exact_public_data.py
 ```
 
+The ACS housing snapshot is created by the canonical data rebuild rather than the
+download script because it is an API response filtered to the DER panel:
+
+```bash
+CENSUS_API_KEY=your_key python scripts/rebuild_processed_data.py --reuse-nasa
+```
+
 ## Exact public snapshots covered by the script
 
 - `data/raw/interconnection/PGE_Interconnected_Project_Sites_2023-12-31.csv`
@@ -31,6 +38,17 @@ python scripts/fetch_exact_public_data.py
 
 - `data/raw/boundaries/ca_utility_territories.geojson`
   Source: California Electric Utility Service Territory SCOUT ArcGIS FeatureServer.
+
+- `data/raw/acs/acs_2023_5yr_housing_ca_zcta.csv`
+- `data/raw/acs/acs_2023_5yr_housing_query_manifest.json`
+  Source: 2023 ACS five-year detailed-table API, ZCTA geography.
+  Tables: B25024 (units in structure) and B25003 (tenure).
+  Coverage: B25024_001 through B25024_011 and B25003_001 through B25003_003,
+  with both estimates (`E`) and margins of error (`M`). The CSV is filtered to
+  ZIP/ZCTAs in the DER panel. The manifest records the endpoint, exact variable
+  lists, retrieval timestamp, row count, and SHA-256 checksum; it never stores the
+  Census API key.
+  API endpoint: https://api.census.gov/data/2023/acs/acs5
 
 ## 2023-aligned but not yet scripted exactly
 

@@ -24,6 +24,7 @@ TERM_LABELS = {
     "pct_single_family_units": "% single-family units",
     "pct_multifamily_units": "% multifamily units",
     "pct_mobile_home_units": "% mobile-home units",
+    "pct_other_housing_units": "% boat/RV/van/other units",
     "owner_occupied_rate": "% owner-occupied",
     "cdd65_2023": "Cooling degree days",
     "hdd65_2023": "Heating degree days",
@@ -68,6 +69,7 @@ TERM_COLORS = {
     "pct_single_family_units": "#2F6F4E",
     "pct_multifamily_units": "#5B6C99",
     "pct_mobile_home_units": "#A15C38",
+    "pct_other_housing_units": "#9B59B6",
     "owner_occupied_rate": "#1B7F79",
     "ghi_mean_kwh_m2_day_2023": "#D97706",
     "cdd65_2023": "#DC2626",
@@ -664,7 +666,7 @@ def plot_housing_structure_attenuation(
     ]
     add_figure_legend(
         fig, handles, ncol=3, y=0.075,
-        note=SIG_NOTE + "   ·   housing shares vs single-family; tenure is owner share (renters omitted)",
+        note=SIG_NOTE + "   ·   exhaustive structure shares vs single-family; tenure is owner share (renters omitted)",
     )
     _finish_figure(fig, save_path)
     return fig
@@ -673,15 +675,19 @@ def plot_housing_structure_attenuation(
 def plot_housing_structure_across_outcomes(
     all_coefs: pd.DataFrame,
     outcomes: dict[str, str] | None = None,
-    housing_terms: Iterable[str] = ("pct_multifamily_units", "pct_mobile_home_units", "owner_occupied_rate"),
+    housing_terms: Iterable[str] = (
+        "pct_multifamily_units",
+        "pct_mobile_home_units",
+        "pct_other_housing_units",
+        "owner_occupied_rate",
+    ),
     model: str = "Model 2D (add housing structure and tenure)",
     save_path: str | Path | None = None,
 ) -> plt.Figure:
     """Housing-structure coefficients across every outcome.
 
-    The housing shares enter only in Model 2C, so they have no stability-across-
-    specifications story and sat awkwardly as near-empty rows in the robustness panels.
-    Their cross-outcome pattern is the interesting part, so it gets its own figure.
+    The housing shares enter Model 2C and Model 2D, so their cross-outcome pattern is
+    more informative than isolated points inside the main robustness panels.
     """
     apply_paper_style()
     outcomes = outcomes or {
@@ -733,7 +739,7 @@ def plot_housing_structure_across_outcomes(
     add_figure_legend(
         fig,
         term_color_handles(housing_terms) + significance_marker_handles() + [ci_handle()],
-        ncol=3,
+        ncol=4,
         y=0.055,
         note=SIG_NOTE + "   ·   structure shares vs single-family; tenure is owner share vs renter",
     )

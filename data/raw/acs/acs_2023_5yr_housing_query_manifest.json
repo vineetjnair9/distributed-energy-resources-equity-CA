@@ -1,0 +1,45 @@
+{
+  "dataset": "2023 ACS 5-year detailed tables",
+  "geography": "ZIP Code Tabulation Area",
+  "endpoint": "https://api.census.gov/data/2023/acs/acs5",
+  "estimate_variables": [
+    "B25024_001E",
+    "B25024_002E",
+    "B25024_003E",
+    "B25024_004E",
+    "B25024_005E",
+    "B25024_006E",
+    "B25024_007E",
+    "B25024_008E",
+    "B25024_009E",
+    "B25024_010E",
+    "B25024_011E",
+    "B25003_001E",
+    "B25003_002E",
+    "B25003_003E"
+  ],
+  "margin_of_error_variables": [
+    "B25024_001M",
+    "B25024_002M",
+    "B25024_003M",
+    "B25024_004M",
+    "B25024_005M",
+    "B25024_006M",
+    "B25024_007M",
+    "B25024_008M",
+    "B25024_009M",
+    "B25024_010M",
+    "B25024_011M",
+    "B25003_001M",
+    "B25003_002M",
+    "B25003_003M"
+  ],
+  "filters": {
+    "for": "zip code tabulation area:*",
+    "panel": "DER panel ZIP/ZCTAs"
+  },
+  "retrieved_at_utc": "2026-08-13T04:13:09.010845+00:00",
+  "row_count": 1787,
+  "sha256": "a36862e97afd05b7cc47895df3318b25888b953083a38f775fb4d44cdc3d6a3f",
+  "credentials_persisted": false
+}

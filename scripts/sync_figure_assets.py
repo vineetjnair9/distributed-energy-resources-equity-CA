@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import shutil
 
 from paper_figure_utils import sync_site_tree
 
@@ -20,6 +21,13 @@ def main() -> None:
     generated = OUTPUT_FIGURES / "generated"
     if generated.exists():
         copied.extend(sync_site_tree(generated, SITE_FIGURES / "generated"))
+
+    cluster_map = OUTPUT_FIGURES / "cluster_choropleth_map.png"
+    if cluster_map.exists():
+        cluster_target = SITE_FIGURES / "generated" / cluster_map.name
+        cluster_target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(cluster_map, cluster_target)
+        copied.append(cluster_target)
 
     for subdir in [
         "pv_maps",

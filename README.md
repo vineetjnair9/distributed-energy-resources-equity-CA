@@ -15,12 +15,13 @@ In practice, the project:
 
 The main places to look are:
 
-- [notebooks/processing_energy_data_zip.ipynb](/DER_data_UROP/notebooks/processing_energy_data_zip.ipynb): builds the core ZIP-level DER panel and the final merged analysis dataset
-- [notebooks/adding_predictor_data.ipynb](/DER_data_UROP/notebooks/adding_predictor_data.ipynb): builds ACS, NASA POWER, utility, and demand control files
-- [notebooks/plotting_data.ipynb](/DER_data_UROP/notebooks/plotting_data.ipynb): exploratory data analysis and choropleths
-- [notebooks/regression.ipynb](/DER_data_UROP/notebooks/regression.ipynb): main regression specifications, robustness checks, LOWESS plots, and model-comparison figures
-- [notebooks/plotting_outcomes.ipynb](/DER_data_UROP/notebooks/plotting_outcomes.ipynb): publication-style coefficient summary figures
-- [scripts/rebuild_processed_data.py](/DER_data_UROP/scripts/rebuild_processed_data.py): single script to rebuild processed data in a clean order from raw inputs
+- [scripts/run_all.py](scripts/run_all.py): canonical release pipeline and stage order
+- [scripts/rebuild_processed_data.py](scripts/rebuild_processed_data.py): canonical processed-data builder
+- [notebooks/processing_energy_data_zip.ipynb](notebooks/processing_energy_data_zip.ipynb): historical, annotated reference for the core DER cleaning
+- [notebooks/adding_predictor_data.ipynb](notebooks/adding_predictor_data.ipynb): historical, annotated reference for external predictors
+- [notebooks/plotting_data.ipynb](notebooks/plotting_data.ipynb): exploratory data analysis and choropleths
+- [notebooks/regression.ipynb](notebooks/regression.ipynb): main regression specifications, robustness checks, LOWESS plots, and model-comparison figures
+- [notebooks/plotting_outcomes.ipynb](notebooks/plotting_outcomes.ipynb): publication-style coefficient summary figures
 - `data/raw/`: raw source files
 - `data/processed/`: processed intermediate and final analysis files
 - `outputs/`: exported tables, figures, and the methodology report
@@ -53,16 +54,39 @@ The script also rewrites the main aggregated intermediate files and controls:
 - `data/processed/zip_to_utility.csv`
 - `data/processed/demand.csv`
 
+## Release quick start
+
+Create the pinned Python 3.11 environment, run the complete release pipeline, and
+execute the release checks:
+
+```bash
+conda env create -f environment.yml
+conda activate der-data-urop
+set -a; source .env; set +a
+python scripts/run_all.py
+pytest -q
+```
+
+`CENSUS_API_KEY` is needed for the live ACS pull. The default pipeline reuses the
+fixed 2023 NASA POWER files, avoiding thousands of redundant network requests. Use
+`python scripts/run_all.py --skip-data` to refit models and redraw figures without
+rebuilding processed data.
+
+The database is deterministic except for five optional LLM summaries and is not
+version-controlled. Rebuild it with `python scripts/run_all.py --only database`;
+without `OPENAI_API_KEY`, the schema and source-backed tables are still generated.
+
 ## Rebuilding processed data
 
 This repository includes a single rebuild script that recreates the processed California ZIP-level analysis files in a clean order from raw inputs:
 
-- [scripts/rebuild_processed_data.py](/DER_data_UROP/scripts/rebuild_processed_data.py)
+- [scripts/rebuild_processed_data.py](scripts/rebuild_processed_data.py)
 
-The script consolidates logic that was previously split across:
+The script is the release authority. It consolidates logic that was previously split
+across the two reference notebooks:
 
-- [notebooks/processing_energy_data_zip.ipynb](/DER_data_UROP/notebooks/processing_energy_data_zip.ipynb)
-- [notebooks/adding_predictor_data.ipynb](/DER_data_UROP/notebooks/adding_predictor_data.ipynb)
+- [notebooks/processing_energy_data_zip.ipynb](notebooks/processing_energy_data_zip.ipynb)
+- [notebooks/adding_predictor_data.ipynb](notebooks/adding_predictor_data.ipynb)
 
 ### How to run
 
@@ -82,7 +106,15 @@ python scripts/rebuild_processed_data.py --skip-external
 
 - The script preserves the manual row-level fixes currently embedded in the notebooks for power plants and EV charger ZIP assignments.
 - The script uses the local file `data/raw/boundaries/ca_utility_territories.geojson` for the ZIP-to-utility crosswalk.
-- The final analysis notebooks read `data/processed/combined_der_dataset_w_controls_predictors.csv`, so if that file is unchanged, previously generated regression results should remain unchanged.
+- Housing structure comes from all eleven B25024 categories. Models 2C and 2D omit
+  single-family housing as the reference and include multifamily, mobile-home, and
+  boat/RV/van/other shares; Model 2D additionally includes B25003 owner occupancy
+  with renter occupancy as the reference.
+- All valid ZIP/ZCTAs remain in the shared analysis file. The minimum-five-observation
+  county rule is applied only to specifications requesting county-clustered errors.
+- A live ACS rebuild stores exact B25024/B25003 estimates and margins of error plus a
+  credential-free query manifest under `data/raw/acs/`.
+- The final analysis notebooks read `data/processed/combined_der_dataset_w_controls_predictors.csv`.
 - `data/processed/combined_der_dataset_full.csv` in the current workspace is a reconstructed base artifact derived from the base columns embedded in `combined_der_dataset_w_controls_predictors.csv`, because the earlier historical full-base file had been overwritten before this cleanup.
 
 ## Rerunning models and syncing figures
@@ -110,13 +142,13 @@ python scripts/sync_figure_assets.py
 
 If you want to understand the project from start to finish, the most useful order is:
 
-1. Rebuild or inspect the processed data with [scripts/rebuild_processed_data.py](/DER_data_UROP/scripts/rebuild_processed_data.py)
-2. Review [notebooks/processing_energy_data_zip.ipynb](/DER_data_UROP/notebooks/processing_energy_data_zip.ipynb)
-3. Review [notebooks/adding_predictor_data.ipynb](/DER_data_UROP/notebooks/adding_predictor_data.ipynb)
-4. Use [notebooks/plotting_data.ipynb](/DER_data_UROP/notebooks/plotting_data.ipynb) for exploratory checks
-5. Use [notebooks/regression.ipynb](/DER_data_UROP/notebooks/regression.ipynb) for the main models
-6. Use [notebooks/plotting_outcomes.ipynb](/DER_data_UROP/notebooks/plotting_outcomes.ipynb) for summary figures
+1. Run or inspect [scripts/run_all.py](scripts/run_all.py)
+2. Review the canonical builder, [scripts/rebuild_processed_data.py](scripts/rebuild_processed_data.py)
+3. Use the two data-construction notebooks only as annotated source-cleaning references
+4. Use [notebooks/plotting_data.ipynb](notebooks/plotting_data.ipynb) for exploratory checks
+5. Use [notebooks/regression.ipynb](notebooks/regression.ipynb) for the main models
+6. Use [notebooks/plotting_outcomes.ipynb](notebooks/plotting_outcomes.ipynb) for summary figures
 
 ## Legacy background
 
-This repository started partly as a broader DER data catalog and county-level mapping effort. Some notebooks under `data/mapping_files/` and `notebooks/data_retrieval.ipynb` reflect that earlier structure and are useful background, but they are not part of the main final California ZIP-level regression workflow.
+This repository started partly as a broader DER data catalog and county-level mapping effort. The notebooks under `data/mapping_files/` reflect that earlier structure and are useful background, but they are not part of the main final California ZIP-level regression workflow.

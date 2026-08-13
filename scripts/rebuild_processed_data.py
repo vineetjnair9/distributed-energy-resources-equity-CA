@@ -41,10 +41,14 @@ Notes
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import logging
 import os
 import pickle
 import time
+from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 
 import geopandas as gpd
@@ -80,6 +84,7 @@ HOUSING_STRUCTURE_SHARE_COLUMNS = [
     "pct_single_family_units",
     "pct_multifamily_units",
     "pct_mobile_home_units",
+    "pct_other_housing_units",
     "owner_occupied_rate",
 ]
 
@@ -87,6 +92,8 @@ ZCTA_SHP = RAW / "boundaries" / "tl_2023_us_zcta520" / "tl_2023_us_zcta520.shp"
 COUNTY_SHP = RAW / "boundaries" / "tl_2023_us_county" / "tl_2023_us_county.shp"
 CA_UTILITY_GEOJSON = RAW / "boundaries" / "ca_utility_territories.geojson"
 TRACKING_THE_SUN_CSV = RAW / "solar" / "TTS_LBNL_public_file_21-Aug-2024_all.csv"
+ACS_HOUSING_RAW = RAW / "acs" / f"acs_{YEAR}_5yr_housing_ca_zcta.csv"
+ACS_HOUSING_MANIFEST = RAW / "acs" / f"acs_{YEAR}_5yr_housing_query_manifest.json"
 
 LOGGER = logging.getLogger("rebuild_processed_data")
 
@@ -290,6 +297,12 @@ def is_valid_zip(series: pd.Series) -> pd.Series:
     return clean_zip(series).str.fullmatch(r"\d{5}").fillna(False)
 
 
+def is_california_postal_zip(series: pd.Series) -> pd.Series:
+    """Recognize California postal ZIPs without requiring a Census ZCTA polygon."""
+    numeric = pd.to_numeric(clean_zip(series), errors="coerce")
+    return numeric.between(90001, 96162).fillna(False)
+
+
 def load_zcta_shapes() -> gpd.GeoDataFrame:
     zcta = gpd.read_file(ZCTA_SHP)
     zcta = zcta.rename(columns={"ZCTA5CE20": "zip_code"})
@@ -315,7 +328,13 @@ def load_ca_zcta_centroids() -> pd.DataFrame:
     return zcta_ca[["zip_code", "lat", "lon"]].drop_duplicates("zip_code").reset_index(drop=True)
 
 
-def write_csv(df: pd.DataFrame, path: Path, *, index: bool = True) -> None:
+@lru_cache(maxsize=1)
+def load_ca_zcta_codes() -> frozenset[str]:
+    """Return the authoritative set of ZCTAs whose geometry intersects California."""
+    return frozenset(load_ca_zcta_centroids()["zip_code"])
+
+
+def write_csv(df: pd.DataFrame, path: Path, *, index: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=index)
     LOGGER.info("Wrote %s (%s rows)", path.relative_to(ROOT), len(df))
@@ -559,6 +578,15 @@ def build_tracking_the_sun() -> pd.DataFrame:
     tracking = tracking[tracking["state"] == "CA"].copy()
     tracking = tracking[is_valid_zip(tracking["zip_code"])].copy()
     tracking = tracking[tracking["zip_code"].str.startswith("9")].copy()
+    outside_ca = ~is_california_postal_zip(tracking["zip_code"])
+    if outside_ca.any():
+        LOGGER.warning(
+            "Tracking the Sun: dropping %s CA-labelled rows outside California's "
+            "postal ZIP range (examples: %s).",
+            int(outside_ca.sum()),
+            ", ".join(sorted(tracking.loc[outside_ca, "zip_code"].unique())[:5]),
+        )
+    tracking = tracking.loc[~outside_ca].copy()
     tracking = tracking[tracking["PV_system_size_DC"] >= 0].copy()
 
     # Enforce the 2023 alignment the module docstring claims. Without this the outcome
@@ -643,6 +671,15 @@ def build_combined_der_dataset_full(aggregated: dict[str, pd.DataFrame]) -> pd.D
         merged = pd.merge(merged, df, on="zip_code", how="outer")
     merged["zip_code"] = clean_zip(merged["zip_code"])
     merged = merged[merged["zip_code"].str.fullmatch(r"\d{5}")].copy()
+    outside_ca = ~is_california_postal_zip(merged["zip_code"])
+    if outside_ca.any():
+        LOGGER.warning(
+            "Combined DER panel: dropping %s ZIPs outside California's postal range "
+            "(examples: %s).",
+            int(outside_ca.sum()),
+            ", ".join(sorted(merged.loc[outside_ca, "zip_code"].unique())[:5]),
+        )
+    merged = merged.loc[~outside_ca].copy()
     for col in DER_ZERO_COLUMNS:
         if col in merged.columns:
             merged[col] = pd.to_numeric(merged[col], errors="coerce").fillna(0)
@@ -650,6 +687,132 @@ def build_combined_der_dataset_full(aggregated: dict[str, pd.DataFrame]) -> pd.D
     write_csv(merged, PROCESSED / "combined_der_dataset_full.csv")
     write_csv(merged, PROCESSED / "combined_der_dataset.csv")
     return merged
+
+
+def fetch_acs_response(
+    base_url: str,
+    variables: list[str],
+    census_api_key: str,
+) -> pd.DataFrame:
+    """Fetch one ACS ZCTA table without persisting credentials in provenance."""
+    params = {
+        "get": ",".join(variables),
+        "for": "zip code tabulation area:*",
+        "key": census_api_key,
+    }
+    try:
+        resp = requests.get(base_url, params=params, timeout=60)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        # Requests includes the fully prepared URL in its exception text. Because the
+        # Census API key is a query parameter, allowing that exception to escape leaks
+        # the credential into CI and terminal logs.
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        detail = f" (HTTP {status})" if status is not None else ""
+        raise RuntimeError(
+            f"Census ACS request failed{detail}; request credentials were redacted."
+        ) from None
+    data = resp.json()
+    frame = pd.DataFrame(data[1:], columns=data[0]).rename(
+        columns={"zip code tabulation area": "zip_code"}
+    )
+    frame["zip_code"] = clean_zip(frame["zip_code"])
+    for col in variables:
+        frame[col] = pd.to_numeric(frame[col], errors="coerce")
+    return frame
+
+
+def write_acs_housing_snapshot(
+    estimates: pd.DataFrame,
+    margins: pd.DataFrame,
+    estimate_variables: list[str],
+    margin_variables: list[str],
+    base_url: str,
+) -> None:
+    """Persist raw ACS housing counts/MOEs and a credential-free query manifest."""
+    snapshot = estimates[["zip_code", *estimate_variables]].merge(
+        margins[["zip_code", *margin_variables]],
+        on="zip_code",
+        how="left",
+        validate="one_to_one",
+    )
+    ACS_HOUSING_RAW.parent.mkdir(parents=True, exist_ok=True)
+    snapshot.to_csv(ACS_HOUSING_RAW, index=False)
+    digest = hashlib.sha256(ACS_HOUSING_RAW.read_bytes()).hexdigest()
+    manifest = {
+        "dataset": f"{YEAR} ACS 5-year detailed tables",
+        "geography": "ZIP Code Tabulation Area",
+        "endpoint": base_url,
+        "estimate_variables": estimate_variables,
+        "margin_of_error_variables": margin_variables,
+        "filters": {"for": "zip code tabulation area:*", "panel": "DER panel ZIP/ZCTAs"},
+        "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        "row_count": len(snapshot),
+        "sha256": digest,
+        "credentials_persisted": False,
+    }
+    ACS_HOUSING_MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    LOGGER.info(
+        "Wrote %s and query manifest (%s rows)",
+        ACS_HOUSING_RAW.relative_to(ROOT),
+        len(snapshot),
+    )
+
+
+def ensure_housing_structure_shares(acs: pd.DataFrame) -> pd.DataFrame:
+    """Backfill the exact residual category and validate the housing composition."""
+    acs = acs.copy()
+    component_columns = [
+        "pct_single_family_units",
+        "pct_multifamily_units",
+        "pct_mobile_home_units",
+    ]
+    if "pct_other_housing_units" not in acs.columns and all(
+        col in acs.columns for col in component_columns
+    ):
+        # B25024_011E is the residual boat/RV/van/other category. Existing processed
+        # shares used the same B25024 total denominator, so this residual is exact up
+        # to floating-point rounding and lets offline rebuilds migrate safely.
+        acs["pct_other_housing_units"] = 1.0 - acs[component_columns].sum(
+            axis=1,
+            min_count=len(component_columns),
+        )
+        near_zero = acs["pct_other_housing_units"].abs() < 1e-12
+        acs.loc[near_zero, "pct_other_housing_units"] = 0.0
+
+    missing = [c for c in HOUSING_STRUCTURE_SHARE_COLUMNS if c not in acs.columns]
+    empty = [
+        c
+        for c in HOUSING_STRUCTURE_SHARE_COLUMNS
+        if c in acs.columns and acs[c].notna().sum() == 0
+    ]
+    if missing or empty:
+        raise ValueError(
+            "acs_predictors_ca_zip.csv has no usable housing structure/tenure shares "
+            f"(missing: {missing}; all-NaN: {empty}). Rerun with a Census API key."
+        )
+
+    housing_rows = acs[HOUSING_STRUCTURE_SHARE_COLUMNS]
+    outside = (
+        (housing_rows.notna())
+        & ((housing_rows < -1e-10) | (housing_rows > 1 + 1e-10))
+    ).any(axis=1)
+    if outside.any():
+        raise ValueError(f"ACS housing shares fall outside [0, 1] for {outside.sum()} rows.")
+    structure_columns = [
+        "pct_single_family_units",
+        "pct_multifamily_units",
+        "pct_mobile_home_units",
+        "pct_other_housing_units",
+    ]
+    complete_structure = housing_rows[structure_columns].dropna()
+    structure_total = complete_structure.sum(axis=1).to_numpy(dtype=float)
+    bad_composition = ~np.isclose(structure_total, 1.0, atol=1e-8, rtol=0)
+    if bad_composition.any():
+        raise ValueError(
+            f"ACS housing structure shares do not sum to one for {bad_composition.sum()} rows."
+        )
+    return acs
 
 
 def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -683,6 +846,7 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B25024_008E",
         "B25024_009E",
         "B25024_010E",
+        "B25024_011E",
         "B03002_001E",
         "B03002_003E",
         "B03002_004E",
@@ -701,20 +865,27 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B25003_003E",
     ] + edu_vars
 
-    resp = requests.get(
-        base_url,
-        params={"get": ",".join(variables), "for": "zip code tabulation area:*", "key": census_api_key},
-        timeout=60,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    acs = pd.DataFrame(data[1:], columns=data[0]).rename(columns={"zip code tabulation area": "zip_code"})
-    acs["zip_code"] = clean_zip(acs["zip_code"])
-    for col in variables:
-        acs[col] = pd.to_numeric(acs[col], errors="coerce")
+    acs = fetch_acs_response(base_url, variables, census_api_key)
 
-    panel_zips = set(clean_zip(df_full["zip_code"]))
+    panel_zips = set(clean_zip(df_full["zip_code"])) & load_ca_zcta_codes()
     acs = acs[acs["zip_code"].isin(panel_zips)].copy()
+
+    housing_estimate_variables = [
+        *[f"B25024_{index:03d}E" for index in range(1, 12)],
+        *[f"B25003_{index:03d}E" for index in range(1, 4)],
+    ]
+    housing_margin_variables = [
+        variable[:-1] + "M" for variable in housing_estimate_variables
+    ]
+    housing_margins = fetch_acs_response(base_url, housing_margin_variables, census_api_key)
+    housing_margins = housing_margins[housing_margins["zip_code"].isin(panel_zips)].copy()
+    write_acs_housing_snapshot(
+        acs,
+        housing_margins,
+        housing_estimate_variables,
+        housing_margin_variables,
+        base_url,
+    )
     rename_map = {
         "B01003_001E": "total_population",
         "B19013_001E": "median_household_income",
@@ -729,6 +900,7 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B25024_008E": "twenty_fortynine_unit_structures",
         "B25024_009E": "fifty_plus_unit_structures",
         "B25024_010E": "mobile_home_units",
+        "B25024_011E": "other_housing_units",
         "B03002_001E": "raceeth_total",
         "B03002_003E": "white_not_hispanic",
         "B03002_004E": "black_not_hispanic",
@@ -783,6 +955,7 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         / housing_den
     )
     acs["pct_mobile_home_units"] = acs["mobile_home_units"] / housing_den
+    acs["pct_other_housing_units"] = acs["other_housing_units"] / housing_den
     # Owner share only: owner + renter sum to 1 by construction, so entering both
     # alongside an intercept would repeat the compositional trap that made the housing
     # structure shares uninterpretable (VIFs above 1000). Renters are the reference.
@@ -801,10 +974,12 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
             "pct_single_family_units",
             "pct_multifamily_units",
             "pct_mobile_home_units",
+            "pct_other_housing_units",
             "owner_occupied_rate",
             "total_population",
         ]
     ].copy()
+    acs_model = ensure_housing_structure_shares(acs_model)
     write_csv(acs_model, PROCESSED / "acs_predictors_ca_zip.csv")
 
     matched = set(acs_model["zip_code"])
@@ -1075,12 +1250,19 @@ def build_final_analysis_dataset(
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-    zcta = gpd.read_file(ZCTA_SHP)
     county = gpd.read_file(COUNTY_SHP)
+    county = county[county["STATEFP"] == "06"].copy()
+    # Loading the nationwide ZCTA layer twice made a release rebuild spend minutes
+    # parsing tens of thousands of out-of-scope geometries. Fiona's bbox filter keeps
+    # the read California-sized, and this one GeoDataFrame is reused for both county
+    # assignment and area calculations below.
+    zcta = gpd.read_file(ZCTA_SHP, bbox=tuple(county.total_bounds))
     zcta_id = "ZCTA5CE20" if "ZCTA5CE20" in zcta.columns else ("GEOID20" if "GEOID20" in zcta.columns else "GEOID")
     county_id = "GEOID" if "GEOID" in county.columns else ("GEOID20" if "GEOID20" in county.columns else "GEOID10")
     county_name_col = "NAME" if "NAME" in county.columns else None
     zcta = zcta[[zcta_id, "geometry"]].rename(columns={zcta_id: "zip_code"})
+    panel_zips = set(df["zip_code"].dropna())
+    zcta = zcta[zcta["zip_code"].astype(str).str.zfill(5).isin(panel_zips)].copy()
     keep = [county_id, "geometry"] + ([county_name_col] if county_name_col else [])
     county = county[keep].rename(columns={county_id: "county_geoid"})
     if county_name_col:
@@ -1097,19 +1279,15 @@ def build_final_analysis_dataset(
     zip_to_county = pairs.drop_duplicates("zip_code")[cols]
 
     df = df.merge(zip_to_county, on="zip_code", how="left")
-    zcta_area = gpd.read_file(ZCTA_SHP)
-    zcta_area = zcta_area[[zcta_id, "geometry"]].rename(columns={zcta_id: "zip_code"})
-    zcta_area["zip_code"] = zcta_area["zip_code"].astype(str).str.zfill(5)
-    zcta_area = zcta_area.to_crs("EPSG:5070")
-    zcta_area["area_km2"] = zcta_area.geometry.area / 1e6
-    df = df.merge(zcta_area[["zip_code", "area_km2"]], on="zip_code", how="left")
+    zcta["area_km2"] = zcta.geometry.area / 1e6
+    df = df.merge(zcta[["zip_code", "area_km2"]], on="zip_code", how="left")
     df["pop_density_km2"] = df["total_population"] / df["area_km2"].replace(0, np.nan)
     df["log_pop_density"] = np.log1p(df["pop_density_km2"])
 
-    min_n = 5
-    # astype(str) turns NaN into the string "nan", which then passes the min_n filter
-    # as if it were a real county and creates a pseudo-county in the FE and cluster
-    # specifications. Keep missing counties as NA and count them separately.
+    # Keep every valid ZIP/ZCTA in the released analysis dataset. Minimum cluster-size
+    # rules belong inside the few clustered-inference specifications, not in this
+    # shared input: applying one globally removed four otherwise eligible California
+    # ZCTAs from every model and descriptive output.
     df["county_geoid"] = df["county_geoid"].astype("string").str.strip()
     unmatched = df["county_geoid"].isna().sum()
     if unmatched:
@@ -1118,9 +1296,6 @@ def build_final_analysis_dataset(
             "area or climate controls.",
             unmatched,
         )
-    counts = df["county_geoid"].value_counts(dropna=True)
-    keep = counts[counts >= min_n].index
-    df = df[df["county_geoid"].isin(keep) | df["county_geoid"].isna()].copy()
     write_csv(df, PROCESSED / "combined_der_dataset_w_controls_predictors.csv")
     return df
 
@@ -1154,32 +1329,19 @@ def read_or_fetch_external(
         # comment by the notebook's `nunique() > 1` guard, so "Model 2C (add housing
         # structure)" degenerated into a copy of Model 1 while still exporting a table
         # that looked like a real robustness check. Fail loudly instead.
-        missing_structure = [c for c in HOUSING_STRUCTURE_SHARE_COLUMNS if c not in acs.columns]
-        empty_structure = [
-            c
-            for c in HOUSING_STRUCTURE_SHARE_COLUMNS
-            if c in acs.columns and acs[c].notna().sum() == 0
-        ]
-        if missing_structure or empty_structure:
-            raise ValueError(
-                "acs_predictors_ca_zip.csv has no usable housing-structure shares "
-                f"(missing: {missing_structure}; all-NaN: {empty_structure}). "
-                "Rerun without --skip-external and with a Census API key so ACS table "
-                "B25024 is pulled. Continuing would silently disable the housing-"
-                "structure robustness check."
-            )
+        acs = ensure_housing_structure_shares(acs)
+        acs["zip_code"] = clean_zip(acs["zip_code"])
+        acs = acs[acs["zip_code"].isin(load_ca_zcta_codes())].copy()
+        write_csv(acs, PROCESSED / "acs_predictors_ca_zip.csv", index=False)
         ghi = pd.read_csv(PROCESSED / "ca_zip_ghi_mean_2023.csv")
         temp = pd.read_csv(PROCESSED / "ca_zip_temperature_controls_2023.csv")
         wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
         zip_to_utility = pd.read_csv(PROCESSED / "zip_to_utility.csv")
         demand = pd.read_csv(PROCESSED / "demand.csv")
         energy_burden = read_energy_burden()
-        if (PROCESSED / "combined_der_dataset_acs_matched.csv").exists():
-            df_acs = pd.read_csv(PROCESSED / "combined_der_dataset_acs_matched.csv")
-        else:
-            matched = set(acs["zip_code"].astype(str).str.zfill(5))
-            df_acs = df_full[df_full["zip_code"].isin(matched)].copy()
-            write_csv(df_acs, PROCESSED / "combined_der_dataset_acs_matched.csv")
+        matched = set(acs["zip_code"].astype(str).str.zfill(5))
+        df_acs = df_full[df_full["zip_code"].isin(matched)].copy()
+        write_csv(df_acs, PROCESSED / "combined_der_dataset_acs_matched.csv")
         return acs, df_acs, ghi, temp, wind, zip_to_utility, demand, energy_burden
 
     acs, df_acs = fetch_acs_predictors(df_full, args.census_api_key)
