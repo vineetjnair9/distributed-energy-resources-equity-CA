@@ -831,3 +831,65 @@ code {
     min-width: 500px;
   }
 }
+
+/* Cross-references, numbered equations, and multi-panel figures. */
+.xref {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-soft);
+  white-space: nowrap;
+}
+
+.xref:hover,
+.xref:focus {
+  border-bottom-color: var(--accent);
+}
+
+figure.paper-figure,
+.table-wrap,
+.equation,
+.model-card,
+.appendix-card,
+article h2,
+article h3 {
+  scroll-margin-top: 6rem;
+}
+
+:target {
+  animation: xref-flash 1.6s ease-out;
+}
+
+@keyframes xref-flash {
+  from { background-color: var(--accent-soft); }
+  to { background-color: transparent; }
+}
+
+.equation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 0.9rem 0 1.15rem;
+}
+
+.equation .model-formula {
+  margin-top: 0;
+}
+
+.equation-number {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+}
+
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+@media (max-width: 720px) {
+  .figure-grid {
+    grid-template-columns: 1fr;
+  }
+}
