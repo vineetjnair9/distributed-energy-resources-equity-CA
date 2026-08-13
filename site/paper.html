@@ -497,6 +497,12 @@
           <p>The energy-burden connection differs by technology (<a class="xref" href="#sec-4-5">Section 4.5</a>). For rooftop PV, lower deployment in communities with larger Black and Asian population shares matters because PV is one of the main household-level pathways through which customers can reduce net electricity costs or hedge against future rate increases. For storage, the Model 9 result (<a class="xref" href="#tbl-storage-m9">Table 4</a>) is especially relevant: even after conditioning on local PV deployment, storage disparities remain, which means the resilience benefit associated with backup power is not simply following solar access in an equitable way. In high-burden communities, that can compound vulnerability because households may face both higher bill stress and weaker access to outage protection.</p>
           <p>EV charging raises a related but distinct burden issue. Transportation electrification can lower fuel and maintenance costs for some households, but only if charging is practically usable, affordable, and located near daily routines. The positive poverty-rate coefficient in aggregate charger models therefore should not be interpreted as evidence that higher-poverty communities are necessarily better positioned to benefit from EV adoption. If chargers are concentrated in commercial, workplace, corridor, municipal, or other non-residential settings, then the count may represent infrastructure presence without equivalent household-serving access, particularly for renters, multifamily residents, and households without reliable home charging.</p>
           <p>The present paper does not include a dedicated transit, corridor, tenure, or charger-host dataset, so it cannot fully unpack why charging is more prevalent in some higher-poverty ZIP/ZCTAs. That remains an important extension. But the current evidence is already sufficient to show that aggregate infrastructure counts should not be mistaken for equitable access, and that future DER planning needs to distinguish commercial siting from household-serving benefit. Connecting DER deployment to energy burden therefore requires more than asking where assets are installed; it requires asking whether the communities with the highest bill, resilience, and electrification pressures can actually use the technologies being counted.</p>
+
+          <h3 id="sec-5-5">5.5 Potential policy measures to address inequities</h3>
+          <p>The results imply different levers for different actors, and different emphases by technology. The cross-technology divergence argues against a single “DER equity” mandate. PV, storage, and charging require distinct instruments, and measuring success by undifferentiated deployment counts risks mistaking infrastructure presence for equitable benefit.</p>
+          <p><strong>Lawmakers and public-sector agencies.</strong> Racial disparities persist after income controls, so eligibility rules keyed only to income or to generic “disadvantaged community” designations will miss communities that are underserved on race-correlated dimensions. Storage warrants the sharpest targeting. Resilience rebates such as successors to SGIP, backup-power provisioning, and community-storage programs should weight toward communities exposed to outages and wildfire shutoffs, since the Model 9 result (<a class="xref" href="#tbl-storage-m9">Table 4</a>) shows the storage gap does not follow PV access. For charging, procurement targets should measure usable residential access through multifamily, curbside, and renter-serving deployment rather than aggregate charger counts, which the subtype results (<a class="xref" href="#tbl-charger-subtypes">Table 5</a> and <a class="xref" href="#fig-charger-subtypes">Figure 9</a>) show can overstate access.</p>
+          <p><strong>Grid operators and regulators.</strong> Adoption is partly gated by hosting-capacity and interconnection frictions that are themselves socially patterned (Brockway et al. 2021; Aydin et al. 2025). Equity should enter distribution planning directly. Operators can publish hosting-capacity and interconnection-queue outcomes disaggregated by community demographics, and pilot fairness-aware hosting-capacity allocation so that grid upgrades do not concentrate where adoption is already high.</p>
+          <p><strong>Private utilities and market actors.</strong> Persistent PV and storage gaps after income controls point to non-price barriers: installer market penetration, financing access, and split incentives for renters. Third-party ownership, on-bill and inclusive financing, community solar-plus-storage, and installer outreach in low-penetration areas can address adoption frictions that subsidies do not, as long as program design does not re-advantage households that are already well positioned.</p>
         </section>
         <section id="methods">
           <h2>6. Methods</h2>
@@ -666,6 +672,20 @@
                 </div>
               </div>
             </div>
+
+            <div class="model-card" id="model-9">
+              <div class="model-number">9</div>
+              <div>
+                <h4>Outcome-Specific DER Cross-Control and Extension Models</h4>
+                <p>Model 9 (storage, with PV control) adds local PV deployment to the storage model, to test whether storage disparities persist after conditioning on upstream PV deployment. <a class="xref" href="#eq-14">Equation (14)</a> states the combined specification. Model 9A (predicting burden) instead adds DER deployment terms to the energy-burden outcome models, to examine whether DER deployment is associated with household energy burden or affordability gaps. These are two distinct specifications with different outcomes and different control sets; they are labelled separately in all exported tables and figures.</p>
+                <p>Exported names: <code>Model 9 + pv control (most controlled)</code>; <code>Model 9A (predicting burden)</code></p>
+                <div class="equation" id="eq-14">
+                  <code class="model-formula">y_z = β_0 + β RaceSES_z + γX_z + λ Infrastructure_z + ϕ Demand_z + ψ DER_z + ε_z</code>
+                  <span class="equation-number">(14)</span>
+                </div>
+                <p>Because these two variants differ in both outcome and control set, I treat them as targeted robustness and extension models rather than a single, uniform specification applied across all outcomes. Estimates for the storage variant are reported in <a class="xref" href="#tbl-storage-m9">Table 4</a>.</p>
+              </div>
+            </div>
           </div>
           <p>The coefficient paths these specifications produce are summarized in <a class="xref" href="#fig-coefficient-path">Figure 4</a>. Taken together, this model ladder allows me to ask a structured question: do racial/ethnic disparities shrink meaningfully once I account for socioeconomic status, geography, utility context, and infrastructure, or do they remain persistent across specifications?</p>
 
@@ -733,30 +753,138 @@
               <p><strong>Figure 20.</strong> Wind capacity: cross-validated predictive comparison of linear and nonlinear models. Wind remains supplementary in the paper (<a class="xref" href="#sec-4-8">Section 4.8</a>), but the export is preserved here as a contextual benchmark against the consumer-facing DER outcomes.</p>
             </div>
           </div>
+
+          <h3 id="sec-appx-diagnostics">Statistical robustness and diagnostics</h3>
+          <p>The remainder of the appendix reports diagnostic checks on the estimating equations rather than additional descriptive figures (<a class="xref" href="#tbl-vif">Table 7</a>, <a class="xref" href="#tbl-moran">Table 8</a>, and <a class="xref" href="#tbl-conley">Table 9</a>). These do not alter any point estimate; they characterise how much confidence the standard errors deserve and where the specification is strained. <a class="xref" href="#sec-6-9">Section 6.9</a> describes the diagnostic strategy these checks implement.</p>
+
+          <h4>Multicollinearity diagnostics</h4>
+          <p>Variance inflation factors for the Solar PV models (<a class="xref" href="#tbl-vif">Table 7</a>), chosen to show both a well-conditioned specification and a poorly conditioned one. The baseline is comfortable throughout. Adding log housing value inflates log median income from <code>3.10</code> to <code>4.95</code>, which is the overlap between income, poverty and housing value that a reviewer would expect to see quantified. The housing structure and tenure controls in Model 2D stay under <code>6</code> despite owner-occupancy correlating <code>-0.83</code> with multifamily share. The per-capita infrastructure specification is the cautionary case: wind MW per 100k and turbines per 100k are two measures of the same quantity and reach <code>27.4</code>, so their individual coefficients should not be read separately. VIF tables for every model and outcome are exported alongside the coefficient tables.</p>
+          <div class="table-wrap" id="tbl-vif">
+            <div class="table-title"><strong>Table 7.</strong> Variance inflation factors across four Solar PV specifications.</div>
+            <table class="paper-table">
+              <thead>
+                <tr>
+                  <th>Predictor</th>
+                  <th>M1 baseline</th>
+                  <th>M2 + housing value</th>
+                  <th>M2D + structure/tenure</th>
+                  <th>M7 per-capita infrastructure</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Log median income</td><td>3.10</td><td>4.95</td><td>3.64</td><td>3.18</td></tr>
+                <tr><td>Poverty rate</td><td>2.59</td><td>2.68</td><td>2.77</td><td>2.61</td></tr>
+                <tr><td>% Hispanic</td><td>1.42</td><td>1.44</td><td>1.60</td><td>1.47</td></tr>
+                <tr><td>% Asian</td><td>1.26</td><td>1.29</td><td>1.37</td><td>1.34</td></tr>
+                <tr><td>Solar irradiance (GHI)</td><td>1.15</td><td>1.18</td><td>1.17</td><td>1.15</td></tr>
+                <tr><td>% Black</td><td>1.04</td><td>1.05</td><td>1.12</td><td>1.06</td></tr>
+                <tr><td>Log housing value</td><td>—</td><td>2.85</td><td>—</td><td>—</td></tr>
+                <tr><td>% owner-occupied</td><td>—</td><td>—</td><td>5.29</td><td>—</td></tr>
+                <tr><td>% multifamily units</td><td>—</td><td>—</td><td>4.60</td><td>—</td></tr>
+                <tr><td>% mobile-home units</td><td>—</td><td>—</td><td>1.52</td><td>—</td></tr>
+                <tr><td>Wind MW per 100k</td><td>—</td><td>—</td><td>—</td><td><span class="coef">27.40</span></td></tr>
+                <tr><td>Turbines per 100k</td><td>—</td><td>—</td><td>—</td><td><span class="coef">27.38</span></td></tr>
+                <tr><td>Storage MW per 100k</td><td>—</td><td>—</td><td>—</td><td>1.15</td></tr>
+                <tr><td>Plant MW per 100k</td><td>—</td><td>—</td><td>—</td><td>1.02</td></tr>
+                <tr><td><strong>Maximum VIF</strong></td><td><strong>3.10</strong></td><td><strong>4.95</strong></td><td><strong>5.29</strong></td><td><strong>27.40</strong></td></tr>
+              </tbody>
+            </table>
+            <div class="table-note">Values above about 10 indicate a coefficient is not separately identified; an em dash means the predictor does not enter that model.</div>
+          </div>
+
+          <h4>Spatial autocorrelation of residuals</h4>
+          <p>Moran’s I computed on the OLS residuals using row-standardised eight-nearest-neighbour weights over ZCTA centroids, with pseudo p-values from 999 permutations (<a class="xref" href="#tbl-moran">Table 8</a>). All 72 tests (six outcomes by four specifications by three neighbour counts) return <code>p &lt; 0.001</code>, so residual spatial dependence is present throughout rather than marginal. Two patterns are worth noting. Including latitude and longitude linearly absorbs almost none of it, and for energy burden it is slightly worse than the baseline, so that specification should not be read as a geographic robustness check. County fixed effects remove roughly two-thirds of the dependence for PV and storage but leave it clearly present, which indicates clustering at a finer scale than counties. County-clustered standard errors therefore address the right concern at too coarse a resolution, and the reported standard errors are likely to be conservative rather than sufficient. Conley spatial HAC standard errors (<a class="xref" href="#tbl-conley">Table 9</a>) are the natural next step. Results are stable across four, eight and sixteen neighbours; the full grid is exported to <code>outputs/tables/morans_i_residuals.csv</code>.</p>
+          <div class="table-wrap" id="tbl-moran">
+            <div class="table-title"><strong>Table 8.</strong> Moran’s I on OLS residuals, eight-nearest-neighbour weights.</div>
+            <table class="paper-table">
+              <thead>
+                <tr>
+                  <th>Outcome</th>
+                  <th>M1 baseline</th>
+                  <th>M6A + lat/lon</th>
+                  <th>M6B county FE</th>
+                  <th>M8 + demand proxy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Solar PV</td><td>0.436</td><td>0.425</td><td>0.145</td><td>0.358</td></tr>
+                <tr><td>Storage</td><td>0.318</td><td>0.313</td><td>0.095</td><td>0.150</td></tr>
+                <tr><td>EV chargers (aggregate)</td><td>0.140</td><td>0.131</td><td>0.078</td><td>0.127</td></tr>
+                <tr><td>EV chargers (Level 2)</td><td>0.163</td><td>0.152</td><td>0.101</td><td>0.149</td></tr>
+                <tr><td>Energy burden</td><td>0.352</td><td>0.435</td><td>0.276</td><td>0.289</td></tr>
+                <tr><td>Log affordability gap</td><td>0.153</td><td>0.141</td><td>0.112</td><td>0.127</td></tr>
+              </tbody>
+            </table>
+            <div class="table-note">Every entry is significant at <code>p &lt; 0.001</code> by permutation test. Larger values indicate stronger spatial clustering of what the model fails to explain.</div>
+          </div>
+
+          <h4>Conley spatial HAC standard errors</h4>
+          <p>Given the residual spatial dependence documented above (<a class="xref" href="#tbl-moran">Table 8</a>), I recompute the baseline standard errors following Conley (1999) (<a class="xref" href="#tbl-conley">Table 9</a>), allowing residuals to covary with great-circle distance under a Bartlett kernel. Point estimates are unchanged by construction; only the standard errors move. Because there is no consensus rule for the distance cutoff, several are reported. Standard errors rise by up to a factor of three relative to HC1 and plateau between 100 and 200 kilometres, consistent with clustering at utility-territory and metropolitan scale. The substantive conclusions hold but their relative strength changes. The Asian-share coefficients for PV and storage remain significant at the 0.1 percent level at every cutoff and are the most robust results in the paper. The Black-share coefficients remain negative and significant at the 5 percent level but are less precisely estimated than the HC1 errors imply, so they should be described accordingly. The positive poverty coefficient for aggregate charging, which underpins the charger-composition argument, survives at the 1 percent level.</p>
+          <div class="table-wrap" id="tbl-conley">
+            <div class="table-title"><strong>Table 9.</strong> Conley spatial HAC standard errors for the baseline specification, Bartlett kernel over great-circle distance.</div>
+            <table class="paper-table">
+              <thead>
+                <tr>
+                  <th>Term</th>
+                  <th>Coefficient</th>
+                  <th>HC1</th>
+                  <th>Conley 50 km</th>
+                  <th>Conley 100 km</th>
+                  <th>Conley 200 km</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="6"><strong>Solar PV</strong></td></tr>
+                <tr><td>Log median income</td><td><span class="coef">0.125</span></td><td>0.038**</td><td>0.053*</td><td>0.056*</td><td>0.054*</td></tr>
+                <tr><td>% Black</td><td><span class="coef">-0.764</span></td><td>0.109***</td><td>0.173***</td><td>0.238**</td><td>0.300*</td></tr>
+                <tr><td>% Hispanic</td><td><span class="coef">0.014</span></td><td>0.049</td><td>0.105</td><td>0.122</td><td>0.145</td></tr>
+                <tr><td>% Asian</td><td><span class="coef">-0.583</span></td><td>0.048***</td><td>0.071***</td><td>0.086***</td><td>0.086***</td></tr>
+                <tr><td>Poverty rate</td><td><span class="coef">-0.048</span></td><td>0.219</td><td>0.240</td><td>0.254</td><td>0.260</td></tr>
+                <tr><td colspan="6"><strong>Storage</strong></td></tr>
+                <tr><td>Log median income</td><td><span class="coef">0.779</span></td><td>0.122***</td><td>0.177***</td><td>0.178***</td><td>0.166***</td></tr>
+                <tr><td>% Black</td><td><span class="coef">-1.651</span></td><td>0.329***</td><td>0.465***</td><td>0.557**</td><td>0.642*</td></tr>
+                <tr><td>% Hispanic</td><td><span class="coef">-0.608</span></td><td>0.126***</td><td>0.205**</td><td>0.212**</td><td>0.181***</td></tr>
+                <tr><td>% Asian</td><td><span class="coef">-1.784</span></td><td>0.162***</td><td>0.293***</td><td>0.346***</td><td>0.341***</td></tr>
+                <tr><td>Poverty rate</td><td><span class="coef">-0.197</span></td><td>0.562</td><td>0.683</td><td>0.713</td><td>0.684</td></tr>
+                <tr><td colspan="6"><strong>EV chargers (aggregate)</strong></td></tr>
+                <tr><td>Log median income</td><td><span class="coef">0.160</span></td><td>0.098</td><td>0.131</td><td>0.121</td><td>0.104</td></tr>
+                <tr><td>% Black</td><td><span class="coef">-0.009</span></td><td>0.343</td><td>0.274</td><td>0.292</td><td>0.285</td></tr>
+                <tr><td>% Hispanic</td><td><span class="coef">-0.403</span></td><td>0.105***</td><td>0.156**</td><td>0.165*</td><td>0.172*</td></tr>
+                <tr><td>% Asian</td><td><span class="coef">0.413</span></td><td>0.147**</td><td>0.208*</td><td>0.220</td><td>0.200*</td></tr>
+                <tr><td>Poverty rate</td><td><span class="coef">2.004</span></td><td>0.497***</td><td>0.642**</td><td>0.675**</td><td>0.694**</td></tr>
+              </tbody>
+            </table>
+            <div class="table-note">Coefficients are identical across columns; only the standard errors differ. Stars denote significance under each estimator.</div>
+          </div>
         </section>
 
         <section id="references">
           <h2>9. References</h2>
           <ol class="refs">
-            <li>American Council for an Energy-Efficient Economy (ACEEE). 2023. <em>Racial disparities in the energy burden</em>.</li>
-            <li>Borenstein, Severin, and James Bushnell. 2016. Work on residential electricity rate design and equity implications for DER uptake.</li>
-            <li>Brockway, Anna M., et al. 2021. “Inequitable access to distributed energy resources due to grid infrastructure limits in California.”</li>
-            <li>Caballero-Peña, et al. 2022. Work on network impacts of DERs and distribution-system constraints.</li>
-            <li>California Public Utilities Commission (CPUC). 2021. <em>Distributed Energy Resources Integration Research Roadmap</em>.</li>
-            <li>Clean Energy Group. 2021. <em>Energy Storage as an Equity Asset</em>.</li>
-            <li>Federal Energy Regulatory Commission (FERC) Staff. 2018. <em>Distributed Energy Resources: Technological and Policy Considerations</em>.</li>
-            <li>Feinberg, et al. 2017. “Data-driven planning amidst socio-technical complexities.”</li>
-            <li>Greenlining Institute. 2024. <em>Demystifying Equity in California’s Energy Grid Transition</em>.</li>
-            <li>Gridworks. 2022. <em>Advancing Equity in Access to DERs in California</em>.</li>
-            <li>Kurdgelashvili, Lado, Roy Kwon, and Peter Larsen. 2019. “An empirical analysis of county-level residential PV adoption in California.”</li>
-            <li>Lukanov, Boris R., and Elizabeth M. Krieger. 2019. “Distributed solar and environmental justice: Exploring the demographic and socio-economic trends of residential PV adoption in California.”</li>
-            <li>NREL / DOE. n.d. <em>Optimal coordination of flexible DERs</em>.</li>
-            <li>Parra, et al. 2017. “Assessing the implications of socioeconomic diversity for low-carbon technology uptake in electrical distribution networks.”</li>
-            <li>SEIA / Vote Solar. 2022. Work on California community-solar policy gaps and renter exclusion.</li>
-            <li>Stokes, Leah C., and Christopher Warshaw. 2022. Work on motivations and barriers to residential solar adoption.</li>
-            <li>Sunter, Deborah A., Sergio Castellanos, and Daniel M. Kammen. 2019. “Disparities in rooftop photovoltaics deployment in the United States by race and ethnicity.”</li>
-            <li>U.S. Department of Energy. 2023. <em>Towards Closing the Data Gap</em>.</li>
-            <li>Urban Institute. 2023. <em>Identifying Disadvantaged Communities in the United States</em>.</li>
+            <li>B. R. Lukanov and E. M. Krieger, “Distributed solar and environmental justice: Exploring the demographic and socio-economic trends of residential PV adoption in California,” Energy Policy, vol. 134, 2019, doi: 10.1016/j.enpol.2019.110935.</li>
+            <li>D. A. Sunter, S. Castellanos, and D. M. Kammen, “Disparities in rooftop photovoltaics deployment in the United States by race and ethnicity,” Nat. Sustain., vol. 2, no. 1, pp. 71–76, Jan. 2019, doi: 10.1038/s41893-018-0204-z.</li>
+            <li>L. Kurdgelashvili, C. H. Shih, F. Yang, and M. Garg, “An empirical analysis of county-level residential PV adoption in California,” Technol. Forecast. Soc. Change, vol. 139, 2019, doi: 10.1016/j.techfore.2018.11.021.</li>
+            <li>T. G. Reames, “Distributional disparities in residential rooftop solar potential and penetration in four cities in the United States,” Energy Res. Soc. Sci., vol. 69, p. 101612, Nov. 2020, doi: 10.1016/J.ERSS.2020.101612.</li>
+            <li>N. R. Darghouth, E. O’Shaughnessy, S. Forrester, and G. Barbose, “Characterizing local rooftop solar adoption inequity in the US,” Environmental Research Letters, vol. 17, no. 3, p. 034028, Feb. 2022, doi: 10.1088/1748-9326/AC4FDC.</li>
+            <li>C. Sigrist, A. Lechowicz, J. Champ, N. Bashir, and M. Hajiesmaili, “Lost in Siting: The Hidden Carbon Cost of Inequitable Residential Solar Installations,” Jan. 2025, [Online]. Available: <a href="http://arxiv.org/abs/2501.13868" rel="noopener">http://arxiv.org/abs/2501.13868</a></li>
+            <li>A. Drehobl, L. Ross, R. Ayala, A. Zaman, and J. Amann, “An Assessment of National and Metropolitan Energy Burden across the United States SEPTEMBER 2020 How High Are Household Energy Burdens?,” 2020.</li>
+            <li>“Demystifying Equity in California’s Energy Grid Transition BLOG ENERGY EQUITY.”</li>
+            <li>T. Light, E. McIntosh, and O. Stephenson, “Advancing Equity in Access to Distributed Energy Resources in California,” Journal of Science Policy &amp; Governance, 2022, doi: 10.38126/jspg200106.</li>
+            <li>S. P. Forrester, C. C. Montañés, E. O’Shaughnessy, and G. Barbose, “Modeling the potential effects of rooftop solar on household energy burden in the United States,” Nature Communications 2024 15:1, vol. 15, no. 1, pp. 4676-, Jun. 2024, doi: 10.1038/s41467-024-48967-x.</li>
+            <li>A. Brockway and D. Callaway, “California’s omission of community solar from distributed energy policies is shortsighted,” 2022.</li>
+            <li>J. Caballero-Peña, C. Cadena-Zarate, A. Parrado-Duque, and G. Osma-Pinto, “Distributed energy resources on distribution networks: A systematic review of modelling, simulation, metrics, and impacts,” International Journal of Electrical Power &amp; Energy Systems, vol. 138, p. 107900, Jun. 2022, doi: 10.1016/J.IJEPES.2021.107900.</li>
+            <li>“Distributed Energy Resources Technical Considerations for the Bulk Power System,” 2018.</li>
+            <li>R. Mcallister, M. Coddington, M. Kolb, S. Murtishaw, L. Schwartz, and S. Sergici, “WESTERN INTERSTATE ENERGY BOARD Distributed Energy Resources: Technological and Policy Considerations of Hosting Capacity and Locational Value Acknowledgements Disclaimer,” 2016.</li>
+            <li>B. Aydin, R. Holt, and M. Almassalkhi, “Fairness-aware Dynamic Hosting Capacity and the Impacts of Strategic Solar PV Curtailment,” Apr. 2025, [Online]. Available: <a href="http://arxiv.org/abs/2504.18905" rel="noopener">http://arxiv.org/abs/2504.18905</a></li>
+            <li>“Distributed Energy Resource Interconnection Roadmap.”</li>
+            <li>B. Tarekegne, R. O’Neil, and J. Twitchell, “Energy Storage as an Equity Asset,” 2021. doi: 10.1007/s40518-021-00184-6.</li>
+            <li>L. C. Stokes and C. Warshaw, “Renewable energy policy design and framing influence public support in the United States,” Nat. Energy, vol. 2, no. 8, Aug. 2017, doi: 10.1038/NENERGY.2017.107.</li>
+            <li>S. Borenstein and J. Bushnell, “The U.S. Electricity Industry after 20 Years of Restructuring,” 2015, doi: 10.1146/annureveconomics-080614-115630.</li>
+            <li>T. Light, E. McIntosh, and O. Stephenson, “Advancing Equity in Access to Distributed Energy Resources in California,” Journal of Science Policy &amp; Governance, 2022, doi: 10.38126/jspg200106.</li>
+            <li>S. Churchill and J. B. Armstrong, “BEFORE THE PUBLIC UTILITIES COMMISSION OF THE STATE OF CALIFORNIA OPENING BRIEF OF THE SOLAR ENERGY INDUSTRIES ASSOCIATION AND VOTE SOLAR VOTE SOLAR,” 2021.</li>
+            <li>M. Alipour, E. Irannezhad, R. A. Stewart, and O. Sahin, “Exploring residential solar PV and battery energy storage adoption motivations and barriers in a mature PV market,” Renew. Energy, vol. 190, 2022, doi: 10.1016/j.renene.2022.03.040.</li>
+            <li>R. Haider, Y. Xu, and W. Yang, “Towards closing the data gap: A project-driven distributed energy resource dataset for the U.S. Grid,” in e-Energy 2023 Companion - Proceedings of the 14th ACM International Conference on Future Energy Systems, 2023. doi: 10.1145/3599733.3600250.</li>
+            <li>L. Ge, T. Du, C. Li, Y. Li, J. Yan, and M. U. Rafiq, “Virtual Collection for Distributed Photovoltaic Data: Challenges, Methodologies, and Applications,” 2022. doi: 10.3390/en15238783.</li>
           </ol>
         </section>
       </article>

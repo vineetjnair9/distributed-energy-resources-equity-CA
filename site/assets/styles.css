@@ -152,6 +152,15 @@ h3 {
   margin: 1.45rem 0 0.45rem;
 }
 
+/* subsection headings in running prose, e.g. the appendix diagnostics;
+   the card variants below override this inside .model-card / .appendix-card */
+article h4 {
+  font-size: 1rem;
+  line-height: 1.3;
+  margin: 1.25rem 0 0.4rem;
+  color: #17202a;
+}
+
 p {
   margin: 0.45rem 0 1rem;
   font-size: 1.03rem;
