@@ -152,3 +152,16 @@ If you want to understand the project from start to finish, the most useful orde
 ## Legacy background
 
 This repository started partly as a broader DER data catalog and county-level mapping effort. The notebooks under `data/mapping_files/` reflect that earlier structure and are useful background, but they are not part of the main final California ZIP-level regression workflow.
+
+## Licensing
+
+The code in this repository -- the pipeline, scripts, notebooks, and tests -- is
+released under the MIT License; see [LICENSE](LICENSE).
+
+The dataset is released separately under CC-BY-4.0 as a Zenodo record, built by
+`scripts/make_zenodo_bundle.py` from the metadata in `release/zenodo/`.
+
+Raw third-party inputs are neither redistributed nor relicensed here. They remain
+under their own terms and carry their own citation requirements -- notably LBNL
+*Tracking the Sun*, the USGS US Wind Turbine Database, CaliforniaDGStats, NASA POWER,
+and the US Census Bureau. `data/raw/SOURCES.md` documents each with a retrieval URL.
