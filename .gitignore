@@ -16,3 +16,9 @@ data/der_tool.db
 # Rebuild with: python scripts/make_zenodo_bundle.py --archive
 release/zenodo-bundle/
 release/zenodo-bundle.zip
+
+# Derived analysis data (~1.0GB), regenerated from data/raw by the pipeline.
+# Not versioned: it is rewritten wholesale on every run, so each commit added a
+# near-complete copy to LFS. The citable snapshot lives in the Zenodo record.
+# Rebuild with: python scripts/rebuild_processed_data.py
+data/processed/
