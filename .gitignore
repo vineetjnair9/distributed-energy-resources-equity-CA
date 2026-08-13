@@ -11,3 +11,8 @@ __pycache__/
 # Generated SQLite database (~300MB, over GitHub's 100MB file limit).
 # Rebuild with: python scripts/run_all.py --only database
 data/der_tool.db
+
+# Generated Zenodo upload bundle (~134MB) and its archive.
+# Rebuild with: python scripts/make_zenodo_bundle.py --archive
+release/zenodo-bundle/
+release/zenodo-bundle.zip

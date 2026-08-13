@@ -1,0 +1,35 @@
+{
+  "title": "California ZIP/ZCTA Distributed Energy Resource Equity Dataset (2023)",
+  "upload_type": "dataset",
+  "description": "ZIP/ZCTA-level dataset for California integrating rooftop solar PV, battery storage, EV charging infrastructure, wind, and power-plant capacity with American Community Survey demographic predictors, NASA POWER climate controls, electric utility territory, electricity demand, and energy-burden measures. Built for equity analysis across multiple DER types under a consistent set of outcomes and controls. See README.md in this record for contents, provenance, and reproduction instructions.",
+  "creators": [
+    {
+      "name": "Knutson, Danielle",
+      "affiliation": "Massachusetts Institute of Technology"
+    }
+  ],
+  "keywords": [
+    "distributed energy resources",
+    "energy equity",
+    "environmental justice",
+    "rooftop solar",
+    "battery storage",
+    "electric vehicle charging",
+    "California",
+    "ZIP Code Tabulation Area",
+    "American Community Survey",
+    "energy burden"
+  ],
+  "license": "cc-by-4.0",
+  "access_right": "open",
+  "language": "eng",
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/vineetjnair9/DER_data_UROP",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "notes": "Raw third-party inputs are not redistributed in this record. They are public and are cited with retrieval URLs in SOURCES.md, and scripts/fetch_exact_public_data.py downloads the pinned snapshots."
+}
