@@ -411,7 +411,10 @@ def plot_stability_from_csvs(
             alpha=0.15,
             linewidth=0,
         )
-        ax.plot(s["x"], s["coef"], color=color, lw=2.2, marker="o", ms=6.8, mec="white", mew=0.8)
+        # Line only, no marker. The two scatters below draw a marker at every point, and a
+        # marker here would sit underneath them in solid colour: on a transparent canvas
+        # HOLLOW_FACE is "none", so it showed through and every point read as filled.
+        ax.plot(s["x"], s["coef"], color=color, lw=2.2)
         sig = s["pval"] < 0.05
         ax.scatter(
             s.loc[sig, "x"],
@@ -584,7 +587,9 @@ def plot_energy_burden_model_ladder_from_csvs(
             s["x"] = s["model"].map(model_to_x).astype(float)
             color = TERM_COLORS.get(term, "#374151")
             ax.vlines(s["x"], s["conf_low"], s["conf_high"], color=color, alpha=0.22, linewidth=2)
-            ax.plot(s["x"], s["coef"], color=color, lw=2.1, marker="o", ms=6.2, label=TERM_LABELS.get(term, term))
+            # Line only; see the note in plot_stability_from_csvs. A solid marker here
+            # showed through the transparent face of the "not significant" scatter.
+            ax.plot(s["x"], s["coef"], color=color, lw=2.1, label=TERM_LABELS.get(term, term))
             sig = s["pval"] < 0.05
             ax.scatter(s.loc[sig, "x"], s.loc[sig, "coef"], s=60, facecolor=color, edgecolor="white", linewidth=1, zorder=4)
             ax.scatter(
