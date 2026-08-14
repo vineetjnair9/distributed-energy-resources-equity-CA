@@ -24,5 +24,4 @@ release/zenodo-bundle.zip
 data/processed/
 
 # Local safety copies taken before editing the manuscript (~18MB each).
-# site/index_backup_20260703_151243.docx predates this rule and is still tracked.
 site/index_backup_*.docx
