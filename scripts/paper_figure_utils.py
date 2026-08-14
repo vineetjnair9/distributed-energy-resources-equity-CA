@@ -881,9 +881,14 @@ def plot_charger_subtype_comparison(
         for yi, (_, row) in zip(y, df.iterrows()):
             color = TERM_COLORS.get(row["term"], "#374151")
             ax.hlines(yi, row["conf_low"], row["conf_high"], color=color, lw=2.4, alpha=0.95)
-            ax.plot(row["coef"], yi, "o", color=color, ms=7.3, mec="white", mew=0.9)
+            # Same convention as the coefficient ladders: filled means p < 0.05, hollow
+            # means p >= 0.05. This figure previously filled every marker and added an
+            # outer ring for significance, which read as the opposite of the ladders.
+            # Draw one marker only, so a hollow face is not backed by a solid one.
             if row["pval"] < 0.05:
-                ax.plot(row["coef"], yi, "o", ms=10.5, mfc="none", mec=color, mew=1.5)
+                ax.plot(row["coef"], yi, "o", ms=7.3, mfc=color, mec="white", mew=0.9)
+            else:
+                ax.plot(row["coef"], yi, "o", ms=7.3, mfc=HOLLOW_FACE, mec=color, mew=1.6)
             xmins.append(float(row["conf_low"]))
             xmaxs.append(float(row["conf_high"]))
 
@@ -903,12 +908,9 @@ def plot_charger_subtype_comparison(
         ax.set_xlabel("Standardized coefficient estimate")
 
     fig.tight_layout(rect=[0.03, 0.13, 0.985, 0.985])
-    ring = Line2D([0], [0], marker="o", linestyle="none", markerfacecolor="none",
-                  markeredgecolor=MUTED, markeredgewidth=1.5, markersize=11,
-                  label="ringed marker: p < 0.05")
     add_figure_legend(
         fig,
-        term_color_handles(var_order) + [ci_handle(), ring],
+        term_color_handles(var_order) + [ci_handle()] + significance_marker_handles(),
         ncol=4,
         y=0.058,
         note=SIG_NOTE,
