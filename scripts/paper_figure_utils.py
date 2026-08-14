@@ -351,6 +351,22 @@ def plot_dot_whisker_from_csvs(
     return fig
 
 
+def _canonical_ladder_term(term: str, terms_keep: Iterable[str]) -> str:
+    """Map a centered main effect back to its base term for the stability ladders.
+
+    Centered specifications (Model 4) suffix main effects with "_c". Because the model
+    is mean-centered, that coefficient is the effect at the mean of the interacting
+    variable, which is the quantity the uncentered specifications report. Without this
+    alias the race rows have no estimate at Model 4 and the ladder interpolates across
+    the gap. Interaction terms keep their own names and are never plotted as main effects.
+    """
+    if ":" in term:
+        return term
+    if term.endswith("_c") and term[:-2] in set(terms_keep):
+        return term[:-2]
+    return term
+
+
 def plot_stability_from_csvs(
     all_coefs: pd.DataFrame,
     outcome: str,
@@ -364,8 +380,17 @@ def plot_stability_from_csvs(
     sub = all_coefs[
         (all_coefs["outcome"] == outcome)
         & (all_coefs["model"].isin(models_keep))
-        & (all_coefs["term"].isin(terms_keep))
     ].copy()
+    sub["term"] = sub["term"].map(lambda t: _canonical_ladder_term(t, terms_keep))
+    sub = sub[sub["term"].isin(terms_keep)].copy()
+
+    collisions = sub.duplicated(subset=["model", "term"]).sum()
+    if collisions:
+        raise ValueError(
+            f"{outcome}: {collisions} model/term collisions after centering aliases; "
+            "a specification reports both the centered and uncentered form of a term."
+        )
+
     sub["model"] = pd.Categorical(sub["model"], categories=models_keep, ordered=True)
 
     fig, axes = plt.subplots(len(terms_keep), 1, figsize=(12.6, 1.9 * len(terms_keep) + 1.7), sharex=True)
