@@ -22,3 +22,7 @@ release/zenodo-bundle.zip
 # near-complete copy to LFS. The citable snapshot lives in the Zenodo record.
 # Rebuild with: python scripts/rebuild_processed_data.py
 data/processed/
+
+# Local safety copies taken before editing the manuscript (~18MB each).
+# site/index_backup_20260703_151243.docx predates this rule and is still tracked.
+site/index_backup_*.docx
