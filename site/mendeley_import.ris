@@ -79,3 +79,39 @@ PY  - 2023
 UR  - https://cecgis-caenergy.opendata.arcgis.com/
 N1  - SCOUT ArcGIS FeatureServer layer, used for the ZIP-to-utility crosswalk.
 ER  -
+
+TY  - DATA
+AU  - California Energy Commission
+TI  - California Energy Storage System Survey
+PB  - California Energy Commission, Energy Almanac
+PY  - 2024
+UR  - https://www.energy.ca.gov/data-reports/energy-almanac/california-electricity-data/california-energy-storage-system-survey
+N1  - Battery storage nameplate capacity by ZIP code and customer sector.
+ER  -
+
+TY  - DATA
+AU  - California Energy Commission
+TI  - Zero Emission Vehicle and Infrastructure Statistics
+PB  - California Energy Commission, Energy Almanac
+PY  - 2024
+UR  - https://www.energy.ca.gov/data-reports/energy-almanac/zero-emission-vehicle-and-infrastructure-statistics-collection/electric
+N1  - EV charger counts by type (Level 1, Level 2, DC fast) and EV registrations.
+ER  -
+
+TY  - DATA
+AU  - U.S. Energy Information Administration
+TI  - Power Plants
+PB  - U.S. Energy Information Administration
+PY  - 2023
+UR  - https://atlas.eia.gov/datasets/eia::power-plants/explore
+N1  - Feature layer filtered to California. Historical series: EIA-860.
+ER  -
+
+TY  - DATA
+AU  - California Energy Commission
+TI  - Energy Equity Indicators - Deep Dive Energy
+PB  - California Energy Commission
+PY  - 2023
+UR  - https://www.energy.ca.gov/data-reports/data-exploration-tools/energy-equity-indicators-dashboard-collection/deep-dive-energy
+N1  - Energy burden, energy affordability index, and energy affordability gap.
+ER  -

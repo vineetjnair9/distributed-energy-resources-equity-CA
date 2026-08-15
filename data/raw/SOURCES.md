@@ -57,30 +57,55 @@ CENSUS_API_KEY=your_key python scripts/rebuild_processed_data.py --reuse-nasa
   Public page: https://emp.lbl.gov/tracking-the-sun/
   The exact stable direct-download URL still needs to be pinned before it is safe to automate in `fetch_exact_public_data.py`.
 
-## Public but not yet pinned to the exact historical file
+## Source page documented, exact export not yet reproducible
 
-These are publicly available, but the exact historical workbook or export used in this repo is not yet fully resolved:
+Each of these has a known origin, recorded in the markdown cells of
+`notebooks/processing_energy_data_zip.ipynb` and the loader cells of
+`notebooks/adding_predictor_data.ipynb`. What is still missing is a stable direct
+download: the files are dashboard exports, so the source page is citable but the exact
+workbook cannot yet be re-fetched by URL and checksummed.
 
 - `data/raw/storage/Storage_LatLong.xlsx`
-- `data/raw/ev_chargers/Stock_Map_County (2)_Full Data_data.xlsx`
+- `data/raw/storage/EnergyStorage_Cleaned_August2024_ada.xlsx`
+  Source: California Energy Commission, California Energy Storage System Survey.
+  Public page: https://www.energy.ca.gov/data-reports/energy-almanac/california-electricity-data/california-energy-storage-system-survey
+  Granularity: ZIP code, with customer sector and nameplate capacity in kW AC.
+
 - `data/raw/ev_chargers/Charger_County Map_Full Data_data_zip_lat-lon.xlsx`
+- `data/raw/ev_chargers/Stock_Map_County (2)_Full Data_data.xlsx`
+  Source: California Energy Commission, Zero Emission Vehicle and Infrastructure
+  Statistics collection.
+  Public page: https://www.energy.ca.gov/data-reports/energy-almanac/zero-emission-vehicle-and-infrastructure-statistics-collection/electric
+  The charger file carries the Level 1 / Level 2 / DC fast split the paper relies on;
+  the stock file is EV registrations.
+
 - `data/raw/plants/Power_Plants.csv`
-- `data/raw/demand/*`
+  Source: U.S. Energy Information Administration, Power Plants feature layer, filtered
+  to California.
+  Public page: https://atlas.eia.gov/datasets/eia::power-plants/explore
+  Historical series: https://www.eia.gov/electricity/data/eia860/
 
-In several cases the repo contains dashboard-export filenames that do not map cleanly to a stable permanent URL without an additional archival pass.
+- `data/raw/energy_burden/EB_data.csv`, `EAI_data.csv`, `EA Gap_data.csv`
+  Source: California Energy Commission, Energy Equity Indicators dashboard collection,
+  Deep Dive Energy.
+  Public page: https://www.energy.ca.gov/data-reports/data-exploration-tools/energy-equity-indicators-dashboard-collection/deep-dive-energy
+  Exports are UTF-16 tab-separated despite the `.csv` extension.
 
-## Current nearest public sources
+- `data/raw/demand/PGE_2023_Q*.csv`, `SCE_2023_Q*.xlsx`, `SDGE-ELEC-2023-Q*.csv`
+  Source: the three investor-owned utilities' public quarterly electric usage by ZIP
+  code. All four quarters are present for each utility, so demand coverage is statewide
+  across PG&E, SCE and SDG&E rather than a single territory.
+  The retrieval URLs are not yet recorded; this is the one remaining family with no
+  source page written down.
 
-These links are useful for reconstructing those families of data, but they should not yet be treated as the exact files used in the current 2023-aligned repo state.
+Note: `notebooks/processing_energy_data_zip.ipynb` is marked non-canonical and reads
+`TTS_LBNL_public_file_29-Sep-2025_all.csv`, a later Tracking the Sun release than the
+`21-Aug-2024` file the release pipeline uses. The pipeline file is the correct one for a
+2023-aligned build; the notebook reference is stale.
 
-- California Energy Storage System Survey:
-  https://www.energy.ca.gov/data-reports/energy-almanac/california-electricity-data/california-energy-storage-system-survey
-
-- ZEV and Infrastructure Stats Data:
-  https://www.energy.ca.gov/files/zev-and-infrastructure-stats-data
-
-- U.S. Power Plants:
-  https://atlas.eia.gov/datasets/bf5c5110b1b944d299bb683cdbd02d2a_0/explore
+`data/raw/demographics/Education.xlsx` and `PopulationEstimates.xlsx` are left over from
+the earlier county-level effort. Education now comes from ACS B15003 in
+`adding_predictor_data.ipynb`, so these are not inputs to the current pipeline.
 
 If you want full reproducibility for the entire rebuild pipeline, the next step is to convert the remaining category-2 and category-3 files into either:
 
