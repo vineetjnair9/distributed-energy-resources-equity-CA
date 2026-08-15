@@ -115,3 +115,30 @@ PY  - 2023
 UR  - https://www.energy.ca.gov/data-reports/data-exploration-tools/energy-equity-indicators-dashboard-collection/deep-dive-energy
 N1  - Energy burden, energy affordability index, and energy affordability gap.
 ER  -
+
+TY  - DATA
+AU  - Pacific Gas and Electric Company
+TI  - Electric Usage by ZIP Code, 2023 Quarterly Datasets
+PB  - Pacific Gas and Electric Company
+PY  - 2023
+UR  - https://pge-energydatarequest.com/public_datasets
+N1  - Quarterly ZIP-level electricity consumption by customer class.
+ER  -
+
+TY  - DATA
+AU  - Southern California Edison
+TI  - Electric Usage by ZIP Code, 2023 Quarterly Datasets
+PB  - Southern California Edison
+PY  - 2023
+UR  - https://www.sce.com/regulatory/regulatory-information/energy-data-reports-compliances
+N1  - Quarterly ZIP-level electricity consumption by customer class.
+ER  -
+
+TY  - DATA
+AU  - San Diego Gas and Electric
+TI  - Electric Usage by ZIP Code, 2023 Quarterly Datasets
+PB  - San Diego Gas and Electric
+PY  - 2023
+UR  - https://energydata.sdge.com
+N1  - Quarterly ZIP-level electricity consumption by customer class.
+ER  -

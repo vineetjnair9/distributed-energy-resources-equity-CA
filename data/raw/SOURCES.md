@@ -95,17 +95,28 @@ workbook cannot yet be re-fetched by URL and checksummed.
   Source: the three investor-owned utilities' public quarterly electric usage by ZIP
   code. All four quarters are present for each utility, so demand coverage is statewide
   across PG&E, SCE and SDG&E rather than a single territory.
-  The retrieval URLs are not yet recorded; this is the one remaining family with no
-  source page written down.
+  Public pages, also recorded in `backend/schemas/populate_tables.py`:
+  - PG&E:  https://pge-energydatarequest.com/public_datasets
+  - SCE:   https://www.sce.com/regulatory/regulatory-information/energy-data-reports-compliances
+  - SDG&E: https://energydata.sdge.com
+  Each portal publishes per-quarter files; the 2023 Q1-Q4 sets are the ones used here.
 
 Note: `notebooks/processing_energy_data_zip.ipynb` is marked non-canonical and reads
 `TTS_LBNL_public_file_29-Sep-2025_all.csv`, a later Tracking the Sun release than the
 `21-Aug-2024` file the release pipeline uses. The pipeline file is the correct one for a
 2023-aligned build; the notebook reference is stale.
 
-`data/raw/demographics/Education.xlsx` and `PopulationEstimates.xlsx` are left over from
-the earlier county-level effort. Education now comes from ACS B15003 in
-`adding_predictor_data.ipynb`, so these are not inputs to the current pipeline.
+Two directories are leftovers that no script or notebook reads, so they are not inputs to
+the current pipeline:
+
+- `data/raw/demographics/` (`Education.xlsx`, `PopulationEstimates.xlsx`) is from the
+  earlier county-level effort. Education now comes from ACS B15003 in
+  `adding_predictor_data.ipynb`.
+- `data/raw/natural/` holds earlier NASA POWER pulls of irradiance and wind speed at
+  county and ZIP level. The pipeline now fetches NASA POWER itself into
+  `data/processed/ca_zip_ghi_mean_2023.csv` and the temperature control files.
+
+Neither is redistributed in the Zenodo record.
 
 If you want full reproducibility for the entire rebuild pipeline, the next step is to convert the remaining category-2 and category-3 files into either:
 
