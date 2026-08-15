@@ -1,0 +1,81 @@
+TY  - JOUR
+AU  - Conley, T. G.
+TI  - GMM estimation with cross sectional dependence
+JO  - Journal of Econometrics
+VL  - 92
+IS  - 1
+SP  - 1
+EP  - 45
+PY  - 1999
+DA  - 1999/09
+DO  - 10.1016/S0304-4076(98)00084-0
+ER  -
+
+TY  - DATA
+AU  - Hoen, B. D.
+AU  - Diffendorfer, J. E.
+AU  - Rand, J. T.
+AU  - Kramer, L. A.
+AU  - Garrity, C. P.
+AU  - Hunt, H. E.
+TI  - United States Wind Turbine Database
+PB  - U.S. Geological Survey data release
+PY  - 2018
+DO  - 10.5066/F7TX3DN0
+UR  - https://energy.usgs.gov/uswtdb/data/
+N1  - Jointly funded by the U.S. Department of Energy Wind Energy Technologies Office via Lawrence Berkeley National Laboratory, the USGS Energy Resources Program, and the American Clean Power Association. Continuously updated; record the version used.
+ER  -
+
+TY  - DATA
+AU  - Lawrence Berkeley National Laboratory
+TI  - Tracking the Sun - Public Data File
+PB  - Electricity Markets and Policy Group, Lawrence Berkeley National Laboratory
+PY  - 2024
+UR  - https://emp.lbl.gov/tracking-the-sun/
+N1  - Release of 21 August 2024, the first public file covering installations through the end of 2023. Confirm the edition and its named authors before submission.
+ER  -
+
+TY  - DATA
+AU  - California Distributed Generation Statistics
+TI  - Interconnected Project Sites Report, 31 December 2023
+PB  - California Distributed Generation Statistics
+PY  - 2023
+UR  - https://www.californiadgstats.ca.gov/downloads/
+N1  - Monthly interconnection archive covering PG&E, SCE and SDG&E service territories.
+ER  -
+
+TY  - DATA
+AU  - U.S. Census Bureau
+TI  - American Community Survey 5-Year Estimates, Detailed Tables
+PB  - U.S. Census Bureau
+PY  - 2023
+UR  - https://api.census.gov/data/2023/acs/acs5
+N1  - ZIP Code Tabulation Area geography. Tables B25024 (units in structure) and B25003 (tenure), plus demographic and socioeconomic tables.
+ER  -
+
+TY  - DATA
+AU  - U.S. Census Bureau
+TI  - TIGER/Line Shapefiles
+PB  - U.S. Census Bureau, Geography Division
+PY  - 2023
+UR  - https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html
+N1  - ZIP Code Tabulation Area and county boundary files used for the spatial crosswalk.
+ER  -
+
+TY  - DATA
+AU  - NASA Langley Research Center
+TI  - Prediction of Worldwide Energy Resources (POWER)
+PB  - NASA Langley Research Center Atmospheric Science Data Center
+PY  - 2023
+UR  - https://power.larc.nasa.gov/
+N1  - Global horizontal irradiance, wind speed at 50 m, and temperature-derived heating and cooling degree days.
+ER  -
+
+TY  - DATA
+AU  - California Energy Commission
+TI  - California Electric Utility Service Territories
+PB  - California Energy Commission
+PY  - 2023
+UR  - https://cecgis-caenergy.opendata.arcgis.com/
+N1  - SCOUT ArcGIS FeatureServer layer, used for the ZIP-to-utility crosswalk.
+ER  -

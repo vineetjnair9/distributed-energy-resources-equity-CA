@@ -1,112 +1,116 @@
-# Stage 4 — bibliography work (Mendeley)
+# Bibliography worklist
 
-The bibliography is a `MENDELEY_BIBLIOGRAPHY` content control. Editing it in the XML would
-be overwritten the next time Mendeley refreshes, so everything below has to be done in
-Mendeley and re-inserted with the Word plugin.
+The document half is done. What remains has to happen in the Mendeley library itself,
+because that is what a Refresh in Mendeley Cite reads from.
 
-Four prose fixes that sit *outside* the Mendeley fields are already applied to
-`index.docx` as tracked changes under "Claude (citation fixes)" — see the last section.
-
----
-
-## 1. Add — Conley (comment 77)
-
-Cited eight times in the text, no bibliography entry.
-
-> T. G. Conley, "GMM estimation with cross sectional dependence," *Journal of
-> Econometrics*, vol. 92, no. 1, pp. 1–45, Sep. 1999, doi: 10.1016/S0304-4076(98)00084-0.
+**Why the library matters even though the document already looks right.** Mendeley Cite
+v3 stores each citation's CSL JSON inside the document, and I patched three entries there
+(commit `533b0c4`). Those edits render correctly today. But Refresh re-fetches every item
+by ID from your library, so anything still wrong in the library comes back. Fix the library
+once and the document stays fixed.
 
 ---
 
-## 2. Add — data sources (comment 50)
+## 1. Import the new references — one step
 
-None of these are currently cited. Retrieval URLs for all of them are in
-[`data/raw/SOURCES.md`](../data/raw/SOURCES.md).
+[`mendeley_import.ris`](mendeley_import.ris) holds all eight new references. In Mendeley:
+**File → Import → RIS**, or drag the file into the library.
 
-| Source | Used for | Note |
-|---|---|---|
-| LBNL *Tracking the Sun* (Barbose et al.) | rooftop PV capacity | confirm which edition/year you pulled |
-| California Distributed Generation Statistics (CaliforniaDGStats) | interconnection records, `2023-12-31` snapshot | not named in the manuscript text |
-| USGS US Wind Turbine Database (Hoen et al.), doi: 10.5066/F7TX3DN0 | wind turbines | confirm the version you used |
-| NASA POWER | GHI, wind speed, HDD/CDD | |
-| U.S. Census Bureau, ACS 2023 5-year estimates | demographics, B25024, B25003 | |
-| U.S. Census Bureau, TIGER/Line 2023 shapefiles | ZCTA and county boundaries | not named in the manuscript text |
-| California Electric Utility Service Territory (SCOUT, ArcGIS) | ZIP-to-utility crosswalk | not named in the manuscript text |
+| Reference | For |
+|---|---|
+| Conley (1999), *J. Econometrics* 92(1), 1–45 | the spatial HAC standard errors, cited 8× with no entry |
+| USGS US Wind Turbine Database, doi 10.5066/F7TX3DN0 | wind turbines |
+| LBNL *Tracking the Sun* public data file | rooftop PV capacity |
+| CaliforniaDGStats interconnection report | PV and storage interconnections |
+| Census ACS 2023 5-year | demographics, B25024, B25003 |
+| Census TIGER/Line 2023 | ZCTA and county boundaries |
+| NASA POWER | irradiance, wind speed, degree days |
+| California Electric Utility Service Territories (SCOUT) | ZIP-to-utility crosswalk |
 
-Three of these are not named anywhere in the Methods text, so this needs a sentence naming
-the source as well as the citation.
+Two need a look before you cite them:
 
----
-
-## 3. Fix metadata on existing entries
-
-**[8]** — currently `"Demystifying Equity in California's Energy Grid Transition BLOG ENERGY EQUITY."`
-with no author or year. It is:
-
-> The Greenlining Institute, "Demystifying Equity in California's Energy Grid Transition,"
-> Jul. 25, 2024. https://greenlining.org/2024/demystifying-equity-in-californias-energy-grid-transition/
-
-**[13]** — currently `"Distributed Energy Resources Technical Considerations for the Bulk Power System," 2018`
-with no author. It is:
-
-> Federal Energy Regulatory Commission Staff, "Distributed Energy Resources: Technical
-> Considerations for the Bulk Power System," Docket No. AD18-10-000, Feb. 2018.
-
-**[16]** — currently `"Distributed Energy Resource Interconnection Roadmap."` with no author
-or year. **Needs your decision.** The title matches the DOE i2X *Distributed Energy Resource
-Interconnection Roadmap* (January 2025), but §2.5 refers to "CA Public Utilities Commission
-(CPUC) roadmap documents." Those are different publications. Confirm which one you cited.
-
-**[19]** — the DOI is malformed: `10.1146/annureveconomics-080614-115630` should be
-`10.1146/annurev-economics-080614-115630`.
-
-**[7], [14], [21]** — titles were scraped from PDF cover pages and carry stray capitals and
-fragments ("...SEPTEMBER 2020 How High Are Household Energy Burdens?",
-"WESTERN INTERSTATE ENERGY BOARD ... Acknowledgements Disclaimer",
-"BEFORE THE PUBLIC UTILITIES COMMISSION..."). Clean these in Mendeley before the style
-conversion, or they will render as-is.
+- **Tracking the Sun** is entered with LBNL as institutional author. The report series is
+  authored by Barbose, Darghouth et al.; confirm the 2024 edition's author list if you want
+  a person-level citation.
+- **USWTDB** is continuously versioned. Record the version you actually downloaded.
 
 ---
 
-## 4. Merge the duplicate
+## 2. Fix four items in the library
 
-**[9] and [20] are the same paper** — Light, McIntosh & Stephenson, "Advancing Equity in
-Access to Distributed Energy Resources in California," *Journal of Science Policy &
-Governance*, 2022, doi: 10.38126/jspg200106. Merge them in Mendeley and re-insert.
+The first three I already corrected inside the document, so these edits make the library
+agree rather than changing what you see.
 
----
+**"Demystifying Equity in California's Energy Grid Transition BLOG ENERGY EQUITY"**
+- Author: The Greenlining Institute
+- Year: 2024 (25 July)
+- Title: drop the trailing `BLOG ENERGY EQUITY`
+- URL: https://greenlining.org/2024/demystifying-equity-in-californias-energy-grid-transition/
 
-## 5. Claims with no bibliography entry
+**"Distributed Energy Resources Technical Considerations for the Bulk Power System"**
+- Author: Federal Energy Regulatory Commission Staff
+- Year: 2018 (February)
+- Title: add the colon — `Distributed Energy Resources: Technical Considerations…`
+- Number: Docket No. AD18-10-000
 
-- **"Gridworks (2022)"** (§2.5) — no entry exists.
-- **"Flexible-DER coordination work at NREL and related DOE planning studies"** (§2.5) — no
-  entry exists. Either cite the specific study or drop the sentence.
-- **"CA Public Utilities Commission (CPUC) roadmap documents"** (§2.5) — may be entry [16];
-  see above.
-- "SEIA/Vote Solar community-solar critiques" is covered by entry [21] (Churchill &
-  Armstrong). No action.
+**Borenstein & Bushnell, "The U.S. Electricity Industry after 20 Years of Restructuring"**
+- DOI: `10.1146/annurev-economics-080614-115630` (currently `annureveconomics`, missing a hyphen)
 
----
-
-## 6. Already applied to index.docx (tracked)
-
-| Was | Now | Why |
-|---|---|---|
-| Clean Energy Group (2021) | Tarekegne et al. (2021) | the cited work [17] is Tarekegne, O'Neil & Twitchell |
-| Clean Energy Group 2021 | Tarekegne et al. 2021 | same, second mention |
-| Borenstein and Bushnell (2016) | Borenstein and Bushnell (2015) | entry [19] is 2015, *Annu. Rev. Econ.* vol. 7 |
-| Stokes and Warshaw (2022) | Stokes and Warshaw (2017) | entry [18] is 2017, *Nat. Energy* vol. 2 |
-
-If you meant to cite Clean Energy Group's own storage-equity work rather than the Tarekegne
-article, reject that pair of changes and add a Clean Energy Group entry instead.
+**"Distributed Energy Resource Interconnection Roadmap" — needs you to identify it.**
+I could not resolve this one. The title matches the DOE i2X *Distributed Energy Resource
+Interconnection Roadmap* (January 2025), but §2.5 of the manuscript refers to "CA Public
+Utilities Commission (CPUC) roadmap documents." Those are different publications. Open the
+entry in Mendeley and check its URL or attached PDF — that will settle it — then fill in the
+author and year to match.
 
 ---
 
-## Note on the Brockway attribution
+## 3. Merge the duplicate
 
-`AUDIT.md` and `audit_v3.md` flag §2.4 as misattributing hosting-capacity constraints to
-"Brockway et al. (2021)" when entry [11] was said to be Brockway & Callaway (2022) on
-community solar. **That is not true of the current file.** Entry [11] is Brockway, Conde &
-Callaway, "Inequitable access to distributed energy resources due to grid infrastructure
-limits in California," *Nat. Energy* 6(9), 2021 — the hosting-capacity paper, correctly
-cited. No action needed.
+**Light, McIntosh & Stephenson (2022)**, "Advancing Equity in Access to Distributed Energy
+Resources in California," *J. Science Policy & Governance*, doi 10.38126/jspg200106, exists
+twice in the library with different IDs, which is why it appears as both **[9]** and **[20]**.
+
+Select both and merge them in Mendeley. This is the one change that renumbers the
+bibliography: after merging, everything from [20] onward shifts down by one, in the entry
+list and in every in-text number. Mendeley handles that on Refresh — do not renumber by hand.
+
+---
+
+## 4. Then refresh once
+
+After the import, the four fixes and the merge, hit **Refresh** in Mendeley Cite. That
+rewrites the bibliography and every citation number from the library in one pass, and
+supersedes the patches I made inside the document.
+
+---
+
+## 5. Still to write into the manuscript
+
+Adding references to the library does not cite them. Three data sources are never named in
+the Methods text at all — **CaliforniaDGStats**, **TIGER/Line**, and the **SCOUT utility
+territories layer** — so they need a sentence as well as a citation. Conley is already
+named in the text eight times and only needs its citation inserted.
+
+Two claims in §2.5 still have no entry behind them:
+
+- **"Gridworks (2022)"**
+- **"Flexible-DER coordination work at NREL and related DOE planning studies"**
+
+Either cite something specific or cut the sentence.
+
+---
+
+## Already done in the document
+
+| Change | Commit |
+|---|---|
+| Clean Energy Group (2021) → Tarekegne et al. (2021), matching citation [17] | `533b0c4` |
+| Borenstein and Bushnell (2016) → (2015) in prose | `533b0c4` |
+| Stokes and Warshaw (2022) → (2017) in prose | `533b0c4` |
+| Entries [8], [13], [19] repaired in both the CSL JSON and the rendered text | `533b0c4` |
+
+**On the Brockway attribution:** `AUDIT.md` and `audit_v3.md` flag §2.4 as misattributing
+hosting-capacity constraints. That is not true of the current file — entry [11] is Brockway,
+Conde & Callaway, *Nat. Energy* 6(9), 2021, the hosting-capacity paper, correctly cited.
+No action.
