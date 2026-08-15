@@ -19,6 +19,7 @@ from paper_figure_utils import (
     TERM_COLORS,
     TERM_LABELS,
     TEXT,
+    TRANSPARENT_BG,
     apply_paper_style,
 )
 
@@ -60,21 +61,30 @@ def derive_analysis_frame() -> pd.DataFrame:
     df["y_pv"] = np.log1p(df["pv_kw_per_1k"])
     df["y_storage"] = np.log1p(df["storage_mw_per_100k"])
     df["y_wind_mw"] = np.log1p(df["wind_mw_per_100k"])
+    if "energy_affordability_gap" in df.columns:
+        df["energy_gap_per_capita"] = df["energy_affordability_gap"] / pop
+        df["log_energy_gap_per_capita"] = np.log1p(df["energy_gap_per_capita"])
     df["combined_nonwhite_share"] = df[["pct_black", "pct_hispanic", "pct_asian"]].sum(axis=1, min_count=1)
     return df
 
 
 def _save(fig: plt.Figure, name: str) -> None:
+    # PNG only, and honour FIGURE_BG like every other figure in the project. This used
+    # to hard-code transparent=True and additionally emit an SVG.
     GENERATED.mkdir(parents=True, exist_ok=True)
     path = GENERATED / name
-    fig.savefig(path, dpi=320, bbox_inches="tight")
-    if path.suffix.lower() != ".svg":
-        fig.savefig(path.with_suffix(".svg"), bbox_inches="tight", metadata={"Date": None})
+    if TRANSPARENT_BG:
+        fig.patch.set_alpha(0)
+        for ax in fig.axes:
+            ax.patch.set_alpha(0)
+    else:
+        fig.patch.set_facecolor(PAPER_BG)
+        for ax in fig.axes:
+            ax.patch.set_facecolor(PANEL_BG)
+    fig.savefig(path, dpi=320, bbox_inches="tight", transparent=TRANSPARENT_BG,
+                facecolor=fig.get_facecolor())
     SITE_GENERATED.mkdir(parents=True, exist_ok=True)
     (SITE_GENERATED / path.name).write_bytes(path.read_bytes())
-    svg_path = path.with_suffix(".svg")
-    if svg_path.exists():
-        (SITE_GENERATED / svg_path.name).write_bytes(svg_path.read_bytes())
     plt.close(fig)
 
 
@@ -163,17 +173,7 @@ def build_geography_panel() -> None:
         ax.set_facecolor(PANEL_BG)
         ax.axis("off")
 
-    fig.suptitle("Figure A. California ZIP/ZCTA geography of baseline DER outcomes", fontsize=18, fontweight="bold", y=0.985)
-    fig.text(
-        0.5,
-        0.952,
-        "Baseline spatial figures for rooftop PV, storage, and EV charging show that deployment is not evenly distributed across the state.",
-        ha="center",
-        va="top",
-        fontsize=10.5,
-        color=MUTED,
-    )
-    fig.subplots_adjust(left=0.03, right=0.97, bottom=0.04, top=0.88, hspace=0.18, wspace=0.08)
+    fig.subplots_adjust(left=0.03, right=0.97, bottom=0.04, top=0.96, hspace=0.18, wspace=0.08)
     _save(fig, "california_outcome_geography_panel.png")
 
 
@@ -216,17 +216,7 @@ def build_income_small_multiples(df: pd.DataFrame) -> None:
         ax.set_ylim(y_min, y_max)
 
     axes[0].set_ylabel("Outcome, log(1 + rate)")
-    fig.suptitle("Figure B. Adoption intensity rises with income, but not equally across technologies", fontsize=17, fontweight="bold", y=0.99)
-    fig.text(
-        0.5,
-        0.94,
-        "Points are ZIP/ZCTAs; curves are LOWESS fits. Outcomes use the same log-transformed deployment variables reported in the regressions.",
-        ha="center",
-        va="top",
-        fontsize=10.25,
-        color=MUTED,
-    )
-    fig.tight_layout(rect=[0.02, 0.05, 0.985, 0.9])
+    fig.tight_layout(rect=[0.02, 0.05, 0.985, 0.98])
     _save(fig, "income_lowess_small_multiples.png")
 
 
@@ -260,17 +250,7 @@ def build_eda_panel(df: pd.DataFrame) -> None:
     axes[0].set_ylabel("ZIP/ZCTA count")
     axes[3].set_ylabel("ZIP/ZCTA count")
     axes[5].axis("off")
-    fig.suptitle("Descriptive distributions for DER deployment and neighborhood conditions", fontsize=17, fontweight="bold", y=0.99)
-    fig.text(
-        0.5,
-        0.945,
-        "Histograms use clipped upper tails at the 98th percentile for readability; dashed lines mark medians.",
-        ha="center",
-        va="top",
-        fontsize=10.25,
-        color=MUTED,
-    )
-    fig.tight_layout(rect=[0.02, 0.04, 0.985, 0.92])
+    fig.tight_layout(rect=[0.02, 0.04, 0.985, 0.98])
     _save(fig, "eda_distribution_panel.png")
 
 
@@ -327,9 +307,7 @@ def build_predictor_lowess_small_multiples(
             ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: f"{x:.0%}"))
 
     axes[0].set_ylabel("Outcome, log(1 + rate)")
-    fig.suptitle(title, fontsize=17, fontweight="bold", y=0.99)
-    fig.text(0.5, 0.94, subtitle, ha="center", va="top", fontsize=10.25, color=MUTED)
-    fig.tight_layout(rect=[0.02, 0.05, 0.985, 0.9])
+    fig.tight_layout(rect=[0.02, 0.05, 0.985, 0.98])
     _save(fig, output_name)
 
     OUTPUT_TABLES.mkdir(parents=True, exist_ok=True)
@@ -338,6 +316,15 @@ def build_predictor_lowess_small_multiples(
 
 def load_coef(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path).rename(columns={"Unnamed: 0": "term", "Coef.": "coef", "Std.Err.": "std_err", "P>|z|": "pval", "P>|t|": "pval"})
+    # The interaction model (Model 4R) mean-centers its predictors, so its terms are
+    # named pct_black_c rather than pct_black. The coefficient-path figure matches on
+    # the uncentered names, so its M4 column came out blank. Normalise the suffix: for a
+    # centered variable the main effect is the effect at the mean of the interacting
+    # term, which is exactly the quantity the ladder is meant to show. Interaction rows
+    # (containing ':') keep their own names and are simply not selected by the figure.
+    df["term"] = df["term"].astype(str).apply(
+        lambda t: t[:-2] if t.endswith("_c") and ":" not in t else t
+    )
     df["file"] = path.name
     return df
 
@@ -345,10 +332,13 @@ def load_coef(path: Path) -> pd.DataFrame:
 def build_coefficient_path() -> None:
     apply_paper_style()
     model_map = [
-        ("M1", "Model 1 baseline (CDD+HDD)"),
+        # Was "Model 1 baseline (CDD+HDD)", a label no current notebook produces — this
+        # figure had been silently drawing an M1 column from a stale table left over
+        # from an earlier notebook version.
+        ("M1", "Model 1 baseline (climate controls)"),
         ("M2", "Model 2 (add bachelors)"),
         ("M3", "Model 3B (temp only)"),
-        ("M4", "Model 4R interactions (centered)"),
+        ("M4", "Model 4R interactions (centered, no poverty control)"),
         ("M5", "Model 5 utility FE"),
         ("M6", "Model 6B county fe"),
         ("M7", "Model 7 (infrastructure controls, outcome-safe)"),
@@ -410,17 +400,7 @@ def build_coefficient_path() -> None:
     axes[-1].set_xlabel("Model ladder")
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.955))
-    fig.suptitle("Figure C. Core disparity coefficients across the model ladder", fontsize=17, fontweight="bold", y=0.99)
-    fig.text(
-        0.5,
-        0.885,
-        "The same five predictors are traced from the standardized baseline through richer socioeconomic, geographic, and infrastructure specifications.",
-        ha="center",
-        va="top",
-        fontsize=10.25,
-        color=MUTED,
-    )
-    fig.tight_layout(rect=[0.03, 0.06, 0.985, 0.84])
+    fig.tight_layout(rect=[0.03, 0.06, 0.985, 0.9])
     _save(fig, "coefficient_path_across_models.png")
 
 
@@ -447,6 +427,16 @@ def main() -> None:
         output_name="education_lowess_small_multiples.png",
         metrics_name="education_lowess_small_multiples_metrics.csv",
     )
+    if "pct_single_family_units" in df.columns and df["pct_single_family_units"].notna().sum() >= 10:
+        build_predictor_lowess_small_multiples(
+            df,
+            x_col="pct_single_family_units",
+            x_label="Single-family share of housing units",
+            title="Descriptive DER gradients by single-family housing share",
+            subtitle="Curves are deterministic LOWESS fits with seeded bootstrap 95% confidence intervals.",
+            output_name="housing_structure_lowess_small_multiples.png",
+            metrics_name="housing_structure_lowess_small_multiples_metrics.csv",
+        )
     build_coefficient_path()
 
 

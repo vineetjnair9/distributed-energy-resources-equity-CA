@@ -3,24 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption</title>
+  <title>The Unequal Energy Transition: Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption Across California</title>
   <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body>
   <header>
     <div class="header-inner">
-      <div>
-        <div class="eyebrow">DER Data UROP</div>
-        <div class="header-note">California ZIP/ZCTA energy equity analysis</div>
+      <div class="header-note site-author">Danielle Knutson • MIT</div>
+      <div class="site-brand">
+        <div class="eyebrow">California DER Equity Atlas</div>
       </div>
       <nav>
         <ul class="nav-top">
           <li><a class="nav-link" href="./home.html">Home</a></li>
           <li><a class="nav-link" href="./paper.html">Paper</a></li>
-          <li><a class="nav-link" href="./region_analysis.html">Region Analysis</a></li>
+          <li><a class="nav-link" href="./regionanalysis.html">Region Analysis</a></li>
         </ul>
       </nav>
-      <div class="header-note">Danielle Knutson • MIT</div>
     </div>
   </header>
 
@@ -28,7 +27,7 @@
     <div class="layout">
       <article>
         <div class="title-block">
-          <h1>Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption: Evidence from California ZIP/ZCTA Areas Across Solar, Storage, and EV Charging</h1>
+          <h1>The Unequal Energy Transition: Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption Across California</h1>
           <div class="author-line">Danielle Knutson • Massachusetts Institute of Technology</div>
         </div>
 
@@ -54,6 +53,7 @@
           <h3>1.2 Research question</h3>
           <p>The central research question is: how do demographic and infrastructure-related factors shape inequitable access to different types of DERs in California? A related question is whether race remains statistically significant once socioeconomic, climate, institutional, and infrastructure-related controls are added, and if so whether that result challenges current race-neutral planning frameworks for DER policy.</p>
           <p>Three more specific questions guide the empirical analysis. First, are disparities similar across solar PV, battery storage, and EV charging, or does the equity story change by technology? Second, when income, education, and other adoption-capacity proxies are included, do racial and ethnic composition variables still explain meaningful differences in deployment intensity? Third, how much of the observed variation is absorbed by place-based and institutional factors such as utility territory, demand, and installed energy-system context, and how much remains after those adjustments?</p>
+          <p>The rest of the paper is structured as follows. <a class="xref" href="#background">Section 2</a> reviews the prior literature and states the gap this paper addresses, and <a class="xref" href="#data">Section 3</a> describes the data and measures. <a class="xref" href="#results">Section 4</a> reports the results, <a class="xref" href="#discussion">Section 5</a> discusses mechanisms and policy implications, and <a class="xref" href="#methods">Section 6</a> sets out the empirical strategy and the full model ladder. <a class="xref" href="#limitations">Section 7</a> states the limitations and <a class="xref" href="#conclusion">Section 8</a> concludes. Supporting robustness visuals are collected in the <a class="xref" href="#appendix">appendix</a>.</p>
 
           <h3>1.3 Contributions</h3>
           <p>This paper contributes in three ways. First, it builds a multi-DER California ZIP/ZCTA dataset designed for equity analysis and later public reuse. Second, it applies a consistent model ladder across DER types so disparities can be compared directly rather than technology by technology under unrelated specifications. Third, it provides evidence that race remains statistically associated with DER adoption across multiple technologies, which supports the argument that race should be explicitly considered in DER-related policymaking and equity planning frameworks rather than treated as outside the scope of race-neutral design.</p>
@@ -85,33 +85,33 @@
           <h2>3. Data and Measures</h2>
 
           <h3>3.1 Unit of analysis</h3>
-          <p>The unit of analysis is the ZIP-code level, implemented using Census ZIP Code Tabulation Areas (ZCTAs). ZIP/ZCTA geography is the most practical common denominator across the DER, demographic, and contextual source files used in the repo. The analysis is therefore an area-level California snapshot rather than a household panel, and it is framed as a 2023 cross-section using the most recent aligned observations available through that year.</p>
+          <p>The unit of analysis is the ZIP-code level, implemented using Census ZIP Code Tabulation Areas (ZCTAs). ZIP/ZCTA geography is the most practical common denominator across the DER, demographic, and contextual source files used in the repo. The analysis is therefore an area-level California snapshot rather than a household panel, and it is framed as a 2023 cross-section using the most recent aligned observations available through that year. All the variables used for the outcomes, predictors, and controls are defined in <a class="xref" href="#tbl-variables">Table 1</a>.</p>
 
           <h3>3.2 Outcomes</h3>
-          <p>To make outcomes comparable across technologies, each DER measure is converted into a population-normalized intensity metric and then transformed using <code>log(1 + rate)</code>. The three primary outcomes are <code>y_chargers</code>, based on total chargers per 1,000 residents; <code>y_pv</code>, based on PV system size in kW DC per 1,000 residents; and <code>y_storage</code>, based on storage capacity in MW per 100,000 residents. Supplementary analysis also examines charger subtypes and a wind-capacity outcome used as contextual evidence rather than as a headline policy result.</p>
+          <p>To make outcomes comparable across technologies, each DER measure is converted into a population-normalized intensity metric and then transformed using <code>log(1 + rate)</code>. The three primary outcomes are <code>y_chargers</code>, based on total chargers per 1,000 residents; <code>y_pv</code>, based on PV system size in kW DC per 1,000 residents; and <code>y_storage</code>, based on storage capacity in MW per 100,000 residents. Supplementary analysis also examines charger subtypes and a wind-capacity outcome used as contextual evidence rather than as a headline policy result. <a class="xref" href="#sec-6-3">Section 6.3</a> gives the exact construction of each outcome in Equations (<a class="xref" href="#eq-1">1</a>), (<a class="xref" href="#eq-2">2</a>) and (<a class="xref" href="#eq-3">3</a>), and <a class="xref" href="#sec-4-8">Section 4.8</a> reports the wind results.</p>
 
           <h3>3.3 Key predictors</h3>
-          <p>The main explanatory variables fall into two categories. The first is racial and ethnic composition, measured using ZIP/ZCTA population shares such as <code>pct_black</code>, <code>pct_hispanic</code>, and <code>pct_asian</code>. The second is socioeconomic status, including <code>log_median_household_income</code>, <code>poverty_rate</code>, and in expanded specifications variables such as educational attainment and housing value. For descriptive smoothing plots, I also use a combined non-white share equal to the sum of the Black, Hispanic, and Asian shares in the merged ACS export.</p>
+          <p>The main explanatory variables fall into two categories. The first is racial and ethnic composition, measured using ZIP/ZCTA population shares such as <code>pct_black</code>, <code>pct_hispanic</code>, and <code>pct_asian</code>. The second is socioeconomic status, including <code>log_median_household_income</code>, <code>poverty_rate</code>, and in expanded specifications variables such as educational attainment and housing value. For descriptive smoothing plots, I also use a combined non-white share equal to the sum of the Black, Hispanic, and Asian shares in the merged ACS export. Those plots are shown in <a class="xref" href="#fig-nonwhite-lowess">Figure 13</a> and <a class="xref" href="#fig-education-lowess">Figure 14</a> and discussed in <a class="xref" href="#sec-4-6">Section 4.6</a>; <a class="xref" href="#sec-6-4">Section 6.4</a> gives the full definitions.</p>
 
           <h3>3.4 Controls</h3>
           <p>Controls are included to account for non-demographic differences across places that may shape DER deployment. These include climate and resource variables, utility territory, broader geographic adjustments, installed-energy-context proxies, and an annual electricity demand proxy. Together these controls are intended to separate demographic disparities from observed variation in physical suitability, institutional context, and underlying load. They should not be read as a full measurement of circuit-level grid infrastructure or hosting capacity.</p>
-          <p>The repo’s conceptual framing treats DERs as behind-the-meter resources below 5 MW, but several source-specific cleaning steps use tighter thresholds in code. The empirical analysis therefore follows the processed dataset as built by the repo rather than imposing one different threshold on every raw source.</p>
+          <p>The repo’s conceptual framing treats DERs as behind-the-meter resources below 5 MW, but several source-specific cleaning steps use tighter thresholds in code. The empirical analysis therefore follows the processed dataset as built by the repo rather than imposing one different threshold on every raw source. <a class="xref" href="#sec-6-5">Section 6.5</a> lists the control blocks in full, and <a class="xref" href="#tbl-variables">Table 1</a> defines each control variable.</p>
 
           <figure class="paper-figure" id="fig-data-geography">
-            <img src="./assets/figures/generated/california_outcome_geography_panel.svg" alt="Three-panel California geography figure showing baseline solar PV, storage, and EV charging outcomes across ZIP/ZCTAs">
-            <figcaption><strong>Figure A.</strong> Baseline California ZIP/ZCTA geography for rooftop PV, storage, and aggregate EV charging. As shown here, deployment is spatially uneven before any regression adjustments are introduced. Blank areas indicate missing or excluded observations, unmatched geography, or unavailable source data; they should not be interpreted automatically as zero deployment.</figcaption>
+            <img src="./assets/figures/generated/california_outcome_geography_panel.png" alt="Three-panel California geography figure showing baseline solar PV, storage, and EV charging outcomes across ZIP/ZCTAs">
+            <figcaption><strong>Figure 1.</strong> Baseline California ZIP/ZCTA geography for rooftop PV, storage, and aggregate EV charging. As shown here, deployment is spatially uneven before any regression adjustments are introduced. Blank areas indicate missing or excluded observations, unmatched geography, or unavailable source data; they should not be interpreted automatically as zero deployment.</figcaption>
           </figure>
 
           <h3>3.5 Descriptive distributions</h3>
-          <p>Before turning to regression coefficients, it is useful to see how uneven the raw distributions already are. Figure A1 shows that the three DER outcomes are right-skewed, while the socioeconomic context variables span materially different neighborhood conditions. Table 1 then summarizes the analysis sample numerically so the later model comparisons can be interpreted relative to the observed scale of the data.</p>
+          <p>Before turning to regression coefficients, it is useful to see how uneven the raw distributions already are. <a class="xref" href="#fig-data-geography">Figure 1</a> shows that DER adoption is uneven across the state for all three technologies. <a class="xref" href="#fig-eda-distributions">Figure 2</a> shows that the three DER outcomes are right-skewed, while the socioeconomic context variables span materially different neighborhood conditions. <a class="xref" href="#tbl-summary">Table 2</a> then summarizes the analysis sample numerically so the later model comparisons can be interpreted relative to the observed scale of the data.</p>
 
           <figure class="paper-figure" id="fig-eda-distributions">
-            <img src="./assets/figures/generated/eda_distribution_panel.svg" alt="Distribution panel for raw PV deployment, storage deployment, EV charging deployment, income, and poverty rate">
-            <figcaption><strong>Figure A1.</strong> Descriptive distributions for raw DER deployment rates together with median household income and poverty rate. The figure is included as an EDA bridge so readers can see the underlying spread in deployment and neighborhood conditions before moving into conditional models.</figcaption>
+            <img src="./assets/figures/generated/eda_distribution_panel.png" alt="Distribution panel for raw PV deployment, storage deployment, EV charging deployment, income, and poverty rate">
+            <figcaption><strong>Figure 2.</strong> Descriptive distributions for raw DER deployment rates together with median household income and poverty rate. The figure is included as an EDA bridge so readers can see the underlying spread in deployment and neighborhood conditions before moving into conditional models.</figcaption>
           </figure>
 
-          <div class="table-wrap">
-            <div class="table-title"><strong>Table 1A.</strong> Variable definitions for the main outcomes, predictors, and controls.</div>
+          <div class="table-wrap" id="tbl-variables">
+            <div class="table-title"><strong>Table 1.</strong> Variable definitions for the main outcomes, predictors, and controls.</div>
             <table class="paper-table">
               <thead>
                 <tr>
@@ -141,8 +141,8 @@
             <div class="table-note">The same variable names are used in the regression formulas and coefficient tables. Outcome variables are transformed intensity measures, while demographic and socioeconomic variables are ZIP/ZCTA-level ACS predictors.</div>
           </div>
 
-          <div class="table-wrap">
-            <div class="table-title"><strong>Table 1.</strong> Summary statistics for the main outcomes and key predictors in the analysis sample.</div>
+          <div class="table-wrap" id="tbl-summary">
+            <div class="table-title"><strong>Table 2.</strong> Summary statistics for the main outcomes and key predictors in the analysis sample.</div>
             <table class="paper-table">
               <thead>
                 <tr>
@@ -155,191 +155,38 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>y_pv</code></td><td>1,386</td><td>0.392</td><td>0.326</td><td>0.131</td><td>0.568</td></tr>
-                <tr><td><code>y_storage</code></td><td>1,386</td><td>1.706</td><td>1.752</td><td>1.012</td><td>2.350</td></tr>
-                <tr><td><code>y_chargers</code></td><td>1,386</td><td>0.693</td><td>0.514</td><td>0.142</td><td>1.025</td></tr>
-                <tr><td><code>pct_black</code></td><td>1,386</td><td>0.042</td><td>0.020</td><td>0.007</td><td>0.050</td></tr>
-                <tr><td><code>pct_hispanic</code></td><td>1,386</td><td>0.347</td><td>0.277</td><td>0.152</td><td>0.498</td></tr>
-                <tr><td><code>pct_asian</code></td><td>1,386</td><td>0.119</td><td>0.066</td><td>0.023</td><td>0.156</td></tr>
-                <tr><td><code>log_median_household_income</code></td><td>1,386</td><td>11.440</td><td>11.434</td><td>11.169</td><td>11.705</td></tr>
-                <tr><td><code>poverty_rate</code></td><td>1,386</td><td>0.123</td><td>0.104</td><td>0.070</td><td>0.161</td></tr>
-                <tr><td><code>pct_bachelors_plus</code></td><td>1,386</td><td>0.359</td><td>0.324</td><td>0.190</td><td>0.505</td></tr>
-                <tr><td><code>ghi_mean_kwh_m2_day_2023</code></td><td>1,386</td><td>5.119</td><td>5.158</td><td>4.855</td><td>5.339</td></tr>
-                <tr><td><code>log_kwh</code></td><td>1,218</td><td>8.480</td><td>0.000</td><td>0.000</td><td>18.275</td></tr>
-                <tr><td><code>energy_burden_pct</code></td><td>1,370</td><td>0.022</td><td>0.020</td><td>0.015</td><td>0.028</td></tr>
-                <tr><td><code>log_energy_gap_per_capita</code></td><td>1,370</td><td>3.791</td><td>4.351</td><td>1.072</td><td>5.650</td></tr>
+                <tr><td><code>y_pv</code></td><td>1,390</td><td>0.392</td><td>0.326</td><td>0.131</td><td>0.568</td></tr>
+                <tr><td><code>y_storage</code></td><td>1,390</td><td>1.706</td><td>1.752</td><td>1.012</td><td>2.350</td></tr>
+                <tr><td><code>y_chargers</code></td><td>1,390</td><td>0.694</td><td>0.515</td><td>0.142</td><td>1.027</td></tr>
+                <tr><td><code>pct_black</code></td><td>1,390</td><td>0.042</td><td>0.020</td><td>0.007</td><td>0.049</td></tr>
+                <tr><td><code>pct_hispanic</code></td><td>1,390</td><td>0.347</td><td>0.277</td><td>0.151</td><td>0.498</td></tr>
+                <tr><td><code>pct_asian</code></td><td>1,390</td><td>0.119</td><td>0.066</td><td>0.023</td><td>0.156</td></tr>
+                <tr><td><code>log_median_household_income</code></td><td>1,390</td><td>11.440</td><td>11.435</td><td>11.169</td><td>11.703</td></tr>
+                <tr><td><code>poverty_rate</code></td><td>1,390</td><td>0.123</td><td>0.104</td><td>0.070</td><td>0.161</td></tr>
+                <tr><td><code>pct_bachelors_plus</code></td><td>1,390</td><td>0.359</td><td>0.324</td><td>0.191</td><td>0.505</td></tr>
+                <tr><td><code>ghi_mean_kwh_m2_day_2023</code></td><td>1,390</td><td>5.118</td><td>5.104</td><td>4.855</td><td>5.339</td></tr>
+                <tr><td><code>log_kwh</code></td><td>1,196</td><td>17.270</td><td>18.016</td><td>16.672</td><td>18.883</td></tr>
+                <tr><td><code>energy_burden_pct</code></td><td>1,374</td><td>0.022</td><td>0.020</td><td>0.015</td><td>0.028</td></tr>
+                <tr><td><code>log_energy_gap_per_capita</code></td><td>1,374</td><td>3.786</td><td>4.342</td><td>1.072</td><td>5.648</td></tr>
               </tbody>
             </table>
             <div class="table-note">Sample restricted to ZIP/ZCTAs with total population of at least 1,000. Outcome variables are log-transformed intensity measures constructed from the processed 2023 cross-section. Energy-burden rows come from the ZIP-level raw energy-burden exports and are matched by ZIP code.</div>
           </div>
         </section>
 
-        <section id="methods">
-          <h2>4. Methods</h2>
-
-          <h3>4.1 Empirical Approach</h3>
-          <p>This paper uses a cross-sectional regression framework to examine whether racial/ethnic and socioeconomic differences are associated with distributed energy resource deployment intensity across California ZIP/ZCTA areas. The main goal is not pure prediction. Instead, it is to test whether disparities in DER adoption persist after accounting for differences in adoption capacity, geography, physical suitability, institutional context, and observed energy-system conditions.</p>
-          <p>To do this, I estimate a consistent sequence of models for each DER outcome. This stepwise model ladder makes the results easier to interpret because changes in the coefficients of interest can be linked to specific added controls rather than to one opaque saturated specification. It also supports direct comparison across technologies, which is central to the paper’s multi-DER framing.</p>
-          <p>The three main outcomes are ZIP/ZCTA-level deployment intensity for rooftop solar PV, battery storage, and EV charging. Each is population-normalized and transformed using a <code>log(1 + rate)</code> specification to reduce skew and retain observations with zero deployment. The main explanatory variables of interest are racial/ethnic composition measures and socioeconomic indicators. I then add contextual controls that capture climate, renewable resource potential, utility territory, built-environment structure, and broader installed-energy context.</p>
-          <p>Because the analysis is ecological and cross-sectional, the results are interpreted as area-level disparities rather than as individual household adoption behavior. The coefficients therefore describe how DER deployment differs across ZIP/ZCTA areas with different demographic and socioeconomic characteristics, conditional on the included controls. They should not be read as causal effects of race or income on any individual household’s technology adoption decision.</p>
-
-          <h3>4.2 Dataset Construction and Sample</h3>
-          <p>The analysis uses a California ZIP/ZCTA-level dataset created by merging multiple DER source files with demographic, climate, utility, and infrastructure controls. The final merged file combines measures of solar PV capacity, battery storage capacity, and EV charging infrastructure with American Community Survey variables and place-based controls.</p>
-          <p>DER measures are first constructed separately by technology and then aggregated to the ZIP/ZCTA level. Solar PV capacity is derived from Tracking the Sun installation records. Battery storage is built from a California storage dataset containing location and capacity information. EV charging infrastructure is constructed from charger-level records that include charger type and location; charger rows without a valid source ZIP are excluded from ZIP/ZCTA charger outcomes rather than reassigned using latitude/longitude, while valid source-ZIP rows are retained even if descriptive fields are blank or say <code>No information</code>. Figure A visualizes the resulting statewide geography and also makes clear that some ZIP/ZCTAs are absent because the underlying merged sample is incomplete in those places.</p>
-          <p>After source-specific cleaning, the DER measures are merged with contextual predictors. Demographic and socioeconomic variables come from the 2023 American Community Survey 5-year estimates and include total population, median household income, median housing value, educational attainment, poverty, and race/ethnicity shares. Climate and renewable resource controls are derived from NASA POWER and include temperature-based measures, degree days, solar irradiance, and wind resource variables. Utility territory is assigned using a ZIP-to-utility spatial crosswalk, and electricity demand is proxied using annualized utility usage data aggregated to ZIPs.</p>
-          <p>The unit of analysis is the ZIP/ZCTA. I use ZCTAs because they provide the most practical common geography across the available DER and demographic sources. The study is designed as a 2023 cross-sectional snapshot, using the most recent data aligned as closely as possible to that year. In the regression stage, ZIP/ZCTAs with total population below 1,000 are excluded from outcome construction to avoid unstable per-capita rates in very small areas.</p>
-
-          <h3>4.3 Outcome Variables</h3>
-          <p>To make the outcomes comparable across technologies, each DER measure is converted into a population-normalized deployment intensity metric and then transformed using <code>log(1 + x)</code>. This helps reduce skew and allows ZIP/ZCTAs with zero deployment to remain in the sample.</p>
-          <p>The three main outcomes are defined as follows.</p>
-          <p>For EV charging:</p>
-          <p><code>chargers_per_1k = (total_chargers × 1000) / population</code><br>
-          <code>y_chargers = log(1 + chargers_per_1k)</code></p>
-          <p>For solar PV:</p>
-          <p><code>pv_kW_per_1k = (PV_system_size_DC × 1000) / population</code><br>
-          <code>y_pv = log(1 + pv_kW_per_1k)</code></p>
-          <p>For battery storage:</p>
-          <p><code>storage_MW_per_100k = (storage_capacity_mw × 100000) / population</code><br>
-          <code>y_storage = log(1 + storage_MW_per_100k)</code></p>
-          <p>Storage is scaled per 100,000 residents rather than per 1,000 because storage deployment is much smaller and more uneven at the ZIP level, so the larger denominator keeps the raw rate in a more interpretable range before transformation.</p>
-          <p>In supplementary analysis, I also examine more disaggregated charging outcomes, including Level 1, Level 2, and DC fast chargers separately, along with a wind-capacity outcome used mainly as contextual comparison. The core paper, however, focuses on the three outcomes above.</p>
-
-          <h3>4.4 Key Explanatory Variables</h3>
-          <p>The main explanatory variables fall into two groups: racial/ethnic composition and socioeconomic status.</p>
-          <p>The race/ethnicity variables are ZIP/ZCTA-level shares of the population identifying as Black, Hispanic/Latino, and Asian. These variables are included to test whether DER deployment differs systematically across communities in ways that are not fully explained by socioeconomic conditions alone. For descriptive LOWESS plots, I also summarize these patterns using a combined non-white share, but the regressions keep the disaggregated race variables to avoid collapsing distinct demographic patterns into one coefficient.</p>
-          <p>The socioeconomic variables are intended to proxy for adoption capacity and broader social advantage. The core measures are log median household income and poverty rate. Additional socioeconomic variables used in extended specifications include percent bachelor’s degree or higher and log median housing value. Education is therefore treated primarily as a control rather than as the paper’s headline predictor: it captures information, housing-market position, and adoption capacity that overlap with income, but the central research question is whether race remains statistically associated with DER deployment after those proxies are included.</p>
-          <p>The central empirical question is whether the race/ethnicity coefficients weaken substantially once these socioeconomic proxies are included, or whether meaningful disparities remain after accounting for them. If the race coefficients remain negative and statistically distinguishable from zero in richer models, that is evidence against a purely race-neutral account of observed DER deployment patterns.</p>
-
-          <h3>4.5 Contextual Controls</h3>
-          <p>I include several categories of place-based controls to account for non-demographic factors that may shape DER deployment. First, I include climate and resource controls. Baseline models use heating and cooling degree days to capture broad climatic differences across California. Alternative specifications use more technology-specific contextual variables, including global horizontal irradiance for solar PV and wind speed measures for wind-related outcomes. Temperature controls are also used in some robustness checks.</p>
-          <p>Second, I include institutional controls through utility territory fixed effects. Utility territories matter because rates, interconnection processes, incentive administration, and historical investment can differ substantially across service areas. Including utility fixed effects helps isolate within-utility differences in deployment.</p>
-          <p>Third, I include broader geographic controls in selected specifications, including total population, latitude and longitude, and county-based adjustments. These help account for large-scale regional gradients and spatially correlated unobservables. When I refer below to county-clustered standard errors, I mean that inference is adjusted for within-county error correlation rather than assuming each ZIP/ZCTA contributes an independent disturbance.</p>
-          <p>Fourth, I include electricity demand and infrastructure-context controls in later models. Annual electricity consumption serves as a proxy for underlying load and commercial activity, especially relevant for EV charging. Existing plant, wind, and storage assets are used as installed-energy-context proxies. They are informative about the local energy landscape, but they are not full direct measures of grid infrastructure, feeder capacity, or hosting capacity.</p>
-
-          <h3>4.6 Baseline Regression Specification</h3>
-          <p>The main estimation approach is ordinary least squares regression using the transformed ZIP/ZCTA-level deployment outcomes. The baseline specification is:</p>
-          <p><code>y_z = β_0 + β_1 Income_z + β_2 Black_z + β_3 Hispanic_z + β_4 Asian_z + β_5 Poverty_z + γX_z + ε_z</code></p>
-          <p>where <code>y_z</code> is the DER deployment outcome in ZIP/ZCTA <code>z</code>, <code>Income_z</code> is log median household income, <code>Black_z</code>, <code>Hispanic_z</code>, and <code>Asian_z</code> are race/ethnicity population shares, <code>Poverty_z</code> is the ZIP/ZCTA poverty rate, <code>X_z</code> is a vector of contextual controls for ZIP/ZCTA <code>z</code>, and <code>ε_z</code> is the error term.</p>
-          <p>All models are estimated with heteroskedasticity-robust HC1 standard errors by default. In plain language, HC1 means the standard errors are adjusted so inference is less sensitive to unequal residual variance across ZIP/ZCTAs. In selected specifications, I also cluster standard errors at the county level to allow for within-county correlation in errors.</p>
-          <p>Rather than relying on one preferred specification, I estimate a staged model ladder. This matters because the paper is not only asking whether disparities appear in one model, but whether they persist as increasingly demanding controls are introduced. The modeling objective is therefore coefficient stability and interpretability across related specifications, not selection of a single best predictive model.</p>
-
-          <h3>4.7 Model Series</h3>
-          <div class="model-series">
-            <div class="model-card">
-              <div class="model-number">1</div>
-              <div>
-                <h4>Baseline Equity Specification</h4>
-                <p>The baseline model includes log median household income, race/ethnicity shares, poverty rate, and a limited set of climate controls. This model provides a first-pass estimate of area-level disparities after accounting for basic socioeconomic status and broad geographic conditions.</p>
-                <p>Exported name: <code>Model 1 baseline (climate controls)</code></p>
-                <code class="model-formula">y_z = β_0 + β_1 Income_z + β_2 Black_z + β_3 Hispanic_z + β_4 Asian_z + β_5 Poverty_z + γ Climate_z + ε_z</code>
-              </div>
-            </div>
-
-            <div class="model-card">
-              <div class="model-number">2</div>
-              <div>
-                <h4>Additional Socioeconomic Controls</h4>
-                <p>I then add another socioeconomic proxy, typically percent bachelor’s degree or higher or log median housing value, to test whether the race/ethnicity coefficients are sensitive to richer measures of social and housing advantage. This step is important because income alone may not fully capture adoption capacity.</p>
-                <p>Exported names: <code>Model 2 (add bachelors)</code>; <code>Model 2 (add housing value)</code></p>
-                <code class="model-formula">y_z = β_0 + β_1 Income_z + β_2 Black_z + β_3 Hispanic_z + β_4 Asian_z + β_5 Poverty_z + β_6 SESextra_z + γ Climate_z + ε_z</code>
-              </div>
-            </div>
-
-            <div class="model-card">
-              <div class="model-number">3</div>
-              <div>
-                <h4>Alternative Climate and Resource Controls</h4>
-                <p>To test whether results depend on a particular way of capturing geographic context, I estimate alternative versions of the baseline model with different climate or physical-suitability controls. For PV, this includes solar irradiance. For some outcomes, I compare degree-day controls to mean temperature-based controls. For wind-related outcomes, I use wind resource measures.</p>
-                <p>Exported names: <code>Model 3A (HDD + CDD)</code>; <code>Model 3B (temp only)</code>; <code>Model 3C (GHI only)</code></p>
-                <code class="model-formula">y_z = β_0 + β_1 Income_z + β_2 Black_z + β_3 Hispanic_z + β_4 Asian_z + β_5 Poverty_z + γ ResourceClimateAlt_z + ε_z</code>
-              </div>
-            </div>
-
-            <div class="model-card">
-              <div class="model-number">4</div>
-              <div>
-                <h4>Race-by-Income Interactions</h4>
-                <p>I test whether the income gradient in DER deployment differs across communities by including interaction terms between income and race/ethnicity shares. These variables are mean-centered before interaction so that the main effects remain interpretable.</p>
-                <p>Exported names: <code>Model 4 interactions (centered)</code>; <code>Model 4R interactions (centered)</code></p>
-                <code class="model-formula">y_z = β_0 + β_1 Income_c,z + β_2 Black_c,z + β_3 Hispanic_c,z + β_4 Asian_c,z + β_5 (Income_c,z × Black_c,z) + β_6 (Income_c,z × Hispanic_c,z) + β_7 (Income_c,z × Asian_c,z) + γX_z + ε_z</code>
-              </div>
-            </div>
-          </div>
-          <div class="model-series">
-            <div class="model-card">
-              <div class="model-number">5</div>
-              <div>
-                <h4>Utility Fixed Effects and Inference Robustness</h4>
-                <p>I estimate specifications with utility territory fixed effects to absorb institutional differences across service areas. I also estimate county-clustered standard errors as a robustness check for inference.</p>
-                <p>Exported names: <code>Model 5 utility FE</code>; <code>Model 5C clustered SEs by county</code></p>
-                <code class="model-formula">y_z = β_0 + β RaceSES_z + γX_z + δ_utility + ε_z, with HC1 or county-clustered SEs</code>
-              </div>
-            </div>
-
-            <div class="model-card">
-              <div class="model-number">6</div>
-              <div>
-                <h4>Geographic Robustness</h4>
-                <p>Additional specifications introduce latitude and longitude or county fixed effects to test whether the main patterns are simply reflecting broad regional gradients within California rather than more local disparities.</p>
-                <p>Exported names: <code>Model 6A lat and lon</code>; <code>Model 6B county fe</code></p>
-                <code class="model-formula">y_z = β_0 + β RaceSES_z + γX_z + θ Geo_z + ε_z  or  y_z = β_0 + β RaceSES_z + γX_z + δ_county + ε_z</code>
-              </div>
-            </div>
-
-            <div class="model-card">
-              <div class="model-number">7</div>
-              <div>
-                <h4>Infrastructure Context Controls</h4>
-                <p>I add measures of existing energy infrastructure to examine whether local deployment patterns are partly explained by the surrounding energy-system context. These models test whether communities with more existing infrastructure also mechanically appear to have more DER deployment.</p>
-                <p>Exported names: <code>Model 7 (infrastructure controls, outcome-safe)</code>; <code>Model 7 (per-capita infrastructure controls)</code></p>
-                <code class="model-formula">y_z = β_0 + β RaceSES_z + γX_z + λ Infrastructure_z + ε_z</code>
-              </div>
-            </div>
-
-            <div class="model-card">
-              <div class="model-number">8</div>
-              <div>
-                <h4>Electricity Demand Controls</h4>
-                <p>Finally, I add a demand proxy based on annual electricity consumption. This is particularly relevant for EV charging, where infrastructure deployment may track commercial activity and underlying load as much as residential adoption potential.</p>
-                <p>Exported name: <code>Model 8 add demand proxy</code></p>
-                <code class="model-formula">y_z = β_0 + β RaceSES_z + γX_z + λ Infrastructure_z + ϕ Demand_z + ε_z</code>
-              </div>
-            </div>
-          </div>
-          <p>Taken together, this model ladder allows me to ask a structured question: do racial/ethnic disparities shrink meaningfully once I account for socioeconomic status, geography, utility context, and infrastructure, or do they remain persistent across specifications?</p>
-
-          <h3>4.8 Estimation and Inference</h3>
-          <p>The main quantities of interest are the coefficients on the race/ethnicity variables and how those coefficients change across specifications. I compare both the direction and relative magnitude of these coefficients across solar PV, storage, and EV charging outcomes.</p>
-          <p>The interpretation is comparative rather than individual-level. A negative coefficient on a racial/ethnic population share does not imply anything about the behavior of an individual resident. Instead, it indicates that ZIP/ZCTA areas with larger shares of that population tend to have lower DER deployment intensity, conditional on the controls in the model. If the coefficient becomes smaller after additional controls are added, that suggests part of the disparity is explained by those added factors.</p>
-          <p>This comparison across DERs is central to the paper. If the same communities appear underserved across multiple technologies, that points to broader structural inequities in the clean energy transition. If the patterns differ by technology, that suggests more technology-specific barriers.</p>
-
-          <h3>4.9 Robustness and Diagnostic Checks</h3>
-          <p>In addition to the main regression ladder, I conduct several supporting checks. I examine variance inflation factors (VIFs) to monitor multicollinearity across specifications, compare alternative climate and resource control blocks to test the stability of the results, estimate county-clustered standard errors to assess whether statistical significance is sensitive to local spatial clustering, and generate descriptive maps, distribution plots, and coefficient comparison figures to visualize both the raw patterns and the modeled results.</p>
-          <p>VIF screening informs the model inventory, but it is not used as a rigid mechanical inclusion rule. Some richer specifications show elevated VIF values, especially once multiple SES and contextual controls are introduced. I retain predictors when they correspond to substantively distinct constructs that are central to the modeling objective rather than treating any moderate VIF increase as evidence that the model is unusable. The relevant question for this paper is therefore whether the coefficients of interest remain interpretable and stable, not whether every rich specification minimizes collinearity by design.</p>
-          <p>I also estimate energy-burden outcome models using <code>energy_burden_pct</code> and <code>log_energy_gap_per_capita</code>. The purpose is to describe how household utility-cost stress and affordability pressure are patterned across the same ZIP/ZCTA covariates used in the DER models. I treat <code>energy_affordability_index</code> as a sensitivity-only measure because it is closely related to income and poverty in the merged sample.</p>
-          <p>In exploratory analysis, I compare linear specifications to more flexible predictive models, including polynomial regression, random forest, and gradient-boosted trees, using cross-validation. These models are not the basis for the paper’s main claims. Instead, they serve as a diagnostic check on whether simple linear models are missing strong nonlinear structure. The substantive conclusions remain grounded in the interpretable OLS results.</p>
-
-          <h3>4.10 Methodological Limitations</h3>
-          <p>This methodology is designed to identify area-level associations, not causal effects. The results should therefore be interpreted as descriptive disparities conditional on observed controls. Unmeasured confounding may remain, especially around housing tenure, installer presence, permitting, and technology-specific incentive access.</p>
-          <p>There are also limitations tied to geography and measurement. ZIP/ZCTA aggregation is a practical compromise that enables multi-DER harmonization, but it can blur within-area heterogeneity and raises the usual ecological inference problem. In addition, some source files require spatial assignment or manual cleaning steps, which may introduce measurement error. Even so, using a consistent geography and model structure across technologies provides a useful basis for comparative equity analysis.</p>
-
-          <div class="highlight">
-            The central empirical test is not whether disparities appear in just one model, but whether they persist as increasingly demanding controls are added.
-          </div>
-        </section>
 
         <section id="results">
-          <h2>5. Results</h2>
+          <h2>4. Results</h2>
 
-          <p>The results section begins with the descriptive evidence that most closely parallels the comparison papers: smooth adoption-versus-covariate views and compact baseline regression tables. As shown in Figure B and Table 2, the baseline patterns already suggest that race and income are associated with DER outcomes differently across technologies. The later figures then ask whether those patterns persist as the model ladder becomes more demanding.</p>
+          <p>The results section begins with the descriptive evidence that most closely parallels the comparison papers: smooth adoption-versus-covariate views and compact baseline regression tables. As shown in <a class="xref" href="#fig-income-lowess">Figure 3</a> and <a class="xref" href="#tbl-baseline">Table 3</a>, the baseline patterns already suggest that race and income are associated with DER outcomes differently across technologies. The later figures then ask whether those patterns persist as the model ladder becomes more demanding. The baseline estimating equation is given in <a class="xref" href="#sec-6-6">Section 6.6</a> as <a class="xref" href="#eq-4">Equation (4)</a>, and detailed specifications of all models in the ladder can be found in <a class="xref" href="#sec-6-7">Section 6.7</a>.</p>
 
           <figure class="paper-figure" id="fig-income-lowess">
-            <img src="./assets/figures/generated/income_lowess_small_multiples.svg" alt="LOWESS small multiples showing solar PV, storage, and EV charging outcomes against median household income">
-            <figcaption><strong>Figure B.</strong> Outcome-by-income descriptive gradients for rooftop PV, storage, and EV charging. Outcomes are shown on the transformed <code>log(1 + rate)</code> scale. Where shaded bands are shown in the LOWESS figures below, they indicate 95% bootstrap confidence intervals around the fitted smooth.</figcaption>
+            <img src="./assets/figures/generated/income_lowess_small_multiples.png" alt="LOWESS small multiples showing solar PV, storage, and EV charging outcomes against median household income">
+            <figcaption><strong>Figure 3.</strong> Outcome-by-income descriptive gradients for rooftop PV, storage, and EV charging. Outcomes are shown on the transformed <code>log(1 + rate)</code> scale. Where shaded bands are shown in the LOWESS figures below, they indicate 95% bootstrap confidence intervals around the fitted smooth.</figcaption>
           </figure>
 
-          <div class="table-wrap">
-            <div class="table-title"><strong>Table 2.</strong> Baseline regression summary across the three headline DER outcomes.</div>
+          <div class="table-wrap" id="tbl-baseline">
+            <div class="table-title"><strong>Table 3.</strong> Baseline regression summary across the three headline DER outcomes.</div>
             <table class="paper-table">
               <thead>
                 <tr>
@@ -350,88 +197,49 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><code>log_median_household_income</code></td>
-                  <td><span class="coef">0.125***</span><span class="se">(0.038)</span></td>
-                  <td><span class="coef">0.779***</span><span class="se">(0.122)</span></td>
-                  <td><span class="coef">0.160</span><span class="se">(0.098)</span></td>
-                </tr>
-                <tr>
-                  <td><code>pct_black</code></td>
-                  <td><span class="coef">-0.764***</span><span class="se">(0.109)</span></td>
-                  <td><span class="coef">-1.651***</span><span class="se">(0.329)</span></td>
-                  <td><span class="coef">-0.009</span><span class="se">(0.343)</span></td>
-                </tr>
-                <tr>
-                  <td><code>pct_hispanic</code></td>
-                  <td><span class="coef">0.014</span><span class="se">(0.049)</span></td>
-                  <td><span class="coef">-0.608***</span><span class="se">(0.126)</span></td>
-                  <td><span class="coef">-0.403***</span><span class="se">(0.105)</span></td>
-                </tr>
-                <tr>
-                  <td><code>pct_asian</code></td>
-                  <td><span class="coef">-0.583***</span><span class="se">(0.048)</span></td>
-                  <td><span class="coef">-1.784***</span><span class="se">(0.162)</span></td>
-                  <td><span class="coef">0.413***</span><span class="se">(0.147)</span></td>
-                </tr>
-                <tr>
-                  <td><code>poverty_rate</code></td>
-                  <td><span class="coef">-0.048</span><span class="se">(0.219)</span></td>
-                  <td><span class="coef">-0.197</span><span class="se">(0.562)</span></td>
-                  <td><span class="coef">2.004***</span><span class="se">(0.497)</span></td>
-                </tr>
-                <tr>
-                  <td>Key climate/resource control</td>
-                  <td><span class="coef">GHI: 0.160***</span><span class="se">(0.028)</span></td>
-                  <td><span class="coef">CDD/HDD: n.s.</span></td>
-                  <td><span class="coef">CDD65: -0.0002***</span><span class="se">(0.0000)</span></td>
-                </tr>
+                <tr><td><code>log_median_household_income</code></td><td><span class="coef">0.126***</span><span class="se">(0.038)</span></td><td><span class="coef">0.771***</span><span class="se">(0.122)</span></td><td><span class="coef">0.164*</span><span class="se">(0.098)</span></td></tr>
+                <tr><td><code>pct_black</code></td><td><span class="coef">-0.760***</span><span class="se">(0.109)</span></td><td><span class="coef">-1.652***</span><span class="se">(0.328)</span></td><td><span class="coef">-0.007</span><span class="se">(0.343)</span></td></tr>
+                <tr><td><code>pct_hispanic</code></td><td><span class="coef">0.017</span><span class="se">(0.048)</span></td><td><span class="coef">-0.612***</span><span class="se">(0.126)</span></td><td><span class="coef">-0.399***</span><span class="se">(0.105)</span></td></tr>
+                <tr><td><code>pct_asian</code></td><td><span class="coef">-0.579***</span><span class="se">(0.048)</span></td><td><span class="coef">-1.780***</span><span class="se">(0.162)</span></td><td><span class="coef">0.410***</span><span class="se">(0.146)</span></td></tr>
+                <tr><td><code>poverty_rate</code></td><td><span class="coef">-0.047</span><span class="se">(0.219)</span></td><td><span class="coef">-0.228</span><span class="se">(0.562)</span></td><td><span class="coef">2.003***</span><span class="se">(0.497)</span></td></tr>
+                <tr><td>Key climate/resource control</td><td><span class="coef">GHI: 0.160***</span><span class="se">(0.028)</span></td><td><span class="coef">CDD/HDD: n.s.</span></td><td><span class="coef">CDD65: -0.0002***</span><span class="se">(0.0000)</span></td></tr>
               </tbody>
               <tfoot>
-                <tr>
-                  <td>N</td>
-                  <td>1,386</td>
-                  <td>1,386</td>
-                  <td>1,386</td>
-                </tr>
-                <tr>
-                  <td>R²</td>
-                  <td>0.107</td>
-                  <td>0.189</td>
-                  <td>0.079</td>
-                </tr>
+                <tr><td>N</td><td>1,390</td><td>1,390</td><td>1,390</td></tr>
+                <tr><td>R²</td><td>0.106</td><td>0.188</td><td>0.079</td></tr>
               </tfoot>
             </table>
             <div class="table-note">Entries are HC1-robust OLS coefficients with robust standard errors in parentheses. Stars denote <code>p &lt; 0.10</code>, <code>p &lt; 0.05</code>, and <code>p &lt; 0.01</code>.</div>
           </div>
 
           <figure class="paper-figure" id="fig-coefficient-path">
-            <img src="./assets/figures/generated/coefficient_path_across_models.svg" alt="Three-panel coefficient path figure tracking five core coefficients across models for solar PV, storage, and EV charging">
-            <figcaption><strong>Figure C.</strong> Coefficient paths for the five main disparity predictors across the eight-model ladder. This condenses the paper’s central identification claim into one visual: some coefficients attenuate as controls are added, but the overall cross-technology disparity pattern remains.</figcaption>
+            <img src="./assets/figures/generated/coefficient_path_across_models.png" alt="Three-panel coefficient path figure tracking five core coefficients across models for solar PV, storage, and EV charging">
+            <figcaption><strong>Figure 4.</strong> Coefficient paths for the five main disparity predictors across the eight-model ladder. This condenses the paper’s central identification claim into one visual: some coefficients attenuate as controls are added, but the overall cross-technology disparity pattern remains.</figcaption>
           </figure>
 
-          <h3>5.1 Baseline patterns across DER types</h3>
-          <p>A consistent pattern across the main specifications is that racial and socioeconomic disparities are not uniform across technologies. Table 2 and Figure C show that solar PV and battery storage display the clearest and most persistent negative associations with ZIP/ZCTA shares of Black and Asian residents even after controlling for income and poverty. EV charging shows a different pattern: charger deployment is negatively associated with Hispanic share, positively associated with Asian share in the refreshed baseline model, and strongly positively associated with poverty rate. This makes EV charging substantively different from the PV and storage results and suggests that “charger availability” may be capturing a different mix of infrastructure types and siting logics than household-centered DER adoption.</p>
+          <h3 id="sec-4-1">4.1 Baseline patterns across DER types</h3>
+          <p>A consistent pattern across the main specifications is that racial and socioeconomic disparities are not uniform across technologies. <a class="xref" href="#tbl-baseline">Table 3</a> and <a class="xref" href="#fig-coefficient-path">Figure 4</a> show that solar PV and battery storage display the clearest and most persistent negative associations with ZIP/ZCTA shares of Black and Asian residents even after controlling for income and poverty. EV charging shows a different pattern: charger deployment is negatively associated with Hispanic share, positively associated with Asian share in the refreshed baseline model, and strongly positively associated with poverty rate. This makes EV charging substantively different from the PV and storage results and suggests that “charger availability” may be capturing a different mix of infrastructure types and siting logics than household-centered DER adoption. <a class="xref" href="#fig-main-dot-whisker">Figure 5</a> places the four continuous DER outcomes side by side on a common standardized scale.</p>
+          <p>Housing is tested directly rather than left only as a proposed mechanism. <code>Model 2C</code> adds an exhaustive B25024 structure composition—multifamily, mobile-home, and boat/RV/van/other shares, with single-family units omitted as the reference—and <code>Model 2D</code> adds B25003 owner occupancy, with renters as the reference. In standardized models, the Black- and Asian-share coefficients change from <code>-0.049</code> and <code>-0.083</code> to <code>-0.023</code> and <code>-0.051</code> for PV, and from <code>-0.106</code> and <code>-0.254</code> to <code>-0.059</code> and <code>-0.173</code> for storage. For aggregate charging they change from <code>-0.000</code> and <code>0.059</code> to <code>-0.035</code> and <code>-0.008</code>. <a class="xref" href="#fig-housing-attenuation">Figure 21</a> shows all three race coefficients. Movement toward zero is attenuation associated with area-level housing composition; these models do not identify household-level tenure or roof access.</p>
           <figure class="paper-figure" id="fig-main-dot-whisker">
-            <img src="./assets/figures/baseline_der_outcomes_dot_whisker.svg" alt="Dot-whisker comparison of standardized baseline coefficients across outcomes">
-            <figcaption><strong>Figure 1.</strong> Cross-outcome dot-whisker comparison from the standardized model outputs for Solar PV, Storage, EV Chargers, and Wind MW. This figure summarizes how core predictors such as <code>log_median_household_income</code>, <code>pct_black</code>, <code>pct_hispanic</code>, <code>pct_asian</code>, and <code>poverty_rate</code> vary across the continuous DER outcomes, excluding the binary turbine-presence outcome. Source file: <code>outputs/standardized_figures/baseline_der_outcomes_dot_whisker.svg</code>.</figcaption>
+            <img src="./assets/figures/baseline_der_outcomes_dot_whisker.png" alt="Dot-whisker comparison of standardized baseline coefficients across outcomes">
+            <figcaption><strong>Figure 5.</strong> Cross-outcome dot-whisker comparison from the standardized model outputs for Solar PV, Storage, EV Chargers, and Wind MW. This figure summarizes how core predictors such as <code>log_median_household_income</code>, <code>pct_black</code>, <code>pct_hispanic</code>, <code>pct_asian</code>, and <code>poverty_rate</code> vary across the continuous DER outcomes, excluding the binary turbine-presence outcome. Source file: <code>./assets/figures/baseline_der_outcomes_dot_whisker.png</code>.</figcaption>
           </figure>
 
-          <h3>5.2 Solar PV: persistent disparities after resource controls</h3>
-          <p>For solar PV, the baseline specification indicates that ZIP/ZCTAs with higher median household income have higher PV adoption intensity, while ZIP/ZCTAs with larger Black and Asian population shares have substantially lower PV adoption intensity. As summarized in Figure 2, the coefficient on <code>log_median_household_income</code> is positive and statistically significant in the baseline model, while <code>pct_black</code> and <code>pct_asian</code> are strongly negative. Solar resource potential behaves as expected: <code>ghi_mean_kwh_m2_day_2023</code> is positive and highly significant, suggesting that physical suitability is an important predictor of deployment.</p>
-          <p>These disparities remain substantively present as the model becomes more demanding. Adding educational attainment (<code>Model 2</code>) strengthens the estimated income effect and makes the coefficient on <code>pct_hispanic</code> negative and statistically significant as well, while the negative coefficients on <code>pct_black</code> and <code>pct_asian</code> remain large. In the county-clustered specification (<code>Model 5C</code>), the income effect attenuates and becomes marginal, but the negative coefficient on <code>pct_asian</code> remains strongly significant and the negative coefficient on <code>pct_black</code> remains statistically distinguishable from zero. In the infrastructure-control and demand-proxy models (<code>Models 7</code> and <code>8</code>), the PV results continue to show large negative associations for <code>pct_black</code> and <code>pct_asian</code>, indicating that these patterns are not explained away by existing energy infrastructure or underlying electricity demand.</p>
+          <h3 id="sec-4-2">4.2 Solar PV: persistent disparities after resource controls</h3>
+          <p>For solar PV, the baseline specification indicates that ZIP/ZCTAs with higher median household income have higher PV adoption intensity, while ZIP/ZCTAs with larger Black and Asian population shares have substantially lower PV adoption intensity. As summarized in <a class="xref" href="#fig-pv-robustness">Figure 6</a>, the coefficient on <code>log_median_household_income</code> is positive and statistically significant in the baseline model reported in <a class="xref" href="#tbl-baseline">Table 3</a>, while <code>pct_black</code> and <code>pct_asian</code> are strongly negative. Solar resource potential behaves as expected: <code>ghi_mean_kwh_m2_day_2023</code> is positive and highly significant, suggesting that physical suitability is an important predictor of deployment.</p>
+          <p>These disparities remain substantively present as the model becomes more demanding. Adding educational attainment (<code>Model 2</code>; <a class="xref" href="#model-2">Section 6.7</a>) strengthens the estimated income effect and makes the coefficient on <code>pct_hispanic</code> negative and statistically significant as well, while the negative coefficients on <code>pct_black</code> and <code>pct_asian</code> remain large. In the county-clustered specification (<code>Model 5C</code>; <a class="xref" href="#model-5">Section 6.7</a>), the income effect attenuates and becomes marginal, but the negative coefficient on <code>pct_asian</code> remains strongly significant and the negative coefficient on <code>pct_black</code> remains statistically distinguishable from zero. In the infrastructure-control and demand-proxy models (<code>Models 7</code> and <code>8</code>; <a class="xref" href="#model-7">Section 6.7</a>), the PV results continue to show large negative associations for <code>pct_black</code> and <code>pct_asian</code>, indicating that these patterns are not explained away by existing energy infrastructure or underlying electricity demand.</p>
           <p>Substantively, the solar results are the clearest evidence in the paper that demographic disparities persist even after accounting for major “ability to adopt” and resource variables. The persistence of the race/ethnicity coefficients after controlling for income, poverty, and solar irradiance suggests that the PV gap is not simply a byproduct of lower-income areas having worse solar resource conditions.</p>
           <figure class="paper-figure" id="fig-pv-robustness">
-            <img src="./assets/figures/y_pv_robustness.svg" alt="Robustness figure for standardized rooftop PV models">
-            <figcaption><strong>Figure 2.</strong> Standardized robustness summary for <code>y_pv</code>. This is the closest existing exported figure to a coefficient-stability view of the rooftop PV results across the model ladder. Source file: <code>outputs/standardized_figures/y_pv_robustness.svg</code>.</figcaption>
+            <img src="./assets/figures/y_pv_robustness.png" alt="Robustness figure for standardized rooftop PV models">
+            <figcaption><strong>Figure 6.</strong> Standardized robustness summary for <code>y_pv</code>. This is the closest existing exported figure to a coefficient-stability view of the rooftop PV results across the model ladder. Source file: <code>./assets/figures/y_pv_robustness.png</code>.</figcaption>
           </figure>
 
-          <h3>5.3 Storage: the strongest and most consistent inequities</h3>
-          <p>Battery storage exhibits the strongest and most stable disparity pattern of the main DER outcomes. Figure 3 shows that in the baseline storage model <code>log_median_household_income</code> is strongly positive, while <code>pct_black</code>, <code>pct_hispanic</code>, and <code>pct_asian</code> are all negative. Compared with the PV results, the storage coefficients are larger in magnitude and remain negative across nearly every robustness check examined.</p>
+          <h3 id="sec-4-3">4.3 Storage: the strongest and most consistent inequities</h3>
+          <p>Battery storage exhibits the strongest and most stable disparity pattern of the main DER outcomes. <a class="xref" href="#fig-storage-robustness">Figure 7</a> shows that in the baseline storage model (<a class="xref" href="#tbl-baseline">Table 3</a>) <code>log_median_household_income</code> is strongly positive, while <code>pct_black</code>, <code>pct_hispanic</code>, and <code>pct_asian</code> are all negative. Compared with the PV results in <a class="xref" href="#sec-4-2">Section 4.2</a>, the storage coefficients are larger in magnitude and remain negative across nearly every robustness check examined.</p>
           <p>This pattern survives the addition of extra socioeconomic controls, clustered standard errors, infrastructure variables, and electricity demand. In <code>Model 2</code>, the income effect becomes even larger, and the negative coefficients on <code>pct_black</code>, <code>pct_hispanic</code>, and <code>pct_asian</code> remain large and precisely estimated. In the county-clustered specification (<code>Model 5C</code>), all three race/ethnicity variables remain negative and statistically significant. The same is true in the infrastructure-control and demand-proxy models. Unlike the EV charging outcome, the storage pattern does not appear to hinge on one especially unstable control or one fragile specification; it is persistent across the model ladder.</p>
-          <p>I also estimate an additional robustness model, <code>Model 9</code>, that adds <code>y_pv</code> to the most controlled storage specification to ask whether storage inequities persist after conditioning on local PV deployment intensity. The PV term is large and positive (<code>1.143</code>, <code>p &lt; 0.001</code>), as expected for a solar-plus-storage pathway, but the race coefficients remain negative and statistically significant: <code>pct_black = -1.297</code> (<code>p &lt; 0.001</code>), <code>pct_hispanic = -1.003</code> (<code>p &lt; 0.001</code>), and <code>pct_asian = -1.136</code> (<code>p &lt; 0.001</code>). This is an important result for the paper’s policy argument because it suggests that the storage gap is not explained solely by unequal PV deployment upstream.</p>
-          <div class="table-wrap">
-            <div class="table-title"><strong>Table 3.</strong> Storage Model 9 PV-control robustness.</div>
+          <p>I also estimate an additional robustness model, <code>Model 9</code>, that adds <code>y_pv</code> to the most controlled storage specification. The PV term is positive (<code>0.952</code>, <code>p &lt; 0.001</code>), while the race coefficients remain negative and statistically significant: <code>pct_black = -1.343</code>, <code>pct_hispanic = -1.085</code>, and <code>pct_asian = -1.287</code> (all <code>p &lt; 0.001</code>). The conditional education coefficient is also negative (<code>-0.491</code>, <code>p = 0.026</code>) despite the positive unadjusted education gradient, consistent with overlap among education, income, housing, and PV deployment. This suggests that the storage gap is not explained solely by unequal PV deployment upstream.</p>
+          <div class="table-wrap" id="tbl-storage-m9">
+            <div class="table-title"><strong>Table 4.</strong> Storage Model 9 PV-control robustness.</div>
             <table class="paper-table">
               <thead>
                 <tr>
@@ -442,12 +250,12 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td><code>log_median_household_income</code></td><td><span class="coef">0.533***</span></td><td>0.145</td><td>&lt; 0.001</td></tr>
-                <tr><td><code>pct_black</code></td><td><span class="coef">-1.297***</span></td><td>0.286</td><td>&lt; 0.001</td></tr>
-                <tr><td><code>pct_hispanic</code></td><td><span class="coef">-1.003***</span></td><td>0.145</td><td>&lt; 0.001</td></tr>
-                <tr><td><code>pct_asian</code></td><td><span class="coef">-1.136***</span></td><td>0.162</td><td>&lt; 0.001</td></tr>
-                <tr><td><code>pct_bachelors_plus</code></td><td><span class="coef">-0.611***</span></td><td>0.235</td><td>0.009</td></tr>
-                <tr><td><code>y_pv</code></td><td><span class="coef">1.143***</span></td><td>0.175</td><td>&lt; 0.001</td></tr>
+                <tr><td><code>log_median_household_income</code></td><td><span class="coef">0.440***</span></td><td>0.130</td><td>&lt; 0.001</td></tr>
+                <tr><td><code>pct_black</code></td><td><span class="coef">-1.343***</span></td><td>0.288</td><td>&lt; 0.001</td></tr>
+                <tr><td><code>pct_hispanic</code></td><td><span class="coef">-1.085***</span></td><td>0.139</td><td>&lt; 0.001</td></tr>
+                <tr><td><code>pct_asian</code></td><td><span class="coef">-1.287***</span></td><td>0.163</td><td>&lt; 0.001</td></tr>
+                <tr><td><code>pct_bachelors_plus</code></td><td><span class="coef">-0.491**</span></td><td>0.220</td><td>0.026</td></tr>
+                <tr><td><code>y_pv</code></td><td><span class="coef">0.952***</span></td><td>0.170</td><td>&lt; 0.001</td></tr>
               </tbody>
             </table>
             <div class="table-note">Model 9 is storage-specific and should be read as a robustness check, not as a cross-outcome specification. It adds local PV deployment to the most controlled storage model while retaining socioeconomic, climate, electricity-demand, and infrastructure controls.</div>
@@ -455,26 +263,26 @@
           <p>These results suggest that storage adoption is not only income-sensitive but also more unevenly distributed across communities than EV charging and at least as unequal as PV, if not more so. Because storage is often discussed in terms of resilience, backup power, and outage protection, this result has especially important implications for energy equity: the communities with the greatest vulnerability to outages may not be the ones receiving the greatest access to storage.</p>
           <figure class="paper-figure" id="fig-storage-robustness">
             <img src="./assets/figures/y_storage_robustness.png" alt="Robustness figure for standardized battery storage models">
-            <figcaption><strong>Figure 3.</strong> Standardized robustness summary for <code>y_storage</code>. Read together with Figure 2 and the Model 9 table, this figure highlights that the storage coefficients are generally larger and more persistent than the PV coefficients. Source file: <code>outputs/standardized_figures/y_storage_robustness.svg</code>.</figcaption>
+            <figcaption><strong>Figure 7.</strong> Standardized robustness summary for <code>y_storage</code>. Read together with <a class="xref" href="#fig-pv-robustness">Figure 6</a> and <a class="xref" href="#tbl-storage-m9">Table 4</a>, this figure highlights that the storage coefficients are generally larger and more persistent than the PV coefficients. Source file: <code>./assets/figures/y_storage_robustness.png</code>.</figcaption>
           </figure>
 
-          <h3>5.4 EV charging: aggregate disparities mask charger-type composition</h3>
-          <p>The EV charging results are more complex than the PV and storage findings. As shown in Figure 4, the refreshed aggregate charger baseline has a positive but not conventionally significant income coefficient, a near-zero Black-share coefficient, a negative Hispanic-share coefficient, and a positive Asian-share coefficient. At the same time, <code>poverty_rate</code> is strongly positive. That positive poverty coefficient persists across several robustness checks, including county-clustered, infrastructure-control, and demand-proxy models.</p>
-          <p>The charger-type decomposition helps clarify what is going on. In the standardized baseline models, the positive aggregate association with <code>poverty_rate</code> is not present for <code>y_level1_chargers</code>, where the coefficient is small and statistically insignificant (<code>0.002</code>, <code>p = 0.584</code>). Instead, the aggregate pattern appears to be driven primarily by <code>y_level2_chargers</code>, where <code>poverty_rate</code> is positive and highly significant (<code>0.166</code>, <code>p &lt; 0.001</code>). For <code>y_dc_fast_chargers</code>, the coefficient on <code>poverty_rate</code> is also positive, but it is imprecisely estimated in the standardized baseline model (<code>0.028</code>, <code>p = 0.187</code>).</p>
-          <p>Taken together, Figure 5 and Table 4 suggest that the positive poverty-rate relationship in the aggregate charger outcome is composition-driven rather than reflecting uniformly greater charging access across all charger types.</p>
+          <h3 id="sec-4-4">4.4 EV charging: aggregate disparities mask charger-type composition</h3>
+          <p>The EV charging results are more complex than the PV and storage findings in <a class="xref" href="#sec-4-2">Section 4.2</a> and <a class="xref" href="#sec-4-3">Section 4.3</a>. As shown in <a class="xref" href="#fig-chargers-robustness">Figure 8</a>, the refreshed aggregate charger baseline in <a class="xref" href="#tbl-baseline">Table 3</a> has a positive but not conventionally significant income coefficient, a near-zero Black-share coefficient, a negative Hispanic-share coefficient, and a positive Asian-share coefficient. At the same time, <code>poverty_rate</code> is strongly positive. That positive poverty coefficient persists across several robustness checks, including county-clustered, infrastructure-control, and demand-proxy models.</p>
+          <p>The charger-type decomposition helps clarify what is going on. In the standardized baseline models, the positive aggregate association with <code>poverty_rate</code> is not present for <code>y_level1_chargers</code> (<code>0.002</code>, <code>p = 0.584</code>). Instead, it is driven primarily by <code>y_level2_chargers</code> (<code>0.166</code>, <code>p &lt; 0.001</code>). For <code>y_dc_fast_chargers</code>, the coefficient is positive but imprecise (<code>0.027</code>, <code>p = 0.202</code>).</p>
+          <p>Taken together, <a class="xref" href="#fig-charger-subtypes">Figure 9</a> and <a class="xref" href="#tbl-charger-subtypes">Table 5</a> suggest that the positive poverty-rate relationship in the aggregate charger outcome is composition-driven rather than reflecting uniformly greater charging access across all charger types.</p>
           <p>This matters for interpretation. A positive coefficient in the aggregate charger model should not be read as straightforward evidence that poorer communities have better household-serving charging access. The subtype results are more consistent with a siting story in which Level 2 and, to a lesser extent, DC fast infrastructure are concentrated in commercial, corridor, workplace, municipal, or otherwise non-residential locations that may be more common in poorer or more industrial ZIP/ZCTA areas. In that sense, the aggregate charger count is partly measuring infrastructure composition rather than a uniform access benefit.</p>
           <p>This is one of the most interesting findings in the paper because it shows that EV charging equity cannot be interpreted from a single aggregate charger metric alone. Disaggregating charger types changes the substantive meaning of the result and suggests that charger composition should be treated as central, not peripheral, in future equity work.</p>
           <figure class="paper-figure" id="fig-chargers-robustness">
-            <img src="./assets/figures/y_chargers_robustness.svg" alt="Robustness figure for standardized aggregate EV charging models">
-            <figcaption><strong>Figure 4.</strong> Standardized robustness summary for aggregate <code>y_chargers</code>. This figure shows how the aggregate EV charging result behaves across specifications, but it does not by itself separate Level 1, Level 2, and DC fast charging. Source file: <code>outputs/standardized_figures/y_chargers_robustness.svg</code>.</figcaption>
+            <img src="./assets/figures/y_chargers_robustness.png" alt="Robustness figure for standardized aggregate EV charging models">
+            <figcaption><strong>Figure 8.</strong> Standardized robustness summary for aggregate <code>y_chargers</code>. This figure shows how the aggregate EV charging result behaves across specifications, but it does not by itself separate Level 1, Level 2, and DC fast charging. Source file: <code>./assets/figures/y_chargers_robustness.png</code>.</figcaption>
           </figure>
           <figure class="paper-figure" id="fig-charger-subtypes">
-            <img src="./assets/figures/charger_subtype_comparison.svg" alt="Baseline standardized coefficient comparison across aggregate, level 1, level 2, and DC fast EV charger outcomes">
-            <figcaption><strong>Figure 5.</strong> Baseline standardized coefficient comparison across aggregate charging, <code>y_level1_chargers</code>, <code>y_level2_chargers</code>, and <code>y_dc_fast_chargers</code>. This figure makes the subtype result explicit: the positive aggregate association with <code>poverty_rate</code> is not present for Level 1 charging and is driven primarily by Level 2 charging. Source file: <code>outputs/standardized_figures/charger_subtype_comparison.svg</code>.</figcaption>
+            <img src="./assets/figures/charger_subtype_comparison.png" alt="Baseline standardized coefficient comparison across aggregate, level 1, level 2, and DC fast EV charger outcomes">
+            <figcaption><strong>Figure 9.</strong> Baseline standardized coefficient comparison across aggregate charging, <code>y_level1_chargers</code>, <code>y_level2_chargers</code>, and <code>y_dc_fast_chargers</code>. This figure makes the subtype result explicit: the positive aggregate association with <code>poverty_rate</code> is not present for Level 1 charging and is driven primarily by Level 2 charging. Source file: <code>./assets/figures/charger_subtype_comparison.png</code>.</figcaption>
           </figure>
 
-          <div class="table-wrap">
-            <div class="table-title"><strong>Table 4.</strong> EV charger subtype comparison in baseline models.</div>
+          <div class="table-wrap" id="tbl-charger-subtypes">
+            <div class="table-title"><strong>Table 5.</strong> EV charger subtype comparison in baseline models.</div>
             <table class="paper-table">
               <thead>
                 <tr>
@@ -486,89 +294,67 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td><code>log_median_household_income</code></td>
-                  <td><span class="coef">0.160</span><span class="se">(0.098)</span></td>
-                  <td><span class="coef">-0.010</span><span class="se">(0.011)</span></td>
-                  <td><span class="coef">0.199**</span><span class="se">(0.088)</span></td>
-                  <td><span class="coef">0.045</span><span class="se">(0.056)</span></td>
-                </tr>
-                <tr>
-                  <td><code>pct_black</code></td>
-                  <td><span class="coef">-0.009</span><span class="se">(0.343)</span></td>
-                  <td><span class="coef">-0.004</span><span class="se">(0.018)</span></td>
-                  <td><span class="coef">0.087</span><span class="se">(0.323)</span></td>
-                  <td><span class="coef">-0.149</span><span class="se">(0.155)</span></td>
-                </tr>
-                <tr>
-                  <td><code>pct_hispanic</code></td>
-                  <td><span class="coef">-0.403***</span><span class="se">(0.105)</span></td>
-                  <td><span class="coef">-0.018</span><span class="se">(0.012)</span></td>
-                  <td><span class="coef">-0.480***</span><span class="se">(0.089)</span></td>
-                  <td><span class="coef">0.011</span><span class="se">(0.071)</span></td>
-                </tr>
-                <tr>
-                  <td><code>pct_asian</code></td>
-                  <td><span class="coef">0.413***</span><span class="se">(0.147)</span></td>
-                  <td><span class="coef">0.006</span><span class="se">(0.006)</span></td>
-                  <td><span class="coef">0.344**</span><span class="se">(0.142)</span></td>
-                  <td><span class="coef">0.135**</span><span class="se">(0.068)</span></td>
-                </tr>
-                <tr>
-                  <td><code>poverty_rate</code></td>
-                  <td><span class="coef">2.004***</span><span class="se">(0.497)</span></td>
-                  <td><span class="coef">0.031</span><span class="se">(0.056)</span></td>
-                  <td><span class="coef">2.234***</span><span class="se">(0.444)</span></td>
-                  <td><span class="coef">0.377</span><span class="se">(0.285)</span></td>
-                </tr>
+                <tr><td><code>log_median_household_income</code></td><td><span class="coef">0.164*</span><span class="se">(0.098)</span></td><td><span class="coef">-0.010</span><span class="se">(0.011)</span></td><td><span class="coef">0.203**</span><span class="se">(0.088)</span></td><td><span class="coef">0.045</span><span class="se">(0.056)</span></td></tr>
+                <tr><td><code>pct_black</code></td><td><span class="coef">-0.007</span><span class="se">(0.343)</span></td><td><span class="coef">-0.004</span><span class="se">(0.018)</span></td><td><span class="coef">0.089</span><span class="se">(0.323)</span></td><td><span class="coef">-0.148</span><span class="se">(0.155)</span></td></tr>
+                <tr><td><code>pct_hispanic</code></td><td><span class="coef">-0.399***</span><span class="se">(0.105)</span></td><td><span class="coef">-0.018</span><span class="se">(0.012)</span></td><td><span class="coef">-0.478***</span><span class="se">(0.089)</span></td><td><span class="coef">0.013</span><span class="se">(0.070)</span></td></tr>
+                <tr><td><code>pct_asian</code></td><td><span class="coef">0.410***</span><span class="se">(0.146)</span></td><td><span class="coef">0.006</span><span class="se">(0.006)</span></td><td><span class="coef">0.341**</span><span class="se">(0.141)</span></td><td><span class="coef">0.135**</span><span class="se">(0.068)</span></td></tr>
+                <tr><td><code>poverty_rate</code></td><td><span class="coef">2.003***</span><span class="se">(0.497)</span></td><td><span class="coef">0.030</span><span class="se">(0.056)</span></td><td><span class="coef">2.242***</span><span class="se">(0.444)</span></td><td><span class="coef">0.364</span><span class="se">(0.285)</span></td></tr>
               </tbody>
               <tfoot>
-                <tr>
-                  <td>N</td>
-                  <td>1,386</td>
-                  <td>1,386</td>
-                  <td>1,386</td>
-                  <td>1,386</td>
-                </tr>
-                <tr>
-                  <td>R²</td>
-                  <td>0.079</td>
-                  <td>0.006</td>
-                  <td>0.117</td>
-                  <td>0.012</td>
-                </tr>
+                <tr><td>N</td><td>1,390</td><td>1,390</td><td>1,390</td><td>1,390</td></tr>
+                <tr><td>R²</td><td>0.079</td><td>0.006</td><td>0.117</td><td>0.012</td></tr>
               </tfoot>
             </table>
             <div class="table-note">The aggregate poverty relationship is concentrated in Level 2 charging, while Level 1 is effectively null in the same baseline specification.</div>
           </div>
 
-          <h3>5.5 Energy burden outcome results</h3>
-          <p>The energy-burden outcomes provide affordability context for the DER results. In the matched burden sample, mean <code>energy_burden_pct</code> is about <code>2.2%</code> and the interquartile range runs from roughly <code>1.5%</code> to <code>2.8%</code>, while <code>energy_burden_pct</code> is strongly negatively correlated with <code>log_median_household_income</code> (<code>-0.746</code>) and positively correlated with <code>poverty_rate</code> (<code>0.545</code>). The burden variables are therefore best read as a related affordability-stress layer rather than as cleanly orthogonal controls.</p>
-          <p>In the refreshed baseline model with <code>energy_burden_pct</code> as the outcome, <code>log_median_household_income</code> is strongly negative (<code>-0.0096</code>, <code>p &lt; 0.001</code>), <code>pct_hispanic</code> is positive (<code>0.0036</code>, <code>p &lt; 0.001</code>), and <code>pct_asian</code> is negative (<code>-0.0077</code>, <code>p &lt; 0.001</code>), while <code>pct_black</code> and <code>poverty_rate</code> are not statistically distinguishable from zero after the included controls. For <code>log_energy_gap_per_capita</code>, income is again negative (<code>-2.161</code>, <code>p &lt; 0.001</code>), while <code>pct_hispanic</code> (<code>1.531</code>, <code>p &lt; 0.001</code>), <code>pct_asian</code> (<code>1.741</code>, <code>p = 0.009</code>), and <code>poverty_rate</code> (<code>2.701</code>, <code>p = 0.039</code>) are positive.</p>
+          <h3 id="sec-4-5">4.5 Energy burden outcome results</h3>
+          <p>The energy-burden outcomes provide affordability context for the DER results. In the matched burden sample, mean <code>energy_burden_pct</code> is about <code>2.2%</code> and the interquartile range runs from roughly <code>1.5%</code> to <code>2.8%</code>, while <code>energy_burden_pct</code> is strongly negatively correlated with <code>log_median_household_income</code> (<code>-0.746</code>) and positively correlated with <code>poverty_rate</code> (<code>0.545</code>). The burden variables are therefore best read as a related affordability-stress layer rather than as cleanly orthogonal controls. <a class="xref" href="#fig-burden-lowess">Figure 10</a> shows the descriptive gradients linking neighborhood characteristics to both affordability outcomes.</p>
+          <p>In the refreshed baseline model with <code>energy_burden_pct</code> as the outcome, <code>log_median_household_income</code> is strongly negative (<code>-0.0096</code>, <code>p &lt; 0.001</code>), <code>pct_hispanic</code> is positive (<code>0.0036</code>, <code>p &lt; 0.001</code>), and <code>pct_asian</code> is negative (<code>-0.0077</code>, <code>p &lt; 0.001</code>), while <code>pct_black</code> and <code>poverty_rate</code> are not statistically distinguishable from zero after the included controls. For <code>log_energy_gap_per_capita</code>, income is again negative (<code>-2.161</code>, <code>p &lt; 0.001</code>), while <code>pct_hispanic</code> (<code>1.531</code>, <code>p &lt; 0.001</code>), <code>pct_asian</code> (<code>1.741</code>, <code>p = 0.009</code>), and <code>poverty_rate</code> (<code>2.701</code>, <code>p = 0.039</code>) are positive. <a class="xref" href="#fig-burden-der-m9">Figure 11</a> shows the DER predictors in the affordability models and <a class="xref" href="#fig-burden-ladder">Figure 12</a> traces these coefficients across the model ladder.</p>
           <p>These results reinforce the paper’s broader interpretation: affordability stress is itself spatially and demographically structured, but it does not make the DER outcomes interchangeable. PV and storage remain tied to different race and income patterns than aggregate charging, and the charging result still appears to reflect a mixture of infrastructure siting and household-serving access rather than one uniform affordability channel.</p>
 
-          <h3>5.6 Descriptive nonlinear gradients</h3>
-          <p>The regression tables summarize conditional associations, but the raw outcome gradients are also informative. Figure 6 plots a combined non-white share against the three main DER outcomes using deterministic LOWESS smoothing with seeded 95% bootstrap confidence intervals. The fitted gradients are negative for all three technologies, with the largest descriptive decline for storage. Over the middle 90 percent of the observed predictor range, the fitted endpoint change is about <code>-0.20</code> for PV, <code>-1.58</code> for storage, and <code>-0.02</code> for aggregate chargers. These are descriptive summaries rather than causal effects, but they reinforce the regression finding that more heavily non-white ZIP/ZCTAs tend to be less served across multiple DER outcomes.</p>
-          <p>Figure 7 provides the corresponding education view using <code>pct_bachelors_plus</code>. The regenerated deterministic LOWESS audit shows a mildly negative unconditional gradient for PV (<code>-0.06</code>) but positive gradients for storage (<code>0.61</code>) and EV charging (<code>1.17</code>). The corresponding standardized Model 2 charger regression also estimates a positive education coefficient (<code>0.432</code>, <code>p &lt; 0.001</code>). If an earlier figure or notebook export suggested a negative bachelors relationship for EV chargers, that should be read as a stale or specification-specific mismatch rather than the current paper result. In the current generated evidence, bachelor’s attainment is positively associated with aggregate EV charger deployment.</p>
+          <figure class="paper-figure" id="fig-burden-lowess">
+            <div class="figure-grid">
+              <img src="./assets/figures/generated/income_energy_burden_pct_lowess.png" alt="LOWESS gradient between median household income and energy burden">
+              <img src="./assets/figures/generated/income_log_energy_gap_per_capita_lowess.png" alt="LOWESS gradient between median household income and the log per-capita affordability gap">
+              <img src="./assets/figures/generated/education_energy_burden_pct_lowess.png" alt="LOWESS gradient between bachelor's attainment and energy burden">
+              <img src="./assets/figures/generated/education_log_energy_gap_per_capita_lowess.png" alt="LOWESS gradient between bachelor's attainment and the log per-capita affordability gap">
+              <img src="./assets/figures/generated/nonwhite_energy_burden_pct_lowess.png" alt="LOWESS gradient between combined non-white share and energy burden">
+              <img src="./assets/figures/generated/nonwhite_log_energy_gap_per_capita_lowess.png" alt="LOWESS gradient between combined non-white share and the log per-capita affordability gap">
+            </div>
+            <figcaption><strong>Figure 10.</strong> Descriptive LOWESS gradients between neighborhood characteristics and the two energy-affordability outcomes. Curves are deterministic LOWESS fits with seeded bootstrap 95% confidence intervals.</figcaption>
+          </figure>
+          <figure class="paper-figure" id="fig-burden-der-m9">
+            <img src="./assets/figures/energy_burden_der_m9.png" alt="Coefficient plot of DER predictors in the energy-burden and affordability-gap models">
+            <figcaption><strong>Figure 11.</strong> DER predictors in the energy-burden and affordability-gap models (Model 9A). Points are coefficient estimates and horizontal lines are 95% confidence intervals.</figcaption>
+          </figure>
+          <figure class="paper-figure" id="fig-burden-ladder">
+            <img src="./assets/figures/energy_burden_model_ladder.png" alt="Coefficient stability across the model ladder for the energy-burden and affordability-gap outcomes">
+            <figcaption><strong>Figure 12.</strong> Coefficient stability for the energy-burden and affordability-gap outcomes across the model ladder.</figcaption>
+          </figure>
+
+          <h3 id="sec-4-6">4.6 Descriptive nonlinear gradients</h3>
+          <p>The regression tables (<a class="xref" href="#tbl-baseline">Table 3</a>) summarize conditional associations, but the raw outcome gradients are also informative. <a class="xref" href="#fig-nonwhite-lowess">Figure 13</a> plots a combined non-white share against the three main DER outcomes using deterministic LOWESS smoothing with seeded 95% bootstrap confidence intervals. The fitted gradients are negative for all three technologies, with the largest descriptive decline for storage. Over the middle 90 percent of the observed predictor range, the fitted endpoint change is about <code>-0.20</code> for PV, <code>-1.58</code> for storage, and <code>-0.02</code> for aggregate chargers. These are descriptive summaries rather than causal effects, but they reinforce the regression finding that more heavily non-white ZIP/ZCTAs tend to be less served across multiple DER outcomes.</p>
+          <p><a class="xref" href="#fig-education-lowess">Figure 14</a> provides the corresponding education view using <code>pct_bachelors_plus</code>. The regenerated deterministic LOWESS audit shows a mildly negative unconditional gradient for PV (<code>-0.06</code>) but positive gradients for storage (<code>0.61</code>) and EV charging (<code>1.17</code>). The corresponding standardized Model 2 charger regression also estimates a positive education coefficient (<code>0.432</code>, <code>p &lt; 0.001</code>). If an earlier figure or notebook export suggested a negative bachelors relationship for EV chargers, that should be read as a stale or specification-specific mismatch rather than the current paper result. In the current generated evidence, bachelor’s attainment is positively associated with aggregate EV charger deployment. The corresponding income gradients are shown in <a class="xref" href="#fig-income-lowess">Figure 3</a>.</p>
           <figure class="paper-figure" id="fig-nonwhite-lowess">
-            <img src="./assets/figures/generated/nonwhite_lowess_small_multiples.svg" alt="LOWESS small multiples showing solar PV, storage, and EV charging outcomes against combined non-white share">
-            <figcaption><strong>Figure 6.</strong> Descriptive LOWESS gradients between combined non-white share and the three headline DER outcomes. Shaded ribbons show 95% bootstrap confidence intervals. These panels are descriptive only; they do not condition on the full control set used in the regressions.</figcaption>
+            <img src="./assets/figures/generated/nonwhite_lowess_small_multiples.png" alt="LOWESS small multiples showing solar PV, storage, and EV charging outcomes against combined non-white share">
+            <figcaption><strong>Figure 13.</strong> Descriptive LOWESS gradients between combined non-white share and the three headline DER outcomes. Shaded ribbons show 95% bootstrap confidence intervals. These panels are descriptive only; they do not condition on the full control set used in the regressions.</figcaption>
           </figure>
           <figure class="paper-figure" id="fig-education-lowess">
-            <img src="./assets/figures/generated/education_lowess_small_multiples.svg" alt="LOWESS small multiples showing solar PV, storage, and EV charging outcomes against bachelor's degree share">
-            <figcaption><strong>Figure 7.</strong> Descriptive LOWESS gradients between <code>pct_bachelors_plus</code> and the three headline DER outcomes. Shaded ribbons show 95% bootstrap confidence intervals. The education panels are included as descriptive context rather than as a claim that education is the paper’s central explanatory variable.</figcaption>
+            <img src="./assets/figures/generated/education_lowess_small_multiples.png" alt="LOWESS small multiples showing solar PV, storage, and EV charging outcomes against bachelor's degree share">
+            <figcaption><strong>Figure 14.</strong> Descriptive LOWESS gradients between <code>pct_bachelors_plus</code> and the three headline DER outcomes. Shaded ribbons show 95% bootstrap confidence intervals. The education panels are included as descriptive context rather than as a claim that education is the paper’s central explanatory variable.</figcaption>
           </figure>
 
-          <h3>5.7 Exploratory clustering of ZIP/ZCTA types</h3>
+          <h3 id="sec-4-7">4.7 Exploratory clustering of ZIP/ZCTA types</h3>
           <p>In addition to the regression ladder, I use a PCA plus K-means clustering exercise to summarize the kinds of ZIP/ZCTA contexts that appear in the statewide sample. This is descriptive rather than causal, but it is useful for showing that the analysis is not comparing one uniform set of neighborhoods. Instead, California ZIP/ZCTAs sort into distinct socioeconomic and DER-deployment profiles.</p>
-          <p>The cluster map in Figure 8 shows that these profiles are spatially coherent rather than randomly scattered. Table 5 indicates that the clusters differ along multiple dimensions at once: cluster 1 is affluent with a large Asian share and relatively strong charging outcomes; cluster 2 has the highest Hispanic and combined non-white shares together with the highest poverty rate and the weakest charging deployment; and cluster 0 combines comparatively strong PV, storage, and charging outcomes with a larger residual white/other share. These differences are consistent with the broader paper argument that technology access is shaped by bundles of demographic, economic, and infrastructural conditions rather than by one variable in isolation.</p>
+          <p>The cluster map in <a class="xref" href="#fig-cluster-map">Figure 15</a> shows that these profiles are spatially coherent rather than randomly scattered. Cluster IDs are ordered by mean household income for stable interpretation. <a class="xref" href="#tbl-clusters">Table 6</a> shows that clusters 1 and 2 are the lowest-income and most heavily Hispanic profiles; cluster 5 combines high income, the largest Asian share, and the strongest charging outcome; and cluster 6 is the highest-income profile and has the strongest storage outcome. These differences are consistent with the broader paper argument that access is shaped by bundles of demographic, economic, housing, and infrastructural conditions.</p>
           <figure class="paper-figure" id="fig-cluster-map">
             <img src="./assets/figures/generated/cluster_choropleth_map.png" alt="California choropleth map of PCA plus K-means ZIP/ZCTA clusters">
-            <figcaption><strong>Figure 8.</strong> California ZIP/ZCTA clusters from the exploratory PCA plus K-means analysis. The cluster labels are arbitrary identifiers, but the map shows that the resulting neighborhood profiles are geographically structured rather than random.</figcaption>
+            <figcaption><strong>Figure 15.</strong> California ZIP/ZCTA clusters from the exploratory PCA plus K-means analysis. Cluster IDs are stable labels ordered from lowest to highest mean household income; the map shows that the resulting profiles are geographically structured.</figcaption>
           </figure>
 
-          <div class="table-wrap">
-            <div class="table-title"><strong>Table 5.</strong> Cluster-profile means from the PCA plus K-means assignment.</div>
+          <div class="table-wrap" id="tbl-clusters">
+            <div class="table-title"><strong>Table 6.</strong> Cluster-profile means from the PCA plus K-means assignment.</div>
             <table class="paper-table">
               <thead>
                 <tr>
@@ -586,120 +372,446 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td>Blue (1)</td><td>1,218</td><td>$87.5k</td><td>12.9%</td><td>2.5%</td><td>30.1%</td><td>4.1%</td><td>63.3%</td><td>0.89</td><td>11.00</td><td>13.66</td></tr>
-                <tr><td>Orange (2)</td><td>279</td><td>$159.6k</td><td>7.8%</td><td>3.3%</td><td>15.9%</td><td>24.0%</td><td>56.8%</td><td>0.52</td><td>10.66</td><td>10.83</td></tr>
-                <tr><td>Green (3)</td><td>323</td><td>$64.2k</td><td>20.2%</td><td>5.6%</td><td>63.4%</td><td>4.7%</td><td>26.3%</td><td>0.92</td><td>5.62</td><td>2.81</td></tr>
-                <tr><td>Red (4)</td><td>488</td><td>$104.9k</td><td>10.4%</td><td>6.0%</td><td>33.9%</td><td>16.8%</td><td>43.3%</td><td>0.43</td><td>5.13</td><td>2.39</td></tr>
-                <tr><td>Purple (5)</td><td>252</td><td>$74.4k</td><td>13.7%</td><td>0.9%</td><td>14.9%</td><td>1.5%</td><td>82.7%</td><td>0.45</td><td>10.63</td><td>5.40</td></tr>
+                <tr><td>Blue (1)</td><td>222</td><td>$61.3k</td><td>20.5%</td><td>3.5%</td><td>60.4%</td><td>3.5%</td><td>32.6%</td><td>1.02</td><td>5.34</td><td>1.46</td></tr>
+                <tr><td>Orange (2)</td><td>222</td><td>$72.5k</td><td>17.2%</td><td>8.4%</td><td>55.2%</td><td>12.5%</td><td>23.9%</td><td>0.22</td><td>3.15</td><td>1.84</td></tr>
+                <tr><td>Green (3)</td><td>250</td><td>$86.1k</td><td>11.2%</td><td>1.3%</td><td>21.4%</td><td>2.2%</td><td>75.1%</td><td>0.85</td><td>13.14</td><td>1.53</td></tr>
+                <tr><td>Red (4)</td><td>349</td><td>$106.0k</td><td>9.3%</td><td>4.9%</td><td>33.1%</td><td>14.2%</td><td>47.9%</td><td>0.51</td><td>5.85</td><td>1.10</td></tr>
+                <tr><td>Purple (5)</td><td>174</td><td>$132.6k</td><td>9.6%</td><td>4.8%</td><td>18.0%</td><td>26.2%</td><td>51.0%</td><td>0.25</td><td>4.14</td><td>4.61</td></tr>
+                <tr><td>Brown (6)</td><td>173</td><td>$166.8k</td><td>6.2%</td><td>1.8%</td><td>14.6%</td><td>16.9%</td><td>66.6%</td><td>0.64</td><td>15.68</td><td>2.55</td></tr>
               </tbody>
             </table>
             <div class="table-note">Means are descriptive summaries for ZIP/ZCTAs with population of at least 1,000, merged to the exported PCA plus K-means cluster assignments. The residual share is computed as one minus the displayed Black, Hispanic, and Asian shares, so it should be read as an approximate white/other remainder rather than an exact non-Hispanic white measure.</div>
           </div>
 
-          <h3>5.8 Wind as a contextual comparison outcome</h3>
-          <p>The wind-capacity outcome is useful as contextual comparison but is less central to the paper’s main equity argument. For <code>y_wind_mw</code>, the most consistent predictor is <code>wind_ws50m_mean_2023</code>, which is positive and statistically significant across all examined models. By contrast, the social variables are weaker and less stable. This suggests that wind siting is much more tightly tied to physical resource conditions than the other DER outcomes considered here.</p>
-          <p>Because wind is less directly comparable to behind-the-meter or consumer-facing DER adoption, it is best treated as supplementary context rather than as one of the paper’s headline findings. The paper therefore does not foreground the binary turbine-presence outcome in the reported results.</p>
+          <h3 id="sec-4-8">4.8 Wind as a contextual comparison outcome</h3>
+          <p>The wind-capacity outcome is useful as contextual comparison but is less central to the paper’s main equity argument. For <code>y_wind_mw</code>, the most consistent predictor is <code>wind_ws50m_mean_2023</code>, which is positive and statistically significant across all examined models (<a class="xref" href="#fig-wind-robustness">Figure 16</a>). By contrast, the social variables are weaker and less stable. This suggests that wind siting is much more tightly tied to physical resource conditions than the other DER outcomes considered here.</p>
+          <p>Because wind is less directly comparable to behind-the-meter or consumer-facing DER adoption, it is best treated as supplementary context rather than as one of the paper’s headline findings. The paper therefore does not foreground the binary turbine-presence outcome in the reported results. The cross-validated model comparison for wind is reported in <a class="xref" href="#fig-appendix-wind">Figure 20</a>.</p>
           <figure class="paper-figure" id="fig-wind-robustness">
-            <img src="./assets/figures/y_wind_mw_robustness.svg" alt="Robustness figure for standardized wind capacity models">
-            <figcaption><strong>Figure 9.</strong> Standardized robustness summary for <code>y_wind_mw</code>, included mainly as contextual evidence rather than as a headline equity result. Source file: <code>outputs/standardized_figures/y_wind_mw_robustness.svg</code>.</figcaption>
+            <img src="./assets/figures/y_wind_mw_robustness.png" alt="Robustness figure for standardized wind capacity models">
+            <figcaption><strong>Figure 16.</strong> Standardized robustness summary for <code>y_wind_mw</code>, included mainly as contextual evidence rather than as a headline equity result. Source file: <code>./assets/figures/y_wind_mw_robustness.png</code>.</figcaption>
           </figure>
 
-          <h3>5.9 Overall interpretation</h3>
-          <p>Taken together, the results suggest that inequity in California’s DER transition is not a single repeated pattern across technologies. Instead, the form of disparity depends on the technology being considered. Solar PV and especially storage show persistent negative associations with several race and ethnicity shares even after major socioeconomic and contextual controls are included. EV charging shows a more mixed pattern: Hispanic population share is associated with lower aggregate charger deployment, Asian population share is positive in the refreshed baseline model, and aggregate charging is also positively associated with poverty, a relationship that appears to be driven mainly by Level 2 charging rather than by Level 1 charging. This indicates that different technologies are shaped by different barriers and siting dynamics, and that a policy solution aimed at “DER equity” in the abstract may miss the fact that solar, storage, and EV charging do not reproduce inequity in exactly the same way.</p>
+          <h3 id="sec-4-9">4.9 Overall interpretation</h3>
+          <p>Taken together, the results summarized in <a class="xref" href="#fig-coefficient-path">Figure 4</a> and <a class="xref" href="#fig-main-dot-whisker">Figure 5</a> suggest that inequity in California’s DER transition is not a single repeated pattern across technologies. Instead, the form of disparity depends on the technology being considered. Solar PV and especially storage show persistent negative associations with several race and ethnicity shares even after major socioeconomic and contextual controls are included. EV charging shows a more mixed pattern: Hispanic population share is associated with lower aggregate charger deployment, Asian population share is positive in the refreshed baseline model, and aggregate charging is also positively associated with poverty, a relationship that appears to be driven mainly by Level 2 charging rather than by Level 1 charging. This indicates that different technologies are shaped by different barriers and siting dynamics, and that a policy solution aimed at “DER equity” in the abstract may miss the fact that solar, storage, and EV charging do not reproduce inequity in exactly the same way.</p>
         </section>
 
         <section id="discussion">
-          <h2>6. Discussion</h2>
+          <h2>5. Discussion</h2>
 
-          <h3>6.1 What persists and what changes across DER types</h3>
-          <p>The most important substantive finding is that the clean energy transition does not reproduce inequality in the same way across technologies. Solar PV shows persistent racial and socioeconomic patterning, but storage appears even more unequal and more stable across specifications, including after conditioning on local PV deployment. EV charging, by contrast, does not fit a simple underserved-versus-served story. Instead, the aggregate charging measure mixes together infrastructure types that likely serve different users and are governed by different siting logics. The paper’s contribution is therefore not only to show that disparities exist, but to show that the meaning of those disparities changes by technology.</p>
+          <h3>5.1 What persists and what changes across DER types</h3>
+          <p>The most important substantive finding is that the clean energy transition does not reproduce inequality in the same way across technologies. Solar PV shows persistent racial and socioeconomic patterning (<a class="xref" href="#sec-4-2">Section 4.2</a>), but storage appears even more unequal and more stable across specifications (<a class="xref" href="#sec-4-3">Section 4.3</a>), including after conditioning on local PV deployment (<a class="xref" href="#tbl-storage-m9">Table 4</a>). EV charging, by contrast (<a class="xref" href="#sec-4-4">Section 4.4</a>), does not fit a simple underserved-versus-served story. Instead, the aggregate charging measure mixes together infrastructure types that likely serve different users and are governed by different siting logics. The paper’s contribution is therefore not only to show that disparities exist, but to show that the meaning of those disparities changes by technology.</p>
           <p>This matters conceptually. A community that appears relatively “served” on one aggregate infrastructure metric may still be underserved in the specific DER benefits that matter most, such as bill savings from rooftop PV, resilience from storage, or residentially usable charging access. In that sense, the paper supports a more technology-specific approach to energy equity measurement and a race-aware approach to DER planning rather than a purely race-neutral framework.</p>
 
-          <h3>6.2 Plausible mechanisms</h3>
+          <h3>5.2 Plausible mechanisms</h3>
           <p>Several mechanisms are consistent with the observed patterns, though the analysis does not identify them causally. For rooftop PV, the persistence of negative coefficients after controlling for income is consistent with barriers beyond household income alone, including roof access, housing tenure, installer market penetration, credit constraints, or permitting and interconnection frictions. For storage, the larger and more stable disparities are consistent with the fact that storage often involves higher capital costs, stronger dependence on bundled solar-plus-storage adoption pathways, and programmatic complexity that may advantage already well-positioned households and communities.</p>
           <p>The energy-burden outcome models add a household stress layer to this interpretation. Higher burden can indicate that communities face less disposable income, weaker financing capacity, or greater exposure to bill volatility even when median income and poverty are already included. Because the burden outcomes are themselves spatially and demographically patterned, they point to an additional affordability pathway through which clean-energy benefits may be unevenly distributed.</p>
-          <p>The EV charging results point to a different mechanism story. The positive poverty association in the aggregate charging outcome is not visible for Level 1 charging and appears to be driven primarily by Level 2 charging. The refreshed baseline also makes the Black-share association much weaker than before, while the Hispanic-share coefficient remains negative and the Asian-share coefficient is positive. That pattern is more consistent with charger composition and siting than with broad household-serving access. A key implication is that aggregate charger counts are not neutral measures of equitable access. They may capture infrastructure abundance in ways that overstate practical charging access for residents, especially where charger types and host settings differ.</p>
-          <p>The clustering exercise adds another descriptive layer to this story. More affluent clusters with higher residual white/other shares and lower poverty tend to have stronger charger and storage outcomes, while the high-Hispanic, high-poverty cluster shows the weakest charging outcomes. Those spatial profiles are descriptive, but they are consistent with the broader argument that race, income, and existing energy-system context are jointly structuring where DER benefits accumulate.</p>
+          <p>The EV charging results point to a different mechanism story. The positive poverty association in the aggregate charging outcome is not visible for Level 1 charging and appears to be driven primarily by Level 2 charging (<a class="xref" href="#fig-charger-subtypes">Figure 9</a> and <a class="xref" href="#tbl-charger-subtypes">Table 5</a>). The refreshed baseline also makes the Black-share association much weaker than before, while the Hispanic-share coefficient remains negative and the Asian-share coefficient is positive. That pattern is more consistent with charger composition and siting than with broad household-serving access. A key implication is that aggregate charger counts are not neutral measures of equitable access. They may capture infrastructure abundance in ways that overstate practical charging access for residents, especially where charger types and host settings differ.</p>
+          <p>The clustering exercise adds another descriptive layer to this story (<a class="xref" href="#sec-4-7">Section 4.7</a>). More affluent clusters with higher residual white/other shares and lower poverty tend to have stronger charger and storage outcomes, while the high-Hispanic, high-poverty cluster shows the weakest charging outcomes (<a class="xref" href="#tbl-clusters">Table 6</a> and <a class="xref" href="#fig-cluster-map">Figure 15</a>). Those spatial profiles are descriptive, but they are consistent with the broader argument that race, income, and existing energy-system context are jointly structuring where DER benefits accumulate.</p>
 
-          <h3>6.3 Policy relevance</h3>
+          <h3>5.3 Policy relevance</h3>
           <p>The policy implication is not simply that disadvantaged places need “more DERs.” Rather, different technologies appear to require different equity strategies. For rooftop solar, the persistence of disparities after observed controls suggests the continued importance of targeted incentives, community-solar expansion, financing support, and outreach policies that reduce adoption frictions in underserved communities. For storage, the stronger disparities suggest that resilience-oriented subsidy programs, backup-power programs, and community-serving storage deployments may need sharper equity targeting if storage benefits are to reach communities that face higher vulnerability to outages, wildfire-related shutoffs, and climate-related disruptions.</p>
           <p>For EV charging, the results suggest that policymakers should distinguish much more carefully between charger counts and usable charging access. A place with many chargers is not necessarily a place with equitable residential charging opportunities. Programs focused on multifamily charging, curbside or neighborhood charging, renter-serving infrastructure, and targeted deployment outside purely commercial corridors may therefore matter more than aggregate public charger deployment targets alone. More broadly, the findings suggest that clean energy equity policy should be technology-specific rather than assuming that one design principle can cover PV, storage, and charging simultaneously.</p>
 
-          <h3>6.4 Broader implications for energy burden and community resilience</h3>
+          <h3>5.4 Broader implications for energy burden and community resilience</h3>
           <p>These findings also matter beyond adoption statistics themselves. DERs can alter household bills, outage resilience, air-quality exposure, and who benefits from the clean-energy transition. If rooftop PV, storage, and residentially useful charging remain concentrated in already advantaged communities, then lower-income and more heavily non-white communities may face a double burden: higher exposure to outage risk and energy burden alongside lower access to technologies that buffer those risks. That is one reason the race results matter for policy even in a non-causal paper. If race remains statistically significant after the main socioeconomic controls are added, then a purely race-neutral planning frame may miss communities that are persistently underserved in practice.</p>
-          <p>The energy-burden connection differs by technology. For rooftop PV, lower deployment in communities with larger Black and Asian population shares matters because PV is one of the main household-level pathways through which customers can reduce net electricity costs or hedge against future rate increases. For storage, the Model 9 result is especially relevant: even after conditioning on local PV deployment, storage disparities remain, which means the resilience benefit associated with backup power is not simply following solar access in an equitable way. In high-burden communities, that can compound vulnerability because households may face both higher bill stress and weaker access to outage protection.</p>
+          <p>The energy-burden connection differs by technology (<a class="xref" href="#sec-4-5">Section 4.5</a>). For rooftop PV, lower deployment in communities with larger Black and Asian population shares matters because PV is one of the main household-level pathways through which customers can reduce net electricity costs or hedge against future rate increases. For storage, the Model 9 result (<a class="xref" href="#tbl-storage-m9">Table 4</a>) is especially relevant: even after conditioning on local PV deployment, storage disparities remain, which means the resilience benefit associated with backup power is not simply following solar access in an equitable way. In high-burden communities, that can compound vulnerability because households may face both higher bill stress and weaker access to outage protection.</p>
           <p>EV charging raises a related but distinct burden issue. Transportation electrification can lower fuel and maintenance costs for some households, but only if charging is practically usable, affordable, and located near daily routines. The positive poverty-rate coefficient in aggregate charger models therefore should not be interpreted as evidence that higher-poverty communities are necessarily better positioned to benefit from EV adoption. If chargers are concentrated in commercial, workplace, corridor, municipal, or other non-residential settings, then the count may represent infrastructure presence without equivalent household-serving access, particularly for renters, multifamily residents, and households without reliable home charging.</p>
-          <p>The present paper does not include a dedicated transit, corridor, tenure, or charger-host dataset, so it cannot fully unpack why charging is more prevalent in some higher-poverty ZIP/ZCTAs. That remains an important extension. But the current evidence is already sufficient to show that aggregate infrastructure counts should not be mistaken for equitable access, and that future DER planning needs to distinguish commercial siting from household-serving benefit. Connecting DER deployment to energy burden therefore requires more than asking where assets are installed; it requires asking whether the communities with the highest bill, resilience, and electrification pressures can actually use the technologies being counted.</p>
+          <p>The present paper includes area-level housing structure and tenure controls but does not include dedicated transit, corridor, charger-host, household tenancy, or roof-suitability data, so it cannot fully unpack why charging is more prevalent in some higher-poverty ZIP/ZCTAs. That remains an important extension. But the current evidence is already sufficient to show that aggregate infrastructure counts should not be mistaken for equitable access, and that future DER planning needs to distinguish commercial siting from household-serving benefit. Connecting DER deployment to energy burden therefore requires more than asking where assets are installed; it requires asking whether the communities with the highest bill, resilience, and electrification pressures can actually use the technologies being counted.</p>
+
+          <h3 id="sec-5-5">5.5 Potential policy measures to address inequities</h3>
+          <p>The results imply different levers for different actors, and different emphases by technology. The cross-technology divergence argues against a single “DER equity” mandate. PV, storage, and charging require distinct instruments, and measuring success by undifferentiated deployment counts risks mistaking infrastructure presence for equitable benefit.</p>
+          <p><strong>Lawmakers and public-sector agencies.</strong> Racial disparities persist after income controls, so eligibility rules keyed only to income or to generic “disadvantaged community” designations will miss communities that are underserved on race-correlated dimensions. Storage warrants the sharpest targeting. Resilience rebates such as successors to SGIP, backup-power provisioning, and community-storage programs should weight toward communities exposed to outages and wildfire shutoffs, since the Model 9 result (<a class="xref" href="#tbl-storage-m9">Table 4</a>) shows the storage gap does not follow PV access. For charging, procurement targets should measure usable residential access through multifamily, curbside, and renter-serving deployment rather than aggregate charger counts, which the subtype results (<a class="xref" href="#tbl-charger-subtypes">Table 5</a> and <a class="xref" href="#fig-charger-subtypes">Figure 9</a>) show can overstate access.</p>
+          <p><strong>Grid operators and regulators.</strong> Adoption is partly gated by hosting-capacity and interconnection frictions that are themselves socially patterned (Brockway et al. 2021; Aydin et al. 2025). Equity should enter distribution planning directly. Operators can publish hosting-capacity and interconnection-queue outcomes disaggregated by community demographics, and pilot fairness-aware hosting-capacity allocation so that grid upgrades do not concentrate where adoption is already high.</p>
+          <p><strong>Private utilities and market actors.</strong> Persistent PV and storage gaps after income controls point to non-price barriers: installer market penetration, financing access, and split incentives for renters. Third-party ownership, on-bill and inclusive financing, community solar-plus-storage, and installer outreach in low-penetration areas can address adoption frictions that subsidies do not, as long as program design does not re-advantage households that are already well positioned.</p>
+        </section>
+        <section id="methods">
+          <h2>6. Methods</h2>
+
+          <h3>6.1 Empirical Approach</h3>
+          <p>This paper uses a cross-sectional regression framework to examine whether racial/ethnic and socioeconomic differences are associated with distributed energy resource deployment intensity across California ZIP/ZCTA areas. The main goal is not pure prediction. Instead, it is to test whether disparities in DER adoption persist after accounting for differences in adoption capacity, geography, physical suitability, institutional context, and observed energy-system conditions.</p>
+          <p>To do this, I estimate a consistent sequence of models for each DER outcome. This stepwise model ladder makes the results easier to interpret because changes in the coefficients of interest can be linked to specific added controls rather than to one opaque saturated specification. <a class="xref" href="#sec-6-6">Section 6.6</a> states the baseline equation, <a class="xref" href="#sec-6-7">Section 6.7</a> defines each rung of the ladder, and <a class="xref" href="#fig-coefficient-path">Figure 4</a> shows the resulting coefficient paths. It also supports direct comparison across technologies, which is central to the paper’s multi-DER framing.</p>
+          <p>The three main outcomes are ZIP/ZCTA-level deployment intensity for rooftop solar PV, battery storage, and EV charging. Each is population-normalized and transformed using a <code>log(1 + rate)</code> specification to reduce skew and retain observations with zero deployment. The main explanatory variables of interest are racial/ethnic composition measures and socioeconomic indicators. I then add contextual controls that capture climate, renewable resource potential, utility territory, built-environment structure, and broader installed-energy context.</p>
+          <p>Because the analysis is ecological and cross-sectional, the results are interpreted as area-level disparities rather than as individual household adoption behavior. The coefficients therefore describe how DER deployment differs across ZIP/ZCTA areas with different demographic and socioeconomic characteristics, conditional on the included controls. They should not be read as causal effects of race or income on any individual household’s technology adoption decision.</p>
+
+          <h3 id="sec-6-2">6.2 Dataset Construction and Sample</h3>
+          <p>The analysis uses a California ZIP/ZCTA-level dataset created by merging multiple DER source files with demographic, climate, utility, and infrastructure controls. The final merged file combines measures of solar PV capacity, battery storage capacity, and EV charging infrastructure with American Community Survey variables and place-based controls.</p>
+          <p>DER measures are first constructed separately by technology and then aggregated to the ZIP/ZCTA level. Solar PV capacity is derived from Tracking the Sun installation records. Battery storage is built from a California storage dataset containing location and capacity information. EV charging infrastructure is constructed from charger-level records that include charger type and location; charger rows without a valid source ZIP are excluded from ZIP/ZCTA charger outcomes rather than reassigned using latitude/longitude, while valid source-ZIP rows are retained even if descriptive fields are blank or say <code>No information</code>. <a class="xref" href="#fig-data-geography">Figure 1</a> visualizes the resulting statewide geography and also makes clear that some ZIP/ZCTAs are absent because the underlying merged sample is incomplete in those places.</p>
+          <p>After source-specific cleaning, the DER measures are merged with contextual predictors. Demographic and socioeconomic variables come from the 2023 American Community Survey 5-year estimates and include total population, median household income, median housing value, educational attainment, poverty, and race/ethnicity shares. Housing structure uses every category in ACS B25024: single-family, multifamily, mobile-home, and boat/RV/van/other shares sum to one. Tenure uses B25003 owner occupancy, with renter occupancy as its complement. Climate and renewable resource controls are derived from NASA POWER and include temperature-based measures, degree days, solar irradiance, and wind resource variables. Utility territory is assigned using a ZIP-to-utility spatial crosswalk, and electricity demand is proxied using annualized utility usage data aggregated to ZIPs.</p>
+          <p>The unit of analysis is the ZIP/ZCTA. I use ZCTAs because they provide the most practical common geography across the available DER and demographic sources. The study is designed as a 2023 cross-sectional snapshot, using the most recent data aligned as closely as possible to that year. In the regression stage, ZIP/ZCTAs with total population below 1,000 are excluded from outcome construction to avoid unstable per-capita rates in very small areas. <a class="xref" href="#tbl-summary">Table 2</a> summarizes the resulting analysis sample.</p>
+
+          <h3 id="sec-6-3">6.3 Outcome Variables</h3>
+          <p>To make the outcomes comparable across technologies, each DER measure is converted into a population-normalized deployment intensity metric and then transformed using <code>log(1 + x)</code>. This helps reduce skew and allows ZIP/ZCTAs with zero deployment to remain in the sample.</p>
+          <p>The three main outcomes are defined as follows. Their definitions and units are also collected in <a class="xref" href="#tbl-variables">Table 1</a>.</p>
+          <p>For EV charging:</p>
+          <div class="equation" id="eq-1">
+            <code class="model-formula">chargers_per_1k = (total_chargers × 1000) / population<br>y_chargers = log(1 + chargers_per_1k)</code>
+            <span class="equation-number">(1)</span>
+          </div>
+          <p>For solar PV:</p>
+          <div class="equation" id="eq-2">
+            <code class="model-formula">pv_kW_per_1k = (PV_system_size_DC × 1000) / population<br>y_pv = log(1 + pv_kW_per_1k)</code>
+            <span class="equation-number">(2)</span>
+          </div>
+          <p>For battery storage:</p>
+          <div class="equation" id="eq-3">
+            <code class="model-formula">storage_MW_per_100k = (storage_capacity_mw × 100000) / population<br>y_storage = log(1 + storage_MW_per_100k)</code>
+            <span class="equation-number">(3)</span>
+          </div>
+          <p>Storage is scaled per 100,000 residents rather than per 1,000 in <a class="xref" href="#eq-3">Equation (3)</a> because storage deployment is much smaller and more uneven at the ZIP level, so the larger denominator keeps the raw rate in a more interpretable range before transformation.</p>
+          <p>In supplementary analysis, I also examine more disaggregated charging outcomes, including Level 1, Level 2, and DC fast chargers separately, along with a wind-capacity outcome used mainly as contextual comparison. The core paper, however, focuses on the three outcomes above.</p>
+
+          <h3 id="sec-6-4">6.4 Key Explanatory Variables</h3>
+          <p>The main explanatory variables fall into two groups: racial/ethnic composition and socioeconomic status.</p>
+          <p>The race/ethnicity variables are ZIP/ZCTA-level shares of the population identifying as Black, Hispanic/Latino, and Asian. These variables are included to test whether DER deployment differs systematically across communities in ways that are not fully explained by socioeconomic conditions alone. For descriptive LOWESS plots, I also summarize these patterns using a combined non-white share, but the regressions keep the disaggregated race variables to avoid collapsing distinct demographic patterns into one coefficient.</p>
+          <p>The socioeconomic variables are intended to proxy for adoption capacity and broader social advantage. The core measures are log median household income and poverty rate. Additional socioeconomic variables used in extended specifications include percent bachelor’s degree or higher and log median housing value. Education is therefore treated primarily as a control rather than as the paper’s headline predictor: it captures information, housing-market position, and adoption capacity that overlap with income, but the central research question is whether race remains statistically associated with DER deployment after those proxies are included.</p>
+          <p>The central empirical question is whether the race/ethnicity coefficients weaken substantially once these socioeconomic proxies are included, or whether meaningful disparities remain after accounting for them. If the race coefficients remain negative and statistically distinguishable from zero in richer models, that is evidence against a purely race-neutral account of observed DER deployment patterns.</p>
+
+          <h3 id="sec-6-5">6.5 Contextual Controls</h3>
+          <p>I include several categories of place-based controls to account for non-demographic factors that may shape DER deployment. First, I include climate and resource controls. Baseline models use heating and cooling degree days to capture broad climatic differences across California. Alternative specifications use more technology-specific contextual variables, including global horizontal irradiance for solar PV and wind speed measures for wind-related outcomes. Temperature controls are also used in some robustness checks.</p>
+          <p>Second, I include institutional controls through utility territory fixed effects. Utility territories matter because rates, interconnection processes, incentive administration, and historical investment can differ substantially across service areas. Including utility fixed effects helps isolate within-utility differences in deployment.</p>
+          <p>Third, I include broader geographic controls in selected specifications, including total population, latitude and longitude, and county-based adjustments. These help account for large-scale regional gradients and spatially correlated unobservables. When I refer below to county-clustered standard errors, I mean that inference is adjusted for within-county error correlation rather than assuming each ZIP/ZCTA contributes an independent disturbance.</p>
+          <p>Fourth, I include electricity demand and infrastructure-context controls in later models. Annual electricity consumption serves as a proxy for underlying load and commercial activity, especially relevant for EV charging. Existing plant, wind, and storage assets are used as installed-energy-context proxies. They are informative about the local energy landscape, but they are not full direct measures of grid infrastructure, feeder capacity, or hosting capacity.</p>
+
+          <h3 id="sec-6-6">6.6 Baseline Regression Specification</h3>
+          <p>The main estimation approach is ordinary least squares regression using the transformed ZIP/ZCTA-level deployment outcomes. The baseline specification is:</p>
+          <div class="equation" id="eq-4">
+            <code class="model-formula">y_z = β₀ + β₁ Income_z + β₂ Black_z + β₃ Hispanic_z + β₄ Asian_z+ β₅ Poverty_z + γX_z + ε_z</code>
+            <span class="equation-number">(4)</span>
+          </div>
+          <p>where <code>y_z</code> is the DER deployment outcome in ZIP/ZCTA <code>z</code>, <code>Income_z</code> is log median household income, <code>Black_z</code>, <code>Hispanic_z</code>, and <code>Asian_z</code> are race/ethnicity population shares, <code>Poverty_z</code> is the ZIP/ZCTA poverty rate, <code>X_z</code> is a vector of contextual controls for ZIP/ZCTA <code>z</code>, and <code>ε_z</code> is the error term. Estimates of <a class="xref" href="#eq-4">Equation (4)</a> for the three headline outcomes are reported in <a class="xref" href="#tbl-baseline">Table 3</a>.</p>
+          <p>All models are estimated with heteroskedasticity-robust HC1 standard errors by default. In plain language, HC1 means the standard errors are adjusted so inference is less sensitive to unequal residual variance across ZIP/ZCTAs. In selected specifications, I also cluster standard errors at the county level to allow for within-county correlation in errors.</p>
+          <p>Rather than relying on one preferred specification, I estimate a staged model ladder. This matters because the paper is not only asking whether disparities appear in one model, but whether they persist as increasingly demanding controls are introduced. The modeling objective is therefore coefficient stability and interpretability across related specifications, not selection of a single best predictive model.</p>
+
+          <h3 id="sec-6-7">6.7 Model Series</h3>
+          <div class="model-series">
+            <div class="model-card" id="model-1">
+              <div class="model-number">1</div>
+              <div>
+                <h4>Baseline Equity Specification</h4>
+                <p>The baseline model includes log median household income, race/ethnicity shares, poverty rate, and a limited set of climate controls. This model provides a first-pass estimate of area-level disparities after accounting for basic socioeconomic status and broad geographic conditions.</p>
+                <p>Exported name: <code>Model 1 baseline (climate controls)</code></p>
+                <div class="equation" id="eq-5">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γ Climate_z + ε_z</code>
+                  <span class="equation-number">(5)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-2">
+              <div class="model-number">2</div>
+              <div>
+                <h4>Additional Socioeconomic Controls</h4>
+                <p>I then add another socioeconomic proxy, typically percent bachelor’s degree or higher or log median housing value, to test whether the race/ethnicity coefficients are sensitive to richer measures of social and housing advantage. This step is important because income alone may not fully capture adoption capacity.</p>
+                <p><code>Model 2C</code> separately adds the three non-reference structure shares from the exhaustive B25024 composition: multifamily, mobile-home, and boat/RV/van/other units. Single-family units are the omitted reference. <code>Model 2D</code> adds owner occupancy from B25003; renters are the omitted tenure reference. The notebook fails rather than silently simplifying these specifications if any required housing variable is absent or constant.</p>
+                <p>Exported names: <code>Model 2 (add bachelors)</code>; <code>Model 2 (add housing value)</code>; <code>Model 2C (add housing structure)</code>; <code>Model 2D (add housing structure and tenure)</code></p>
+                <div class="equation" id="eq-6">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + θ SESextra_z + γ Climate_z + ε_z</code>
+                  <span class="equation-number">(6)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-3">
+              <div class="model-number">3</div>
+              <div>
+                <h4>Alternative Climate and Resource Controls</h4>
+                <p>To test whether results depend on a particular way of capturing geographic context, I estimate alternative versions of the baseline model with different climate or physical-suitability controls. For PV, this includes solar irradiance. For some outcomes, I compare degree-day controls to mean temperature-based controls. For wind-related outcomes, I use wind resource measures.</p>
+                <p>Exported names: <code>Model 3A (HDD + CDD)</code>; <code>Model 3B (temp only)</code>; <code>Model 3C (GHI only)</code></p>
+                <div class="equation" id="eq-7">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + θ ResourceClimateAlt_z + ε_z</code>
+                  <span class="equation-number">(7)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-4">
+              <div class="model-number">4</div>
+              <div>
+                <h4>Race-by-Income Interactions</h4>
+                <p>I test whether the income gradient in DER deployment differs across communities by including interaction terms between income and race/ethnicity shares. These variables are mean-centered before interaction so that the main effects remain interpretable.</p>
+                <p>Exported names: <code>Model 4 interactions (centered)</code>; <code>Model 4R interactions (centered)</code></p>
+                <div class="equation" id="eq-8">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + δ(Income_z × Race_z) + γX_z + ε_z</code>
+                  <span class="equation-number">(8)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="model-series">
+            <div class="model-card" id="model-5">
+              <div class="model-number">5</div>
+              <div>
+                <h4>Utility Fixed Effects and Inference Robustness</h4>
+                <p>I estimate specifications with utility territory fixed effects to absorb institutional differences across service areas. I also estimate county-clustered standard errors as a robustness check for inference.</p>
+                <p>Exported names: <code>Model 5 utility FE</code>; <code>Model 5C clustered SEs by county</code></p>
+                <div class="equation" id="eq-9">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γX_z + δ Utility_z + ε_z</code>
+                  <span class="equation-number">(9)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-6">
+              <div class="model-number">6</div>
+              <div>
+                <h4>Geographic Robustness</h4>
+                <p>Additional specifications introduce latitude and longitude or county fixed effects to test whether the main patterns are simply reflecting broad regional gradients within California rather than more local disparities.</p>
+                <p>Exported names: <code>Model 6A lat and lon</code>; <code>Model 6B county fe</code></p>
+                <div class="equation" id="eq-10">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γX_z + θ Geo_z + ε_z</code>
+                  <span class="equation-number">(10)</span>
+                </div>
+                <div class="equation" id="eq-11">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γX_z + δ County_z + ε_z</code>
+                  <span class="equation-number">(11)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-7">
+              <div class="model-number">7</div>
+              <div>
+                <h4>Infrastructure Context Controls</h4>
+                <p>I add measures of existing energy infrastructure to examine whether local deployment patterns are partly explained by the surrounding energy-system context. These models test whether communities with more existing infrastructure also mechanically appear to have more DER deployment.</p>
+                <p>Exported names: <code>Model 7 (infrastructure controls, outcome-safe)</code>; <code>Model 7 (per-capita infrastructure controls)</code></p>
+                <div class="equation" id="eq-12">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γX_z + λ Infrastructure_z + ε_z</code>
+                  <span class="equation-number">(12)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-8">
+              <div class="model-number">8</div>
+              <div>
+                <h4>Electricity Demand Controls</h4>
+                <p>Finally, I add a demand proxy based on annual electricity consumption. This is particularly relevant for EV charging, where infrastructure deployment may track commercial activity and underlying load as much as residential adoption potential.</p>
+                <p>Exported name: <code>Model 8 add demand proxy</code></p>
+                <div class="equation" id="eq-13">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γX_z + λ Infrastructure_z + ϕ Demand_z + ε_z</code>
+                  <span class="equation-number">(13)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="model-card" id="model-9">
+              <div class="model-number">9</div>
+              <div>
+                <h4>Outcome-Specific DER Cross-Control and Extension Models</h4>
+                <p>Model 9 (storage, with PV control) adds local PV deployment to the storage model, to test whether storage disparities persist after conditioning on upstream PV deployment. <a class="xref" href="#eq-14">Equation (14)</a> states the combined specification. Model 9A (predicting burden) instead adds DER deployment terms to the energy-burden outcome models, to examine whether DER deployment is associated with household energy burden or affordability gaps. These are two distinct specifications with different outcomes and different control sets; they are labelled separately in all exported tables and figures.</p>
+                <p>Exported names: <code>Model 9 + pv control (most controlled)</code>; <code>Model 9A (predicting burden)</code></p>
+                <div class="equation" id="eq-14">
+                  <code class="model-formula">y_z = β₀ + β RaceSES_z + γX_z + λ Infrastructure_z + ϕ Demand_z + ψ DER_z + ε_z</code>
+                  <span class="equation-number">(14)</span>
+                </div>
+                <p>Because these two variants differ in both outcome and control set, I treat them as targeted robustness and extension models rather than a single, uniform specification applied across all outcomes. Estimates for the storage variant are reported in <a class="xref" href="#tbl-storage-m9">Table 4</a>.</p>
+              </div>
+            </div>
+          </div>
+          <p>The coefficient paths these specifications produce are summarized in <a class="xref" href="#fig-coefficient-path">Figure 4</a>. Taken together, this model ladder allows me to ask a structured question: do racial/ethnic disparities shrink meaningfully once I account for socioeconomic status, geography, utility context, and infrastructure, or do they remain persistent across specifications?</p>
+
+          <h3 id="sec-6-8">6.8 Estimation and Inference</h3>
+          <p>The main quantities of interest are the coefficients on the race/ethnicity variables and how those coefficients change across specifications. I compare both the direction and relative magnitude of these coefficients across solar PV, storage, and EV charging outcomes.</p>
+          <p>The interpretation is comparative rather than individual-level. A negative coefficient on a racial/ethnic population share does not imply anything about the behavior of an individual resident. Instead, it indicates that ZIP/ZCTA areas with larger shares of that population tend to have lower DER deployment intensity, conditional on the controls in the model. If the coefficient becomes smaller after additional controls are added, that suggests part of the disparity is explained by those added factors.</p>
+          <p>This comparison across DERs is central to the paper. If the same communities appear underserved across multiple technologies, that points to broader structural inequities in the clean energy transition. If the patterns differ by technology, that suggests more technology-specific barriers.</p>
+
+          <h3 id="sec-6-9">6.9 Robustness and Diagnostic Checks</h3>
+          <p>In addition to the main regression ladder, I conduct several supporting checks. I examine variance inflation factors (VIFs) to monitor multicollinearity across specifications, compare alternative climate and resource control blocks to test the stability of the results, estimate county-clustered standard errors to assess whether statistical significance is sensitive to local spatial clustering, and generate descriptive maps, distribution plots, and coefficient comparison figures to visualize both the raw patterns and the modeled results (<a class="xref" href="#fig-data-geography">Figure 1</a>, <a class="xref" href="#fig-eda-distributions">Figure 2</a>, and <a class="xref" href="#fig-coefficient-path">Figure 4</a>).</p>
+          <p>VIF screening informs the model inventory, but it is not used as a rigid mechanical inclusion rule. Some richer specifications show elevated VIF values, especially once multiple SES and contextual controls are introduced. I retain predictors when they correspond to substantively distinct constructs that are central to the modeling objective rather than treating any moderate VIF increase as evidence that the model is unusable. The relevant question for this paper is therefore whether the coefficients of interest remain interpretable and stable, not whether every rich specification minimizes collinearity by design.</p>
+          <p>I also estimate energy-burden outcome models using <code>energy_burden_pct</code> and <code>log_energy_gap_per_capita</code>. The purpose is to describe how household utility-cost stress and affordability pressure are patterned across the same ZIP/ZCTA covariates used in the DER models. I treat <code>energy_affordability_index</code> as a sensitivity-only measure because it is closely related to income and poverty in the merged sample.</p>
+          <p>In exploratory analysis, I compare linear specifications to more flexible predictive models, including polynomial regression, random forest, and gradient-boosted trees, using cross-validation (<a class="xref" href="#fig-appendix-storage">Figure 17</a>, <a class="xref" href="#fig-appendix-chargers">Figure 18</a>, and <a class="xref" href="#fig-appendix-wind">Figure 20</a>). These models are not the basis for the paper’s main claims. Instead, they serve as a diagnostic check on whether simple linear models are missing strong nonlinear structure. The substantive conclusions remain grounded in the interpretable OLS results.</p>
+
+          <h3>6.10 Methodological Limitations</h3>
+          <p>This methodology is designed to identify area-level associations, not causal effects. The results should therefore be interpreted as descriptive disparities conditional on observed controls. B25024 structure and B25003 tenure are included at the ZIP/ZCTA level, but unmeasured confounding may remain around household tenancy, roof suitability, installer presence, permitting, and technology-specific incentive access.</p>
+          <p>There are also limitations tied to geography and measurement. ZIP/ZCTA aggregation is a practical compromise that enables multi-DER harmonization, but it can blur within-area heterogeneity and raises the usual ecological inference problem. In addition, some source files require spatial assignment or manual cleaning steps, which may introduce measurement error. Even so, using a consistent geography and model structure across technologies provides a useful basis for comparative equity analysis.</p>
+
+          <div class="highlight">
+            The central empirical test is not whether disparities appear in just one model, but whether they persist as increasingly demanding controls are added.
+          </div>
         </section>
 
         <section id="limitations">
           <h2>7. Limitations</h2>
 
-          <p>This study is designed to identify area-level conditional associations, not causal effects. The regressions show how DER deployment differs across ZIP/ZCTA areas with different observed characteristics, but they do not establish that demographic composition causes those differences. Unmeasured confounding may remain, especially around housing tenure, roof suitability, installer availability, local permitting conditions, program participation, and technology-specific incentive access.</p>
-          <p>The use of ZIP/ZCTA geography is a practical strength for harmonizing multiple datasets, but it also introduces limitations. ZIP/ZCTAs can blur substantial within-area heterogeneity, and ecological inference problems remain. The analysis therefore cannot describe the behavior of individual households or residents. In addition, some raw source files required spatial assignment from latitude and longitude, manual ZIP corrections, or source-specific cleaning decisions, all of which may introduce measurement error. For EV chargers specifically, rows without valid source ZIPs are excluded from ZIP/ZCTA outcomes rather than rescued from coordinates, so the charger outcomes should be interpreted as valid-source-ZIP charger records.</p>
-          <p>There are also technology-specific measurement limitations. Aggregate charger counts mix charger types and host contexts that may not represent equivalent forms of access. The charger-type decomposition helps, but even that does not fully distinguish residential, workplace, corridor, and municipal use cases. Wind outcomes are also less directly comparable to behind-the-meter technologies, which is why the paper treats wind capacity as supplementary context rather than a headline equity result.</p>
-          <p>Finally, the paper is a California 2023 cross-sectional snapshot. California is substantively important as a large and policy-active clean energy market, but the results may not generalize mechanically to other states, years, or regulatory contexts. Future work would benefit from longitudinal analysis, stronger measures of tenure and housing structure, more direct data on technology-specific access mechanisms, and additional place-based variables such as transit and corridor intensity to sharpen the interpretation of charger siting patterns.</p>
+          <p>This study is designed to identify area-level conditional associations, not causal effects (<a class="xref" href="#sec-6-8">Section 6.8</a>). The regressions show how DER deployment differs across ZIP/ZCTA areas with different observed characteristics, but they do not establish that demographic composition causes those differences. Area-level housing structure and tenure are observed in Models 2C and 2D, but unmeasured confounding may remain around household tenancy, roof suitability, installer availability, local permitting conditions, program participation, and technology-specific incentive access.</p>
+          <p>The use of ZIP/ZCTA geography is a practical strength for harmonizing multiple datasets, but it also introduces limitations. ZIP/ZCTAs can blur substantial within-area heterogeneity, and ecological inference problems remain. The analysis therefore cannot describe the behavior of individual households or residents. In addition, some raw source files required spatial assignment from latitude and longitude, manual ZIP corrections, or source-specific cleaning decisions, all of which may introduce measurement error. For EV chargers specifically, rows without valid source ZIPs are excluded from ZIP/ZCTA outcomes rather than rescued from coordinates (<a class="xref" href="#sec-6-2">Section 6.2</a>), so the charger outcomes should be interpreted as valid-source-ZIP charger records.</p>
+          <p>There are also technology-specific measurement limitations. Aggregate charger counts mix charger types and host contexts that may not represent equivalent forms of access. The charger-type decomposition (<a class="xref" href="#tbl-charger-subtypes">Table 5</a> and <a class="xref" href="#fig-charger-subtypes">Figure 9</a>) helps, but even that does not fully distinguish residential, workplace, corridor, and municipal use cases. Wind outcomes are also less directly comparable to behind-the-meter technologies, which is why the paper treats wind capacity as supplementary context rather than a headline equity result (<a class="xref" href="#sec-4-8">Section 4.8</a>; <a class="xref" href="#fig-wind-robustness">Figure 16</a>).</p>
+          <p>Finally, the paper is a California 2023 cross-sectional snapshot. California is substantively important as a large and policy-active clean energy market, but the results may not generalize mechanically to other states, years, or regulatory contexts. Future work would benefit from longitudinal analysis, property- or household-level tenancy and roof-suitability measures, more direct data on technology-specific access mechanisms, and additional place-based variables such as transit and corridor intensity to sharpen the interpretation of charger siting patterns.</p>
         </section>
 
         <section id="conclusion">
           <h2>8. Conclusion</h2>
 
-          <p>This paper asks whether racial and socioeconomic disparities in distributed energy resource deployment persist across California ZIP/ZCTA areas once observed socioeconomic, geographic, institutional, and infrastructure controls are added. The answer is yes, but the form of disparity depends strongly on the technology being considered. Solar PV and especially battery storage remain unequally distributed across communities even in more demanding specifications, while EV charging shows a more complicated pattern in which aggregate charger counts can obscure meaningful differences across charger types.</p>
-          <p>The broader lesson is that clean energy inequality is not one phenomenon. Technologies that appear under the same DER umbrella deliver different benefits, face different barriers, and are deployed through different market and institutional pathways. If equity is measured too coarsely, policy can mistake infrastructure counts for access, or progress in one technology for progress in another. A more credible clean energy transition therefore requires not only more deployment, but better measurement of who can actually use, benefit from, and rely on each technology.</p>
+          <p>This paper asks whether racial and socioeconomic disparities in distributed energy resource deployment persist across California ZIP/ZCTA areas (<a class="xref" href="#introduction">Section 1</a>) once observed socioeconomic, geographic, institutional, and infrastructure controls are added. The answer is yes, but the form of disparity depends strongly on the technology being considered. Solar PV and especially battery storage remain unequally distributed across communities even in more demanding specifications (<a class="xref" href="#sec-4-2">Section 4.2</a> and <a class="xref" href="#sec-4-3">Section 4.3</a>), while EV charging shows a more complicated pattern (<a class="xref" href="#sec-4-4">Section 4.4</a>) in which aggregate charger counts can obscure meaningful differences across charger types.</p>
+          <p>The broader lesson is that clean energy inequality is not one phenomenon (<a class="xref" href="#sec-4-9">Section 4.9</a>). Technologies that appear under the same DER umbrella deliver different benefits, face different barriers, and are deployed through different market and institutional pathways. If equity is measured too coarsely, policy can mistake infrastructure counts for access, or progress in one technology for progress in another. A more credible clean energy transition therefore requires not only more deployment, but better measurement of who can actually use, benefit from, and rely on each technology.</p>
           <p>Viewed in that light, California serves as both an empirical case and an early warning. As decarbonization expands, the question is not only how quickly DERs diffuse, but whether the benefits of that diffusion are structured in ways that reduce inequality or reproduce it in new forms. This paper’s evidence suggests that answering that question requires a multi-DER equity lens rather than a single-technology one.</p>
         </section>
 
         <section id="appendix">
           <h2>Appendix: Additional Robustness Visuals</h2>
 
-          <p>This appendix keeps the heavier visual material out of the main results flow while still making the broader model inventory easy to inspect. It includes representative model-comparison and spatial outputs for the main reported outcomes plus the supplementary wind-capacity context.</p>
+          <p>This appendix keeps the heavier visual material out of the main results flow while still making the broader model inventory easy to inspect. It includes representative model-comparison and spatial outputs for the main reported outcomes, supplementary wind-capacity context, and the housing-control attenuation check (<a class="xref" href="#fig-appendix-storage">Figure 17</a> through <a class="xref" href="#fig-housing-attenuation">Figure 21</a>).</p>
 
           <div class="appendix-grid">
-            <div class="appendix-card">
+            <div class="appendix-card" id="fig-appendix-storage">
               <h4>Outcome-specific model comparisons</h4>
               <img src="./assets/figures/appendix/Storage adoption_model_comparison.png" alt="Storage model comparison appendix figure">
-              <p>Storage model-comparison figure. The same appendix folder also includes EV charging and wind comparison exports for side-by-side review.</p>
+              <p><strong>Figure 17.</strong> Storage adoption: cross-validated predictive comparison of linear and nonlinear models. The same appendix folder also includes the EV charging (<a class="xref" href="#fig-appendix-chargers">Figure 18</a>) and wind (<a class="xref" href="#fig-appendix-wind">Figure 20</a>) comparison exports for side-by-side review.</p>
             </div>
-            <div class="appendix-card">
+            <div class="appendix-card" id="fig-appendix-chargers">
               <h4>EV charging model comparison</h4>
               <img src="./assets/figures/appendix/EV charger availability_model_comparison.png" alt="EV charging model comparison appendix figure">
-              <p>Aggregate charging comparison across the model ladder, included here rather than inline so the main section can focus on the headline robustness and subtype composition figures.</p>
+              <p><strong>Figure 18.</strong> Aggregate EV charging: cross-validated predictive comparison of linear and nonlinear models, included here rather than inline so the main section can focus on the headline robustness (<a class="xref" href="#fig-chargers-robustness">Figure 8</a>) and subtype composition (<a class="xref" href="#fig-charger-subtypes">Figure 9</a>) figures.</p>
             </div>
-            <div class="appendix-card">
+            <div class="appendix-card" id="fig-appendix-pv-spatial">
               <h4>Representative baseline spatial maps</h4>
               <img src="./assets/figures/appendix/y_pv_model_1_baseline_climate_controls_spatial_figure.png" alt="Representative solar PV baseline spatial map">
-              <p>Representative baseline spatial output for rooftop PV. Matching storage and charging spatial maps are linked in the same appendix asset folder.</p>
+              <p><strong>Figure 19.</strong> Representative baseline spatial output for rooftop PV: observed adoption and Model 1 standardized residuals by ZIP/ZCTA. Matching storage and charging spatial maps are linked in the same appendix asset folder; the statewide observed geography for all three outcomes is shown in <a class="xref" href="#fig-data-geography">Figure 1</a>.</p>
             </div>
-            <div class="appendix-card">
+            <div class="appendix-card" id="fig-appendix-wind">
               <h4>Supplementary wind comparison</h4>
               <img src="./assets/figures/appendix/Wind capacity_model_comparison.png" alt="Wind model comparison appendix figure">
-              <p>Wind remains supplementary in the paper, but the model-comparison export is preserved here as a contextual benchmark against the consumer-facing DER outcomes.</p>
+              <p><strong>Figure 20.</strong> Wind capacity: cross-validated predictive comparison of linear and nonlinear models. Wind remains supplementary in the paper (<a class="xref" href="#sec-4-8">Section 4.8</a>), but the export is preserved here as a contextual benchmark against the consumer-facing DER outcomes.</p>
             </div>
+          </div>
+
+          <figure class="paper-figure" id="fig-housing-attenuation">
+            <img src="./assets/figures/housing_structure_attenuation.png" alt="Standardized race coefficients before and after adding exhaustive housing structure and tenure controls for solar PV, storage, and EV charging">
+            <figcaption><strong>Figure 21.</strong> Race-coefficient attenuation after adding exhaustive B25024 housing structure and B25003 tenure controls. Hollow points are the standardized baseline; filled points are Model 2D. Structure coefficients use single-family housing as the omitted reference, and tenure uses renters as the omitted reference.</figcaption>
+          </figure>
+
+          <h3 id="sec-appx-diagnostics">Statistical robustness and diagnostics</h3>
+          <p>The remainder of the appendix reports diagnostic checks on the estimating equations rather than additional descriptive figures (<a class="xref" href="#tbl-vif">Table 7</a>, <a class="xref" href="#tbl-moran">Table 8</a>, and <a class="xref" href="#tbl-conley">Table 9</a>). These do not alter any point estimate; they characterise how much confidence the standard errors deserve and where the specification is strained. <a class="xref" href="#sec-6-9">Section 6.9</a> describes the diagnostic strategy these checks implement.</p>
+
+          <h4>Multicollinearity diagnostics</h4>
+          <p>Variance inflation factors for the Solar PV models (<a class="xref" href="#tbl-vif">Table 7</a>) show both a well-conditioned specification and a cautionary case. The intercept is retained in the auxiliary regressions, so raw and standardized VIF diagnostics agree. Adding log housing value raises the VIF for log median income from <code>3.09</code> to <code>4.94</code>. The exhaustive housing structure and tenure controls in Model 2D have a maximum VIF of <code>5.30</code>, despite owner occupancy correlating <code>-0.72</code> with multifamily share. In the per-capita infrastructure specification, wind MW per 100k and turbines per 100k reach <code>27.40</code> and <code>27.38</code>, so their individual coefficients should not be read separately. VIF tables for every model and outcome are exported alongside the coefficient tables.</p>
+          <div class="table-wrap" id="tbl-vif">
+            <div class="table-title"><strong>Table 7.</strong> Variance inflation factors across four Solar PV specifications.</div>
+            <table class="paper-table">
+              <thead>
+                <tr>
+                  <th>Predictor</th>
+                  <th>M1 baseline</th>
+                  <th>M2 + housing value</th>
+                  <th>M2D + structure/tenure</th>
+                  <th>M7 per-capita infrastructure</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Log median income</td><td>3.09</td><td>4.94</td><td>3.64</td><td>3.18</td></tr>
+                <tr><td>Poverty rate</td><td>2.59</td><td>2.68</td><td>2.80</td><td>2.61</td></tr>
+                <tr><td>% Hispanic</td><td>1.42</td><td>1.43</td><td>1.61</td><td>1.46</td></tr>
+                <tr><td>% Asian</td><td>1.26</td><td>1.29</td><td>1.37</td><td>1.34</td></tr>
+                <tr><td>Solar irradiance (GHI)</td><td>1.15</td><td>1.18</td><td>1.18</td><td>1.15</td></tr>
+                <tr><td>% Black</td><td>1.04</td><td>1.05</td><td>1.13</td><td>1.06</td></tr>
+                <tr><td>Log housing value</td><td>—</td><td>2.84</td><td>—</td><td>—</td></tr>
+                <tr><td>% owner-occupied</td><td>—</td><td>—</td><td>5.30</td><td>—</td></tr>
+                <tr><td>% multifamily units</td><td>—</td><td>—</td><td>4.62</td><td>—</td></tr>
+                <tr><td>% mobile-home units</td><td>—</td><td>—</td><td>1.56</td><td>—</td></tr>
+                <tr><td>% boat/RV/van/other units</td><td>—</td><td>—</td><td>1.11</td><td>—</td></tr>
+                <tr><td>Wind MW per 100k</td><td>—</td><td>—</td><td>—</td><td><span class="coef">27.40</span></td></tr>
+                <tr><td>Turbines per 100k</td><td>—</td><td>—</td><td>—</td><td><span class="coef">27.38</span></td></tr>
+                <tr><td>Storage MW per 100k</td><td>—</td><td>—</td><td>—</td><td>1.15</td></tr>
+                <tr><td>Plant MW per 100k</td><td>—</td><td>—</td><td>—</td><td>1.02</td></tr>
+                <tr><td><strong>Maximum VIF</strong></td><td><strong>3.09</strong></td><td><strong>4.94</strong></td><td><strong>5.30</strong></td><td><strong>27.40</strong></td></tr>
+              </tbody>
+            </table>
+            <div class="table-note">Values above about 10 indicate a coefficient is not separately identified; an em dash means the predictor does not enter that model.</div>
+          </div>
+
+          <h4>Spatial autocorrelation of residuals</h4>
+          <p>Moran’s I computed on the OLS residuals using row-standardised eight-nearest-neighbour weights over ZCTA centroids, with pseudo p-values from 999 permutations (<a class="xref" href="#tbl-moran">Table 8</a>). All 72 tests (six outcomes by four specifications by three neighbour counts) return <code>p ≤ 0.001</code>, so residual spatial dependence is present throughout rather than marginal. Two patterns are worth noting. Including latitude and longitude linearly absorbs almost none of it, and for energy burden it is slightly worse than the baseline, so that specification should not be read as a geographic robustness check. County fixed effects remove roughly two-thirds of the dependence for PV and storage but leave it clearly present, which indicates clustering at a finer scale than counties. County-clustered standard errors therefore address the right concern at too coarse a resolution, and county clustering alone is not sufficient. Conley spatial HAC standard errors (<a class="xref" href="#tbl-conley">Table 9</a>) are the natural next step. Results are stable across four, eight and sixteen neighbours; the full grid is exported to <code>outputs/tables/morans_i_residuals.csv</code>.</p>
+          <div class="table-wrap" id="tbl-moran">
+            <div class="table-title"><strong>Table 8.</strong> Moran’s I on OLS residuals, eight-nearest-neighbour weights.</div>
+            <table class="paper-table">
+              <thead>
+                <tr>
+                  <th>Outcome</th>
+                  <th>M1 baseline</th>
+                  <th>M6A + lat/lon</th>
+                  <th>M6B county FE</th>
+                  <th>M8 + demand proxy</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Solar PV</td><td>0.437</td><td>0.426</td><td>0.145</td><td>0.359</td></tr>
+                <tr><td>Storage</td><td>0.319</td><td>0.314</td><td>0.096</td><td>0.150</td></tr>
+                <tr><td>EV chargers (aggregate)</td><td>0.140</td><td>0.132</td><td>0.078</td><td>0.127</td></tr>
+                <tr><td>EV chargers (Level 2)</td><td>0.162</td><td>0.152</td><td>0.100</td><td>0.149</td></tr>
+                <tr><td>Energy burden</td><td>0.352</td><td>0.434</td><td>0.275</td><td>0.289</td></tr>
+                <tr><td>Log affordability gap</td><td>0.153</td><td>0.142</td><td>0.112</td><td>0.127</td></tr>
+              </tbody>
+            </table>
+            <div class="table-note">Every entry is significant at <code>p &lt; 0.001</code> by permutation test. Larger values indicate stronger spatial clustering of what the model fails to explain.</div>
+          </div>
+
+          <h4>Conley spatial HAC standard errors</h4>
+          <p>Given the residual spatial dependence documented above (<a class="xref" href="#tbl-moran">Table 8</a>), I recompute the baseline standard errors following Conley (1999) (<a class="xref" href="#tbl-conley">Table 9</a>), allowing residuals to covary with great-circle distance under a Bartlett kernel. Point estimates are unchanged by construction; only the standard errors move. Because there is no consensus rule for the distance cutoff, several are reported. Standard errors rise by up to a factor of three relative to HC1 and plateau between 100 and 200 kilometres, consistent with clustering at utility-territory and metropolitan scale. The substantive conclusions hold but their relative strength changes. The Asian-share coefficients for PV and storage remain significant at the 0.1 percent level at every cutoff and are the most robust results in the paper. The Black-share coefficients remain negative and significant at the 5 percent level but are less precisely estimated than the HC1 errors imply, so they should be described accordingly. The positive poverty coefficient for aggregate charging, which underpins the charger-composition argument, survives at the 1 percent level.</p>
+          <div class="table-wrap" id="tbl-conley">
+            <div class="table-title"><strong>Table 9.</strong> Conley spatial HAC standard errors for the baseline specification, Bartlett kernel over great-circle distance.</div>
+            <table class="paper-table">
+              <thead>
+                <tr>
+                  <th>Term</th>
+                  <th>Coefficient</th>
+                  <th>HC1</th>
+                  <th>Conley 50 km</th>
+                  <th>Conley 100 km</th>
+                  <th>Conley 200 km</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="6"><strong>Solar PV</strong></td></tr>
+                <tr><td>Log median income</td><td><span class="coef">0.126</span></td><td>0.038***</td><td>0.053*</td><td>0.056*</td><td>0.053*</td></tr>
+                <tr><td>% Black</td><td><span class="coef">-0.760</span></td><td>0.109***</td><td>0.173***</td><td>0.237**</td><td>0.298*</td></tr>
+                <tr><td>% Hispanic</td><td><span class="coef">0.017</span></td><td>0.048</td><td>0.105</td><td>0.122</td><td>0.144</td></tr>
+                <tr><td>% Asian</td><td><span class="coef">-0.579</span></td><td>0.048***</td><td>0.071***</td><td>0.085***</td><td>0.085***</td></tr>
+                <tr><td>Poverty rate</td><td><span class="coef">-0.047</span></td><td>0.219</td><td>0.240</td><td>0.254</td><td>0.259</td></tr>
+                <tr><td colspan="6"><strong>Storage</strong></td></tr>
+                <tr><td>Log median income</td><td><span class="coef">0.771</span></td><td>0.122***</td><td>0.176***</td><td>0.179***</td><td>0.168***</td></tr>
+                <tr><td>% Black</td><td><span class="coef">-1.652</span></td><td>0.328***</td><td>0.464***</td><td>0.557**</td><td>0.644*</td></tr>
+                <tr><td>% Hispanic</td><td><span class="coef">-0.612</span></td><td>0.126***</td><td>0.205**</td><td>0.213**</td><td>0.182***</td></tr>
+                <tr><td>% Asian</td><td><span class="coef">-1.780</span></td><td>0.162***</td><td>0.292***</td><td>0.344***</td><td>0.339***</td></tr>
+                <tr><td>Poverty rate</td><td><span class="coef">-0.228</span></td><td>0.562</td><td>0.681</td><td>0.710</td><td>0.682</td></tr>
+                <tr><td colspan="6"><strong>EV chargers (aggregate)</strong></td></tr>
+                <tr><td>Log median income</td><td><span class="coef">0.164</span></td><td>0.098</td><td>0.130</td><td>0.120</td><td>0.102</td></tr>
+                <tr><td>% Black</td><td><span class="coef">-0.007</span></td><td>0.343</td><td>0.275</td><td>0.294</td><td>0.285</td></tr>
+                <tr><td>% Hispanic</td><td><span class="coef">-0.399</span></td><td>0.105***</td><td>0.156*</td><td>0.165*</td><td>0.173*</td></tr>
+                <tr><td>% Asian</td><td><span class="coef">0.410</span></td><td>0.146**</td><td>0.207*</td><td>0.218</td><td>0.197*</td></tr>
+                <tr><td>Poverty rate</td><td><span class="coef">2.003</span></td><td>0.497***</td><td>0.641**</td><td>0.674**</td><td>0.692**</td></tr>
+              </tbody>
+            </table>
+            <div class="table-note">Coefficients are identical across columns; only the standard errors differ. Stars denote significance under each estimator.</div>
           </div>
         </section>
 
         <section id="references">
           <h2>9. References</h2>
           <ol class="refs">
-            <li>American Council for an Energy-Efficient Economy (ACEEE). 2023. <em>Racial disparities in the energy burden</em>.</li>
-            <li>Borenstein, Severin, and James Bushnell. 2016. Work on residential electricity rate design and equity implications for DER uptake.</li>
-            <li>Brockway, Anna M., et al. 2021. “Inequitable access to distributed energy resources due to grid infrastructure limits in California.”</li>
-            <li>Caballero-Peña, et al. 2022. Work on network impacts of DERs and distribution-system constraints.</li>
-            <li>California Public Utilities Commission (CPUC). 2021. <em>Distributed Energy Resources Integration Research Roadmap</em>.</li>
-            <li>Clean Energy Group. 2021. <em>Energy Storage as an Equity Asset</em>.</li>
-            <li>Federal Energy Regulatory Commission (FERC) Staff. 2018. <em>Distributed Energy Resources: Technological and Policy Considerations</em>.</li>
-            <li>Feinberg, et al. 2017. “Data-driven planning amidst socio-technical complexities.”</li>
-            <li>Greenlining Institute. 2024. <em>Demystifying Equity in California’s Energy Grid Transition</em>.</li>
-            <li>Gridworks. 2022. <em>Advancing Equity in Access to DERs in California</em>.</li>
-            <li>Kurdgelashvili, Lado, Roy Kwon, and Peter Larsen. 2019. “An empirical analysis of county-level residential PV adoption in California.”</li>
-            <li>Lukanov, Boris R., and Elizabeth M. Krieger. 2019. “Distributed solar and environmental justice: Exploring the demographic and socio-economic trends of residential PV adoption in California.”</li>
-            <li>NREL / DOE. n.d. <em>Optimal coordination of flexible DERs</em>.</li>
-            <li>Parra, et al. 2017. “Assessing the implications of socioeconomic diversity for low-carbon technology uptake in electrical distribution networks.”</li>
-            <li>SEIA / Vote Solar. 2022. Work on California community-solar policy gaps and renter exclusion.</li>
-            <li>Stokes, Leah C., and Christopher Warshaw. 2022. Work on motivations and barriers to residential solar adoption.</li>
-            <li>Sunter, Deborah A., Sergio Castellanos, and Daniel M. Kammen. 2019. “Disparities in rooftop photovoltaics deployment in the United States by race and ethnicity.”</li>
-            <li>U.S. Department of Energy. 2023. <em>Towards Closing the Data Gap</em>.</li>
-            <li>Urban Institute. 2023. <em>Identifying Disadvantaged Communities in the United States</em>.</li>
+            <li>B. R. Lukanov and E. M. Krieger, “Distributed solar and environmental justice: Exploring the demographic and socio-economic trends of residential PV adoption in California,” Energy Policy, vol. 134, 2019, doi: 10.1016/j.enpol.2019.110935.</li>
+            <li>D. A. Sunter, S. Castellanos, and D. M. Kammen, “Disparities in rooftop photovoltaics deployment in the United States by race and ethnicity,” Nat. Sustain., vol. 2, no. 1, pp. 71–76, Jan. 2019, doi: 10.1038/s41893-018-0204-z.</li>
+            <li>L. Kurdgelashvili, C. H. Shih, F. Yang, and M. Garg, “An empirical analysis of county-level residential PV adoption in California,” Technol. Forecast. Soc. Change, vol. 139, 2019, doi: 10.1016/j.techfore.2018.11.021.</li>
+            <li>T. G. Reames, “Distributional disparities in residential rooftop solar potential and penetration in four cities in the United States,” Energy Res. Soc. Sci., vol. 69, p. 101612, Nov. 2020, doi: 10.1016/J.ERSS.2020.101612.</li>
+            <li>N. R. Darghouth, E. O’Shaughnessy, S. Forrester, and G. Barbose, “Characterizing local rooftop solar adoption inequity in the US,” Environmental Research Letters, vol. 17, no. 3, p. 034028, Feb. 2022, doi: 10.1088/1748-9326/AC4FDC.</li>
+            <li>C. Sigrist, A. Lechowicz, J. Champ, N. Bashir, and M. Hajiesmaili, “Lost in Siting: The Hidden Carbon Cost of Inequitable Residential Solar Installations,” Jan. 2025, [Online]. Available: <a href="http://arxiv.org/abs/2501.13868" rel="noopener">http://arxiv.org/abs/2501.13868</a></li>
+            <li>A. Drehobl, L. Ross, R. Ayala, A. Zaman, and J. Amann, “An Assessment of National and Metropolitan Energy Burden across the United States SEPTEMBER 2020 How High Are Household Energy Burdens?,” 2020.</li>
+            <li>“Demystifying Equity in California’s Energy Grid Transition BLOG ENERGY EQUITY.”</li>
+            <li>T. Light, E. McIntosh, and O. Stephenson, “Advancing Equity in Access to Distributed Energy Resources in California,” Journal of Science Policy &amp; Governance, 2022, doi: 10.38126/jspg200106.</li>
+            <li>S. P. Forrester, C. C. Montañés, E. O’Shaughnessy, and G. Barbose, “Modeling the potential effects of rooftop solar on household energy burden in the United States,” Nature Communications 2024 15:1, vol. 15, no. 1, pp. 4676-, Jun. 2024, doi: 10.1038/s41467-024-48967-x.</li>
+            <li>A. Brockway and D. Callaway, “California’s omission of community solar from distributed energy policies is shortsighted,” 2022.</li>
+            <li>J. Caballero-Peña, C. Cadena-Zarate, A. Parrado-Duque, and G. Osma-Pinto, “Distributed energy resources on distribution networks: A systematic review of modelling, simulation, metrics, and impacts,” International Journal of Electrical Power &amp; Energy Systems, vol. 138, p. 107900, Jun. 2022, doi: 10.1016/J.IJEPES.2021.107900.</li>
+            <li>“Distributed Energy Resources Technical Considerations for the Bulk Power System,” 2018.</li>
+            <li>R. Mcallister, M. Coddington, M. Kolb, S. Murtishaw, L. Schwartz, and S. Sergici, “WESTERN INTERSTATE ENERGY BOARD Distributed Energy Resources: Technological and Policy Considerations of Hosting Capacity and Locational Value Acknowledgements Disclaimer,” 2016.</li>
+            <li>B. Aydin, R. Holt, and M. Almassalkhi, “Fairness-aware Dynamic Hosting Capacity and the Impacts of Strategic Solar PV Curtailment,” Apr. 2025, [Online]. Available: <a href="http://arxiv.org/abs/2504.18905" rel="noopener">http://arxiv.org/abs/2504.18905</a></li>
+            <li>“Distributed Energy Resource Interconnection Roadmap.”</li>
+            <li>B. Tarekegne, R. O’Neil, and J. Twitchell, “Energy Storage as an Equity Asset,” 2021. doi: 10.1007/s40518-021-00184-6.</li>
+            <li>L. C. Stokes and C. Warshaw, “Renewable energy policy design and framing influence public support in the United States,” Nat. Energy, vol. 2, no. 8, Aug. 2017, doi: 10.1038/NENERGY.2017.107.</li>
+            <li>S. Borenstein and J. Bushnell, “The U.S. Electricity Industry after 20 Years of Restructuring,” 2015, doi: 10.1146/annureveconomics-080614-115630.</li>
+            <li>T. Light, E. McIntosh, and O. Stephenson, “Advancing Equity in Access to Distributed Energy Resources in California,” Journal of Science Policy &amp; Governance, 2022, doi: 10.38126/jspg200106.</li>
+            <li>S. Churchill and J. B. Armstrong, “BEFORE THE PUBLIC UTILITIES COMMISSION OF THE STATE OF CALIFORNIA OPENING BRIEF OF THE SOLAR ENERGY INDUSTRIES ASSOCIATION AND VOTE SOLAR VOTE SOLAR,” 2021.</li>
+            <li>M. Alipour, E. Irannezhad, R. A. Stewart, and O. Sahin, “Exploring residential solar PV and battery energy storage adoption motivations and barriers in a mature PV market,” Renew. Energy, vol. 190, 2022, doi: 10.1016/j.renene.2022.03.040.</li>
+            <li>R. Haider, Y. Xu, and W. Yang, “Towards closing the data gap: A project-driven distributed energy resource dataset for the U.S. Grid,” in e-Energy 2023 Companion - Proceedings of the 14th ACM International Conference on Future Energy Systems, 2023. doi: 10.1145/3599733.3600250.</li>
+            <li>L. Ge, T. Du, C. Li, Y. Li, J. Yan, and M. U. Rafiq, “Virtual Collection for Distributed Photovoltaic Data: Challenges, Methodologies, and Applications,” 2022. doi: 10.3390/en15238783.</li>
           </ol>
         </section>
       </article>
@@ -711,9 +823,9 @@
           <li><a href="#introduction">1. Introduction</a></li>
           <li><a href="#background">2. Background and Prior Work</a></li>
           <li><a href="#data">3. Data and Measures</a></li>
-          <li><a href="#methods">4. Methods</a></li>
-          <li><a href="#results">5. Results</a></li>
-          <li><a href="#discussion">6. Discussion</a></li>
+          <li><a href="#results">4. Results</a></li>
+          <li><a href="#discussion">5. Discussion</a></li>
+          <li><a href="#methods">6. Methods</a></li>
           <li><a href="#limitations">7. Limitations</a></li>
           <li><a href="#conclusion">8. Conclusion</a></li>
           <li><a href="#appendix">Appendix</a></li>

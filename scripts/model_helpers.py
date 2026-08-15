@@ -1,0 +1,96 @@
+"""Shared statistical helpers used by the regression notebook and release tests."""
+
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+import patsy
+import statsmodels.formula.api as smf
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+
+DEFAULT_MIN_CLUSTER_SIZE = 5
+
+
+def run_ols(
+    formula: str,
+    df: pd.DataFrame,
+    cluster_col: str | None = None,
+    min_cluster_size: int = DEFAULT_MIN_CLUSTER_SIZE,
+):
+    """Fit OLS with HC1 errors or county-clustered errors.
+
+    The minimum-size rule applies only to clustered-inference models. Keeping this
+    restriction here prevents small counties from being removed from the shared
+    release dataset and from specifications that do not use clustered errors.
+    """
+    model_frame = df
+    if cluster_col is not None:
+        if cluster_col not in df.columns:
+            raise KeyError(f"Cluster column is missing: {cluster_col}")
+
+        _, design = patsy.dmatrices(
+            formula,
+            df,
+            return_type="dataframe",
+            NA_action="drop",
+        )
+        model_frame = df.loc[design.index].copy()
+        groups = model_frame[cluster_col].astype("string")
+        model_frame = model_frame.loc[groups.notna()].copy()
+        groups = model_frame[cluster_col].astype("string")
+        group_sizes = groups.value_counts(dropna=True)
+        eligible_groups = group_sizes[group_sizes >= min_cluster_size].index
+        model_frame = model_frame.loc[groups.isin(eligible_groups)].copy()
+
+        if model_frame.empty:
+            raise ValueError(
+                f"No rows remain after requiring {min_cluster_size} observations "
+                f"per {cluster_col} cluster."
+            )
+        if model_frame[cluster_col].nunique(dropna=True) < 2:
+            raise ValueError("Cluster-robust covariance requires at least two clusters.")
+
+    model = smf.ols(formula=formula, data=model_frame)
+    if cluster_col is None:
+        return model.fit(cov_type="HC1")
+
+    result = model.fit()
+    used_index = result.model.data.row_labels
+    groups = model_frame.loc[used_index, cluster_col].astype(str)
+    return model.fit(cov_type="cluster", cov_kwds={"groups": groups})
+
+
+def vif_from_formula(
+    formula: str,
+    df: pd.DataFrame,
+    exclude_prefixes: tuple[str, ...] = ("C(",),
+) -> pd.DataFrame:
+    """Return predictor VIFs while retaining the intercept in auxiliary fits.
+
+    Dropping the intercept before calculating VIF makes raw, uncentered predictors
+    appear highly collinear and causes the raw and standardized exports to disagree.
+    The intercept must stay in the design matrix even though it is not itself reported.
+    """
+    _, design = patsy.dmatrices(formula, df, return_type="dataframe")
+
+    if exclude_prefixes:
+        keep = [
+            column
+            for column in design.columns
+            if column == "Intercept"
+            or not any(column.startswith(prefix) for prefix in exclude_prefixes)
+        ]
+        design = design[keep]
+
+    design = design.replace([np.inf, -np.inf], np.nan).dropna()
+    report_columns = [column for column in design.columns if column != "Intercept"]
+    values = [
+        variance_inflation_factor(design.values, design.columns.get_loc(column))
+        for column in report_columns
+    ]
+    return (
+        pd.DataFrame({"feature": report_columns, "VIF": values})
+        .sort_values("VIF", ascending=False)
+        .reset_index(drop=True)
+    )

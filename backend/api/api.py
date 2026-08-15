@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
@@ -10,11 +11,17 @@ DB_PATH = PROJECT_ROOT / "data" / "der_tool.db"
 app = FastAPI()
 
 
+@contextmanager
 def get_connection():
+    # sqlite3's own context manager commits/rolls back but does not close, so using
+    # `with sqlite3.connect(...)` directly leaked a connection per request.
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON;")
-    return conn
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON;")
+        yield conn
+    finally:
+        conn.close()
 
 
 def row_to_dict(row):
@@ -151,6 +158,8 @@ def get_region_summary(region_id: str):
 
 @app.get("/compare")
 def compare_regions(region_ids: list[str] = Query(...)):
+    if not region_ids:
+        raise HTTPException(status_code=400, detail="region_ids must not be empty")
     placeholders = ",".join("?" for _ in region_ids)
     query = f"""
         SELECT

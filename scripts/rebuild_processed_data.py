@@ -41,10 +41,14 @@ Notes
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import logging
 import os
 import pickle
 import time
+from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 
 import geopandas as gpd
@@ -76,11 +80,20 @@ DER_ZERO_COLUMNS = [
     "wind_capacity_mw",
     "wind_turbine_count",
 ]
+HOUSING_STRUCTURE_SHARE_COLUMNS = [
+    "pct_single_family_units",
+    "pct_multifamily_units",
+    "pct_mobile_home_units",
+    "pct_other_housing_units",
+    "owner_occupied_rate",
+]
 
 ZCTA_SHP = RAW / "boundaries" / "tl_2023_us_zcta520" / "tl_2023_us_zcta520.shp"
 COUNTY_SHP = RAW / "boundaries" / "tl_2023_us_county" / "tl_2023_us_county.shp"
 CA_UTILITY_GEOJSON = RAW / "boundaries" / "ca_utility_territories.geojson"
 TRACKING_THE_SUN_CSV = RAW / "solar" / "TTS_LBNL_public_file_21-Aug-2024_all.csv"
+ACS_HOUSING_RAW = RAW / "acs" / f"acs_{YEAR}_5yr_housing_ca_zcta.csv"
+ACS_HOUSING_MANIFEST = RAW / "acs" / f"acs_{YEAR}_5yr_housing_query_manifest.json"
 
 LOGGER = logging.getLogger("rebuild_processed_data")
 
@@ -240,6 +253,16 @@ def parse_args() -> argparse.Namespace:
         help="Reuse existing external outputs (ACS/NASA) instead of making live requests.",
     )
     parser.add_argument(
+        "--reuse-nasa",
+        action="store_true",
+        help=(
+            "Pull ACS live but reuse the existing NASA POWER files. NASA POWER for a "
+            "completed year is a fixed historical reanalysis, so re-pulling it returns "
+            "identical values at the cost of ~5,500 requests (~1 hour). The local "
+            "utility, demand and geo steps still rebuild. Ignored with --skip-external."
+        ),
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -274,6 +297,12 @@ def is_valid_zip(series: pd.Series) -> pd.Series:
     return clean_zip(series).str.fullmatch(r"\d{5}").fillna(False)
 
 
+def is_california_postal_zip(series: pd.Series) -> pd.Series:
+    """Recognize California postal ZIPs without requiring a Census ZCTA polygon."""
+    numeric = pd.to_numeric(clean_zip(series), errors="coerce")
+    return numeric.between(90001, 96162).fillna(False)
+
+
 def load_zcta_shapes() -> gpd.GeoDataFrame:
     zcta = gpd.read_file(ZCTA_SHP)
     zcta = zcta.rename(columns={"ZCTA5CE20": "zip_code"})
@@ -299,7 +328,13 @@ def load_ca_zcta_centroids() -> pd.DataFrame:
     return zcta_ca[["zip_code", "lat", "lon"]].drop_duplicates("zip_code").reset_index(drop=True)
 
 
-def write_csv(df: pd.DataFrame, path: Path, *, index: bool = True) -> None:
+@lru_cache(maxsize=1)
+def load_ca_zcta_codes() -> frozenset[str]:
+    """Return the authoritative set of ZCTAs whose geometry intersects California."""
+    return frozenset(load_ca_zcta_centroids()["zip_code"])
+
+
+def write_csv(df: pd.DataFrame, path: Path, *, index: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(path, index=index)
     LOGGER.info("Wrote %s (%s rows)", path.relative_to(ROOT), len(df))
@@ -375,7 +410,12 @@ def build_wind_zip() -> tuple[pd.DataFrame, pd.DataFrame]:
 def build_power_plant_der(name_to_fips: dict[str, str]) -> pd.DataFrame:
     power_plant = pd.read_csv(RAW / "plants" / "Power_Plants.csv")
     power_plant["County"] = power_plant["County"].astype(str).str.strip().str.lower()
+    # These fixes are keyed to row positions in the raw file. Guard against a raw-file
+    # update shifting rows: a bare .loc on a missing label would silently append a row.
     for idx, updates in POWER_PLANT_FIXES.items():
+        if idx not in power_plant.index:
+            LOGGER.warning("Power plant fix for row %s skipped: index not in raw file.", idx)
+            continue
         for col, val in updates.items():
             power_plant.loc[idx, col] = val
 
@@ -520,14 +560,53 @@ def build_ev_sources(name_to_fips: dict[str, str]) -> tuple[pd.DataFrame, pd.Dat
 
 def build_tracking_the_sun() -> pd.DataFrame:
     # The 2024 public release is the 2023-aligned Tracking the Sun snapshot.
-    tracking = pd.read_csv(TRACKING_THE_SUN_CSV, low_memory=False)
+    if TRACKING_THE_SUN_CSV.exists():
+        tracking = pd.read_csv(TRACKING_THE_SUN_CSV, low_memory=False)
+    else:
+        fallback = PROCESSED / "tracking_the_sun.csv"
+        if not fallback.exists():
+            raise FileNotFoundError(f"Missing raw and processed Tracking the Sun files: {TRACKING_THE_SUN_CSV}")
+        LOGGER.warning("Raw Tracking the Sun file is missing; reusing %s.", fallback.relative_to(ROOT))
+        tracking = pd.read_csv(fallback, low_memory=False)
+    # Drop the known-malformed source values BEFORE normalising. Running this filter
+    # after clean_zip() never matched anything, because clean_zip has already turned
+    # e.g. "831.0" into "00831" and "2399." into NA.
+    bad = {"-0001", "-01.0", "000.0", "2399.", "831.0"}
+    raw_zip = tracking["zip_code"].astype("string").str.strip()
+    tracking = tracking[~raw_zip.isin(bad)].copy()
     tracking["zip_code"] = clean_zip(tracking["zip_code"])
     tracking = tracking[tracking["state"] == "CA"].copy()
-    bad = {"-0001", "-01.0", "000.0", "2399.", "831.0"}
-    tracking = tracking[~tracking["zip_code"].isin(bad)].copy()
     tracking = tracking[is_valid_zip(tracking["zip_code"])].copy()
     tracking = tracking[tracking["zip_code"].str.startswith("9")].copy()
+    outside_ca = ~is_california_postal_zip(tracking["zip_code"])
+    if outside_ca.any():
+        LOGGER.warning(
+            "Tracking the Sun: dropping %s CA-labelled rows outside California's "
+            "postal ZIP range (examples: %s).",
+            int(outside_ca.sum()),
+            ", ".join(sorted(tracking.loc[outside_ca, "zip_code"].unique())[:5]),
+        )
+    tracking = tracking.loc[~outside_ca].copy()
     tracking = tracking[tracking["PV_system_size_DC"] >= 0].copy()
+
+    # Enforce the 2023 alignment the module docstring claims. Without this the outcome
+    # is cumulative capacity through whatever the snapshot date happens to be, while
+    # every control (ACS, NASA POWER) is 2023. The Aug-2024 release has a reporting lag
+    # so this currently drops well under 0.01% of CA rows, but it stops a future TTS
+    # refresh silently contaminating the cross-section.
+    installed = pd.to_datetime(tracking["installation_date"], errors="coerce", format="mixed")
+    after_cutoff = installed > pd.Timestamp(f"{YEAR}-12-31")
+    undated = installed.isna()
+    if after_cutoff.any() or undated.any():
+        LOGGER.info(
+            "Tracking the Sun date filter: dropping %s installs after %s-12-31; "
+            "%s rows have an unparseable installation_date and are retained.",
+            int(after_cutoff.sum()),
+            YEAR,
+            int(undated.sum()),
+        )
+    tracking = tracking[~after_cutoff].copy()
+
     write_csv(tracking, PROCESSED / "tracking_the_sun.csv")
     return tracking
 
@@ -592,6 +671,15 @@ def build_combined_der_dataset_full(aggregated: dict[str, pd.DataFrame]) -> pd.D
         merged = pd.merge(merged, df, on="zip_code", how="outer")
     merged["zip_code"] = clean_zip(merged["zip_code"])
     merged = merged[merged["zip_code"].str.fullmatch(r"\d{5}")].copy()
+    outside_ca = ~is_california_postal_zip(merged["zip_code"])
+    if outside_ca.any():
+        LOGGER.warning(
+            "Combined DER panel: dropping %s ZIPs outside California's postal range "
+            "(examples: %s).",
+            int(outside_ca.sum()),
+            ", ".join(sorted(merged.loc[outside_ca, "zip_code"].unique())[:5]),
+        )
+    merged = merged.loc[~outside_ca].copy()
     for col in DER_ZERO_COLUMNS:
         if col in merged.columns:
             merged[col] = pd.to_numeric(merged[col], errors="coerce").fillna(0)
@@ -599,6 +687,132 @@ def build_combined_der_dataset_full(aggregated: dict[str, pd.DataFrame]) -> pd.D
     write_csv(merged, PROCESSED / "combined_der_dataset_full.csv")
     write_csv(merged, PROCESSED / "combined_der_dataset.csv")
     return merged
+
+
+def fetch_acs_response(
+    base_url: str,
+    variables: list[str],
+    census_api_key: str,
+) -> pd.DataFrame:
+    """Fetch one ACS ZCTA table without persisting credentials in provenance."""
+    params = {
+        "get": ",".join(variables),
+        "for": "zip code tabulation area:*",
+        "key": census_api_key,
+    }
+    try:
+        resp = requests.get(base_url, params=params, timeout=60)
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        # Requests includes the fully prepared URL in its exception text. Because the
+        # Census API key is a query parameter, allowing that exception to escape leaks
+        # the credential into CI and terminal logs.
+        status = getattr(getattr(exc, "response", None), "status_code", None)
+        detail = f" (HTTP {status})" if status is not None else ""
+        raise RuntimeError(
+            f"Census ACS request failed{detail}; request credentials were redacted."
+        ) from None
+    data = resp.json()
+    frame = pd.DataFrame(data[1:], columns=data[0]).rename(
+        columns={"zip code tabulation area": "zip_code"}
+    )
+    frame["zip_code"] = clean_zip(frame["zip_code"])
+    for col in variables:
+        frame[col] = pd.to_numeric(frame[col], errors="coerce")
+    return frame
+
+
+def write_acs_housing_snapshot(
+    estimates: pd.DataFrame,
+    margins: pd.DataFrame,
+    estimate_variables: list[str],
+    margin_variables: list[str],
+    base_url: str,
+) -> None:
+    """Persist raw ACS housing counts/MOEs and a credential-free query manifest."""
+    snapshot = estimates[["zip_code", *estimate_variables]].merge(
+        margins[["zip_code", *margin_variables]],
+        on="zip_code",
+        how="left",
+        validate="one_to_one",
+    )
+    ACS_HOUSING_RAW.parent.mkdir(parents=True, exist_ok=True)
+    snapshot.to_csv(ACS_HOUSING_RAW, index=False)
+    digest = hashlib.sha256(ACS_HOUSING_RAW.read_bytes()).hexdigest()
+    manifest = {
+        "dataset": f"{YEAR} ACS 5-year detailed tables",
+        "geography": "ZIP Code Tabulation Area",
+        "endpoint": base_url,
+        "estimate_variables": estimate_variables,
+        "margin_of_error_variables": margin_variables,
+        "filters": {"for": "zip code tabulation area:*", "panel": "DER panel ZIP/ZCTAs"},
+        "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
+        "row_count": len(snapshot),
+        "sha256": digest,
+        "credentials_persisted": False,
+    }
+    ACS_HOUSING_MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    LOGGER.info(
+        "Wrote %s and query manifest (%s rows)",
+        ACS_HOUSING_RAW.relative_to(ROOT),
+        len(snapshot),
+    )
+
+
+def ensure_housing_structure_shares(acs: pd.DataFrame) -> pd.DataFrame:
+    """Backfill the exact residual category and validate the housing composition."""
+    acs = acs.copy()
+    component_columns = [
+        "pct_single_family_units",
+        "pct_multifamily_units",
+        "pct_mobile_home_units",
+    ]
+    if "pct_other_housing_units" not in acs.columns and all(
+        col in acs.columns for col in component_columns
+    ):
+        # B25024_011E is the residual boat/RV/van/other category. Existing processed
+        # shares used the same B25024 total denominator, so this residual is exact up
+        # to floating-point rounding and lets offline rebuilds migrate safely.
+        acs["pct_other_housing_units"] = 1.0 - acs[component_columns].sum(
+            axis=1,
+            min_count=len(component_columns),
+        )
+        near_zero = acs["pct_other_housing_units"].abs() < 1e-12
+        acs.loc[near_zero, "pct_other_housing_units"] = 0.0
+
+    missing = [c for c in HOUSING_STRUCTURE_SHARE_COLUMNS if c not in acs.columns]
+    empty = [
+        c
+        for c in HOUSING_STRUCTURE_SHARE_COLUMNS
+        if c in acs.columns and acs[c].notna().sum() == 0
+    ]
+    if missing or empty:
+        raise ValueError(
+            "acs_predictors_ca_zip.csv has no usable housing structure/tenure shares "
+            f"(missing: {missing}; all-NaN: {empty}). Rerun with a Census API key."
+        )
+
+    housing_rows = acs[HOUSING_STRUCTURE_SHARE_COLUMNS]
+    outside = (
+        (housing_rows.notna())
+        & ((housing_rows < -1e-10) | (housing_rows > 1 + 1e-10))
+    ).any(axis=1)
+    if outside.any():
+        raise ValueError(f"ACS housing shares fall outside [0, 1] for {outside.sum()} rows.")
+    structure_columns = [
+        "pct_single_family_units",
+        "pct_multifamily_units",
+        "pct_mobile_home_units",
+        "pct_other_housing_units",
+    ]
+    complete_structure = housing_rows[structure_columns].dropna()
+    structure_total = complete_structure.sum(axis=1).to_numpy(dtype=float)
+    bad_composition = ~np.isclose(structure_total, 1.0, atol=1e-8, rtol=0)
+    if bad_composition.any():
+        raise ValueError(
+            f"ACS housing structure shares do not sum to one for {bad_composition.sum()} rows."
+        )
+    return acs
 
 
 def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -622,6 +836,17 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B01003_001E",
         "B19013_001E",
         "B25077_001E",
+        "B25024_001E",
+        "B25024_002E",
+        "B25024_003E",
+        "B25024_004E",
+        "B25024_005E",
+        "B25024_006E",
+        "B25024_007E",
+        "B25024_008E",
+        "B25024_009E",
+        "B25024_010E",
+        "B25024_011E",
         "B03002_001E",
         "B03002_003E",
         "B03002_004E",
@@ -629,26 +854,53 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B03002_012E",
         "B17001_001E",
         "B17001_002E",
+        # B25003 TENURE. Distinct from B25024 (units in structure): a single-family
+        # home can be rented and a high-rise condo can be owner-occupied. Rooftop PV
+        # and home storage face both a structural barrier (does the unit control a
+        # roof?) and a tenure barrier (may the occupant modify the property, and can
+        # they claim the incentives?). Only ~62% of tenure variation is explained by
+        # single-family share, so this is not redundant.
+        "B25003_001E",
+        "B25003_002E",
+        "B25003_003E",
     ] + edu_vars
 
-    resp = requests.get(
-        base_url,
-        params={"get": ",".join(variables), "for": "zip code tabulation area:*", "key": census_api_key},
-        timeout=60,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    acs = pd.DataFrame(data[1:], columns=data[0]).rename(columns={"zip code tabulation area": "zip_code"})
-    acs["zip_code"] = clean_zip(acs["zip_code"])
-    for col in variables:
-        acs[col] = pd.to_numeric(acs[col], errors="coerce")
+    acs = fetch_acs_response(base_url, variables, census_api_key)
 
-    panel_zips = set(clean_zip(df_full["zip_code"]))
+    panel_zips = set(clean_zip(df_full["zip_code"])) & load_ca_zcta_codes()
     acs = acs[acs["zip_code"].isin(panel_zips)].copy()
+
+    housing_estimate_variables = [
+        *[f"B25024_{index:03d}E" for index in range(1, 12)],
+        *[f"B25003_{index:03d}E" for index in range(1, 4)],
+    ]
+    housing_margin_variables = [
+        variable[:-1] + "M" for variable in housing_estimate_variables
+    ]
+    housing_margins = fetch_acs_response(base_url, housing_margin_variables, census_api_key)
+    housing_margins = housing_margins[housing_margins["zip_code"].isin(panel_zips)].copy()
+    write_acs_housing_snapshot(
+        acs,
+        housing_margins,
+        housing_estimate_variables,
+        housing_margin_variables,
+        base_url,
+    )
     rename_map = {
         "B01003_001E": "total_population",
         "B19013_001E": "median_household_income",
         "B25077_001E": "median_housing_value",
+        "B25024_001E": "housing_units_total",
+        "B25024_002E": "single_family_detached_units",
+        "B25024_003E": "single_family_attached_units",
+        "B25024_004E": "duplex_units",
+        "B25024_005E": "three_four_unit_structures",
+        "B25024_006E": "five_nine_unit_structures",
+        "B25024_007E": "ten_nineteen_unit_structures",
+        "B25024_008E": "twenty_fortynine_unit_structures",
+        "B25024_009E": "fifty_plus_unit_structures",
+        "B25024_010E": "mobile_home_units",
+        "B25024_011E": "other_housing_units",
         "B03002_001E": "raceeth_total",
         "B03002_003E": "white_not_hispanic",
         "B03002_004E": "black_not_hispanic",
@@ -656,6 +908,9 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
         "B03002_012E": "hispanic_any_race",
         "B17001_001E": "poverty_universe",
         "B17001_002E": "below_poverty",
+        "B25003_001E": "occupied_units_total",
+        "B25003_002E": "owner_occupied_units",
+        "B25003_003E": "renter_occupied_units",
         "B15003_001E": "edu_25plus_total",
         "B15003_017E": "hs_diploma",
         "B15003_018E": "ged",
@@ -675,6 +930,7 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
     race_den = acs["raceeth_total"].replace({0: pd.NA})
     pov_den = acs["poverty_universe"].replace({0: pd.NA})
     edu_den = acs["edu_25plus_total"].replace({0: pd.NA})
+    housing_den = acs["housing_units_total"].replace({0: pd.NA})
     acs["pct_black"] = acs["black_not_hispanic"] / race_den
     acs["pct_hispanic"] = acs["hispanic_any_race"] / race_den
     acs["pct_asian"] = acs["asian_not_hispanic"] / race_den
@@ -682,6 +938,29 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
     acs["pct_bachelors_plus"] = (
         acs[["bachelors", "masters", "professional_school", "doctorate"]].sum(axis=1) / edu_den
     )
+    acs["pct_single_family_units"] = (
+        acs[["single_family_detached_units", "single_family_attached_units"]].sum(axis=1) / housing_den
+    )
+    acs["pct_multifamily_units"] = (
+        acs[
+            [
+                "duplex_units",
+                "three_four_unit_structures",
+                "five_nine_unit_structures",
+                "ten_nineteen_unit_structures",
+                "twenty_fortynine_unit_structures",
+                "fifty_plus_unit_structures",
+            ]
+        ].sum(axis=1)
+        / housing_den
+    )
+    acs["pct_mobile_home_units"] = acs["mobile_home_units"] / housing_den
+    acs["pct_other_housing_units"] = acs["other_housing_units"] / housing_den
+    # Owner share only: owner + renter sum to 1 by construction, so entering both
+    # alongside an intercept would repeat the compositional trap that made the housing
+    # structure shares uninterpretable (VIFs above 1000). Renters are the reference.
+    tenure_den = acs["occupied_units_total"].replace({0: pd.NA})
+    acs["owner_occupied_rate"] = acs["owner_occupied_units"] / tenure_den
     acs_model = acs[
         [
             "zip_code",
@@ -692,9 +971,15 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
             "pct_hispanic",
             "pct_asian",
             "median_housing_value",
+            "pct_single_family_units",
+            "pct_multifamily_units",
+            "pct_mobile_home_units",
+            "pct_other_housing_units",
+            "owner_occupied_rate",
             "total_population",
         ]
     ].copy()
+    acs_model = ensure_housing_structure_shares(acs_model)
     write_csv(acs_model, PROCESSED / "acs_predictors_ca_zip.csv")
 
     matched = set(acs_model["zip_code"])
@@ -823,50 +1108,86 @@ def annualize_utility(df: pd.DataFrame, util: str, cust_col_base: str) -> pd.Dat
     out[f"{util}_kwh_annual"] = df.reindex(columns=kwh_cols).sum(axis=1, min_count=1)
     cust_cols = [f"{cust_col_base}_q{i}" for i in range(1, 5)]
     cust_q_sum = df.reindex(columns=cust_cols).sum(axis=1, min_count=1)
-    out[f"{util}_cust_months"] = 3 * cust_q_sum
+    # The quarterly raw files are monthly; the per-quarter groupby already summed over
+    # the three months, so cust_q_sum is customer-months. Multiplying by 3 tripled it.
+    out[f"{util}_cust_months"] = cust_q_sum
     out[f"{util}_kwh_per_cust_month"] = out[f"{util}_kwh_annual"] / out[f"{util}_cust_months"].replace(0, np.nan)
     return out
 
 
+def parse_numeric_column(series: pd.Series, *, label: str) -> pd.Series:
+    """Numeric coercion that survives thousands separators, and complains if it cannot.
+
+    The PG&E usage CSVs store kWh as text with thousands separators ("4,504,370"). A
+    bare pd.to_numeric(errors="coerce") turned every such value into NaN, which then
+    became 0.0 at the groupby (pandas' groupby sum defaults to min_count=0, so an
+    all-NaN group sums to zero rather than NaN). The result was ~85% of PG&E's annual
+    kWh silently discarded, and discarded non-randomly: only values >= 1,000 carry a
+    separator, so precisely the largest consumers were zeroed. SDG&E and SCE were
+    unaffected, which made the damage geographically systematic as well.
+    """
+    cleaned = (
+        series.astype("string")
+        .str.strip()
+        .str.replace(",", "", regex=False)
+        .str.replace("$", "", regex=False)
+        .replace({"": pd.NA, "-": pd.NA, "N/A": pd.NA, "NA": pd.NA})
+    )
+    parsed = pd.to_numeric(cleaned, errors="coerce")
+    lost = int((parsed.isna() & series.notna() & (series.astype("string").str.strip() != "")).sum())
+    if lost:
+        LOGGER.warning(
+            "%s: %s of %s values could not be parsed as numeric and are NaN.",
+            label, lost, len(series),
+        )
+    return parsed
+
+
+def load_quarterly_demand(
+    filename_template: str,
+    *,
+    util: str,
+    zip_col: str,
+    numeric_cols: list[str],
+    drop_cols: list[str],
+    excel: bool = False,
+) -> pd.DataFrame:
+    """Read one utility's four quarterly files into a single ZIP-indexed frame."""
+    merged = None
+    for q in [1, 2, 3, 4]:
+        path = RAW / "demand" / filename_template.format(q=q)
+        temp = pd.read_excel(path, skiprows=[0, 1]) if excel else pd.read_csv(path)
+        temp.columns = temp.columns.str.strip().str.lower()
+        temp = temp.drop(columns=drop_cols, errors="ignore")
+        temp = temp.rename(columns={zip_col: "zip_code"})
+        temp["zip_code"] = clean_zip(temp["zip_code"])
+        for col in numeric_cols:
+            if col in temp.columns:
+                temp[col] = parse_numeric_column(temp[col], label=f"{util} Q{q} {col}")
+        keep = ["zip_code"] + [c for c in numeric_cols if c in temp.columns]
+        # min_count=1 so a ZIP whose values are all NaN stays NaN instead of becoming a
+        # spurious zero that is indistinguishable from genuine zero consumption.
+        temp = temp[keep].groupby("zip_code").sum(min_count=1).add_suffix(f"_q{q}")
+        merged = temp if merged is None else merged.join(temp, how="outer")
+    return merged
+
+
 def build_demand_controls() -> pd.DataFrame:
-    pge = None
-    for q in [1, 2, 3, 4]:
-        temp = pd.read_csv(RAW / "demand" / f"PGE_2023_Q{q}_ElectricUsageByZip.csv")
-        temp.columns = temp.columns.str.strip().str.lower()
-        temp = temp.drop(columns=["month", "year", "customerclass", "combined"], errors="ignore")
-        temp = temp.rename(columns={"zipcode": "zip_code"})
-        temp["zip_code"] = clean_zip(temp["zip_code"])
-        for col in ["totalcustomers", "totalkwh", "averagekwh"]:
-            if col in temp.columns:
-                temp[col] = pd.to_numeric(temp[col], errors="coerce")
-        temp = temp.groupby("zip_code").sum(numeric_only=True).add_suffix(f"_q{q}")
-        pge = temp if pge is None else pge.join(temp, how="outer")
-
-    sce = None
-    for q in [1, 2, 3, 4]:
-        temp = pd.read_excel(RAW / "demand" / f"SCE_2023_Q{q}_ElectricUsageByZip.xlsx", skiprows=[0, 1])
-        temp.columns = temp.columns.str.strip().str.lower()
-        temp = temp.drop(columns=["month", "year", "customer\nclass", "combined"], errors="ignore")
-        temp = temp.rename(columns={"zip\ncode": "zip_code"})
-        temp["zip_code"] = clean_zip(temp["zip_code"])
-        for col in ["totalaccounts", "totalkwh", "averagekwh"]:
-            if col in temp.columns:
-                temp[col] = pd.to_numeric(temp[col], errors="coerce")
-        temp = temp.groupby("zip_code").sum(numeric_only=True).add_suffix(f"_q{q}")
-        sce = temp if sce is None else sce.join(temp, how="outer")
-
-    sdge = None
-    for q in [1, 2, 3, 4]:
-        temp = pd.read_csv(RAW / "demand" / f"SDGE-ELEC-2023-Q{q}.csv")
-        temp.columns = temp.columns.str.strip().str.lower()
-        temp = temp.drop(columns=["month", "year", "customerclass", "combined"], errors="ignore")
-        temp = temp.rename(columns={"zipcode": "zip_code"})
-        temp["zip_code"] = clean_zip(temp["zip_code"])
-        for col in ["totalaccounts", "totalkwh", "averagekwh"]:
-            if col in temp.columns:
-                temp[col] = pd.to_numeric(temp[col], errors="coerce")
-        temp = temp.groupby("zip_code").sum(numeric_only=True).add_suffix(f"_q{q}")
-        sdge = temp if sdge is None else sdge.join(temp, how="outer")
+    pge = load_quarterly_demand(
+        "PGE_2023_Q{q}_ElectricUsageByZip.csv", util="PG&E", zip_col="zipcode",
+        numeric_cols=["totalcustomers", "totalkwh", "averagekwh"],
+        drop_cols=["month", "year", "customerclass", "combined"],
+    )
+    sce = load_quarterly_demand(
+        "SCE_2023_Q{q}_ElectricUsageByZip.xlsx", util="SCE", zip_col="zip\ncode",
+        numeric_cols=["totalaccounts", "totalkwh", "averagekwh"],
+        drop_cols=["month", "year", "customer\nclass", "combined"], excel=True,
+    )
+    sdge = load_quarterly_demand(
+        "SDGE-ELEC-2023-Q{q}.csv", util="SDG&E", zip_col="zipcode",
+        numeric_cols=["totalaccounts", "totalkwh", "averagekwh"],
+        drop_cols=["month", "year", "customerclass", "combined"],
+    )
 
     demand = annualize_utility(pge, "pge", "totalcustomers").join(
         annualize_utility(sce, "sce", "totalaccounts"), how="outer"
@@ -883,6 +1204,21 @@ def build_demand_controls() -> pd.DataFrame:
     demand = demand.reset_index()
     demand_control = demand[["zip_code", "kwh_annual_total"]].copy()
     demand_control["log_kwh"] = np.log1p(demand_control["kwh_annual_total"])
+
+    # A ZIP reporting exactly zero annual consumption is not a real observation, it is a
+    # parsing or coverage failure. Guard against silently shipping it as a valid control.
+    n_zero = int((demand_control["kwh_annual_total"] == 0).sum())
+    if n_zero:
+        LOGGER.warning(
+            "demand: %s of %s ZIPs have kwh_annual_total == 0. Treat as unreported, not "
+            "as zero consumption.", n_zero, len(demand_control),
+        )
+    if n_zero > 0.1 * len(demand_control):
+        raise ValueError(
+            f"demand: {n_zero} of {len(demand_control)} ZIPs report exactly zero annual "
+            "kWh, which is implausible and indicates the usage columns are not parsing. "
+            "Check for thousands separators in the raw files."
+        )
     write_csv(demand_control, PROCESSED / "demand.csv")
     return demand_control
 
@@ -903,18 +1239,30 @@ def build_final_analysis_dataset(
         d = d.copy()
         d["zip_code"] = clean_zip(d["zip_code"])
         d = d.drop(columns=["Unnamed: 0"], errors="ignore")
+        # GHI, temperature and wind tables each carry the same ZCTA centroid lat/lon.
+        # Merging all three unsuffixed produced lat_x/lat_y/lon_x/lon_y duplicates in
+        # the published dataset. Keep the coordinates from the first table only.
+        if "lat" in df.columns and "lon" in df.columns:
+            d = d.drop(columns=["lat", "lon"], errors="ignore")
         df = pd.merge(df, d, on="zip_code", how="left")
 
     for col in DER_ZERO_COLUMNS:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
-    zcta = gpd.read_file(ZCTA_SHP)
     county = gpd.read_file(COUNTY_SHP)
+    county = county[county["STATEFP"] == "06"].copy()
+    # Loading the nationwide ZCTA layer twice made a release rebuild spend minutes
+    # parsing tens of thousands of out-of-scope geometries. Fiona's bbox filter keeps
+    # the read California-sized, and this one GeoDataFrame is reused for both county
+    # assignment and area calculations below.
+    zcta = gpd.read_file(ZCTA_SHP, bbox=tuple(county.total_bounds))
     zcta_id = "ZCTA5CE20" if "ZCTA5CE20" in zcta.columns else ("GEOID20" if "GEOID20" in zcta.columns else "GEOID")
     county_id = "GEOID" if "GEOID" in county.columns else ("GEOID20" if "GEOID20" in county.columns else "GEOID10")
     county_name_col = "NAME" if "NAME" in county.columns else None
     zcta = zcta[[zcta_id, "geometry"]].rename(columns={zcta_id: "zip_code"})
+    panel_zips = set(df["zip_code"].dropna())
+    zcta = zcta[zcta["zip_code"].astype(str).str.zfill(5).isin(panel_zips)].copy()
     keep = [county_id, "geometry"] + ([county_name_col] if county_name_col else [])
     county = county[keep].rename(columns={county_id: "county_geoid"})
     if county_name_col:
@@ -931,20 +1279,23 @@ def build_final_analysis_dataset(
     zip_to_county = pairs.drop_duplicates("zip_code")[cols]
 
     df = df.merge(zip_to_county, on="zip_code", how="left")
-    zcta_area = gpd.read_file(ZCTA_SHP)
-    zcta_area = zcta_area[[zcta_id, "geometry"]].rename(columns={zcta_id: "zip_code"})
-    zcta_area["zip_code"] = zcta_area["zip_code"].astype(str).str.zfill(5)
-    zcta_area = zcta_area.to_crs("EPSG:5070")
-    zcta_area["area_km2"] = zcta_area.geometry.area / 1e6
-    df = df.merge(zcta_area[["zip_code", "area_km2"]], on="zip_code", how="left")
+    zcta["area_km2"] = zcta.geometry.area / 1e6
+    df = df.merge(zcta[["zip_code", "area_km2"]], on="zip_code", how="left")
     df["pop_density_km2"] = df["total_population"] / df["area_km2"].replace(0, np.nan)
     df["log_pop_density"] = np.log1p(df["pop_density_km2"])
 
-    min_n = 5
-    df["county_geoid"] = df["county_geoid"].astype(str).str.strip()
-    counts = df["county_geoid"].value_counts()
-    keep = counts[counts >= min_n].index
-    df = df[df["county_geoid"].isin(keep)].copy()
+    # Keep every valid ZIP/ZCTA in the released analysis dataset. Minimum cluster-size
+    # rules belong inside the few clustered-inference specifications, not in this
+    # shared input: applying one globally removed four otherwise eligible California
+    # ZCTAs from every model and descriptive output.
+    df["county_geoid"] = df["county_geoid"].astype("string").str.strip()
+    unmatched = df["county_geoid"].isna().sum()
+    if unmatched:
+        LOGGER.warning(
+            "%s ZIPs have no county match (no ZCTA geometry); they carry no county, "
+            "area or climate controls.",
+            unmatched,
+        )
     write_csv(df, PROCESSED / "combined_der_dataset_w_controls_predictors.csv")
     return df
 
@@ -960,26 +1311,50 @@ def read_energy_burden() -> pd.DataFrame:
 def read_or_fetch_external(
     args: argparse.Namespace,
     df_full: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
     if args.skip_external:
         LOGGER.warning("Using existing external-derived processed files because --skip-external was provided.")
         acs = pd.read_csv(PROCESSED / "acs_predictors_ca_zip.csv")
+        # Previously these columns were created filled with NA and written back to
+        # disk. That is silently destructive: an all-NaN column is dropped without
+        # comment by the notebook's `nunique() > 1` guard, so "Model 2C (add housing
+        # structure)" degenerated into a copy of Model 1 while still exporting a table
+        # that looked like a real robustness check. Fail loudly instead.
+        acs = ensure_housing_structure_shares(acs)
+        acs["zip_code"] = clean_zip(acs["zip_code"])
+        acs = acs[acs["zip_code"].isin(load_ca_zcta_codes())].copy()
+        write_csv(acs, PROCESSED / "acs_predictors_ca_zip.csv", index=False)
         ghi = pd.read_csv(PROCESSED / "ca_zip_ghi_mean_2023.csv")
         temp = pd.read_csv(PROCESSED / "ca_zip_temperature_controls_2023.csv")
         wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
         zip_to_utility = pd.read_csv(PROCESSED / "zip_to_utility.csv")
         demand = pd.read_csv(PROCESSED / "demand.csv")
         energy_burden = read_energy_burden()
-        if (PROCESSED / "combined_der_dataset_acs_matched.csv").exists():
-            df_acs = pd.read_csv(PROCESSED / "combined_der_dataset_acs_matched.csv")
-        else:
-            matched = set(acs["zip_code"].astype(str).str.zfill(5))
-            df_acs = df_full[df_full["zip_code"].isin(matched)].copy()
-            write_csv(df_acs, PROCESSED / "combined_der_dataset_acs_matched.csv")
+        matched = set(acs["zip_code"].astype(str).str.zfill(5))
+        df_acs = df_full[df_full["zip_code"].isin(matched)].copy()
+        write_csv(df_acs, PROCESSED / "combined_der_dataset_acs_matched.csv")
         return acs, df_acs, ghi, temp, wind, zip_to_utility, demand, energy_burden
 
     acs, df_acs = fetch_acs_predictors(df_full, args.census_api_key)
-    wind, ghi, temp = build_nasa_outputs()
+    if args.reuse_nasa:
+        LOGGER.warning(
+            "Reusing existing NASA POWER files (--reuse-nasa). 2023 is a completed "
+            "year, so these values are fixed; re-pulling would return the same numbers."
+        )
+        ghi = pd.read_csv(PROCESSED / "ca_zip_ghi_mean_2023.csv")
+        temp = pd.read_csv(PROCESSED / "ca_zip_temperature_controls_2023.csv")
+        wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
+    else:
+        wind, ghi, temp = build_nasa_outputs()
     zip_to_utility = build_zip_to_utility()
     demand = build_demand_controls()
     energy_burden = read_energy_burden()

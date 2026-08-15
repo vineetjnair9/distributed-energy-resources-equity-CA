@@ -1,6 +1,27 @@
-data/
-outputs/
+# NOTE: data/ and outputs/ are intentionally tracked (via Git LFS, see .gitattributes).
+# They were previously listed here, which was misleading: it did nothing for the files
+# already tracked, but silently prevented `git add` from picking up NEW processed files
+# and figures.
 __pycache__/
 *.py[cod]
 .DS_Store
 .env
+*.bak
+
+# Generated SQLite database (~300MB, over GitHub's 100MB file limit).
+# Rebuild with: python scripts/run_all.py --only database
+data/der_tool.db
+
+# Generated Zenodo upload bundle (~134MB) and its archive.
+# Rebuild with: python scripts/make_zenodo_bundle.py --archive
+release/zenodo-bundle/
+release/zenodo-bundle.zip
+
+# Derived analysis data (~1.0GB), regenerated from data/raw by the pipeline.
+# Not versioned: it is rewritten wholesale on every run, so each commit added a
+# near-complete copy to LFS. The citable snapshot lives in the Zenodo record.
+# Rebuild with: python scripts/rebuild_processed_data.py
+data/processed/
+
+# Local safety copies taken before editing the manuscript (~18MB each).
+site/index_backup_*.docx

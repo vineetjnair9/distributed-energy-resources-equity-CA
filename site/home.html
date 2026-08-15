@@ -3,24 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption</title>
+  <title>The Unequal Energy Transition: Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption Across California</title>
   <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body>
   <header>
     <div class="header-inner">
-      <div>
-        <div class="eyebrow">DER Data UROP</div>
-        <div class="header-note">California ZIP/ZCTA energy equity analysis</div>
+      <div class="header-note site-author">Danielle Knutson • MIT</div>
+      <div class="site-brand">
+        <div class="eyebrow">California DER Equity Atlas</div>
       </div>
       <nav>
         <ul class="nav-top">
           <li><a class="nav-link" href="./home.html">Home</a></li>
           <li><a class="nav-link" href="./paper.html">Paper</a></li>
-          <li><a class="nav-link" href="#exploring-data">Region Analysis</a></li>
+          <li><a class="nav-link" href="./regionanalysis.html">Region Analysis</a></li>
         </ul>
       </nav>
-      <div class="header-note">Danielle Knutson • MIT</div>
     </div>
   </header>
 
@@ -37,7 +36,7 @@
         </div>
       </div>
       <figure class="home-hero-figure">
-        <img src="./assets/figures/generated/california_outcome_geography_panel.svg" alt="California ZIP/ZCTA maps showing solar PV, storage, and EV charging outcomes">
+        <img src="./assets/figures/generated/california_outcome_geography_panel.png" alt="California ZIP/ZCTA maps showing solar PV, storage, and EV charging outcomes">
         <figcaption>ZIP/ZCTA-level maps make statewide DER patterns visible before model-based adjustments.</figcaption>
       </figure>
     </section>
@@ -58,7 +57,7 @@
         </div>
         <div class="feature-card">
           <h3>Analysis-ready file</h3>
-          <p>The main output is <code>data/processed/combined_der_dataset_w_controls_predictors.csv</code>, which is used for exploratory plots, regression models, robustness checks, and paper figures.</p>
+          <p>The main output is a combined DER dataset with predictors which is used for exploratory plots, regression models, robustness checks, and paper figures.</p>
         </div>
       </div>
     </section>
@@ -66,13 +65,13 @@
     <section class="home-section split-section">
       <div>
         <div class="eyebrow">Paper</div>
-        <h2>Racial and socioeconomic disparities in DER adoption</h2>
+        <h2>The Unequal Energy Transition: Racial and Socioeconomic Disparities in Distributed Energy Resource Adoption Across California</h2>
         <p>The accompanying paper asks whether race, income, poverty, education, climate, utility territory, and infrastructure context are associated with different levels of DER adoption across California communities.</p>
         <p>Instead of treating each technology separately, the paper applies a consistent model ladder across solar PV, storage, EV charging, and supplementary wind outcomes. That structure makes it possible to compare whether inequity appears similarly across technologies or changes depending on the resource being studied.</p>
         <p>The central contribution is both empirical and practical: the paper uses a shared dataset to test race-aware DER equity questions, while the repository preserves the processing and figure-generation workflow for future review or extension.</p>
       </div>
       <figure class="paper-figure compact-figure">
-        <img src="./assets/figures/baseline_der_outcomes_dot_whisker.svg" alt="Dot-whisker plot comparing standardized baseline DER regression coefficients">
+        <img src="./assets/figures/baseline_der_outcomes_dot_whisker.png" alt="Dot-whisker plot comparing standardized baseline DER regression coefficients">
         <figcaption>Standardized coefficients help compare how predictors differ across DER outcomes.</figcaption>
       </figure>
     </section>

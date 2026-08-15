@@ -1,7 +1,7 @@
 import argparse
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -43,6 +43,8 @@ MODEL_VERSION_PRIORITIES = {
     "Model 5 utility FE": 20,
     "Model 2 (add bachelors)": 15,
     "Model 2 (add housing value)": 15,
+    "Model 2C (add housing structure)": 20,
+    "Model 2D (add housing structure and tenure)": 25,
 }
 
 COMPARISON_MODEL_MARKERS = [
@@ -54,6 +56,8 @@ COMPARISON_MODEL_MARKERS = [
     "Model 5 utility FE",
     "Model 2 (add bachelors)",
     "Model 2 (add housing value)",
+    "Model 2C (add housing structure)",
+    "Model 2D (add housing structure and tenure)",
 ]
 
 
@@ -366,7 +370,7 @@ def insert_summary_response(
     metric_snapshot,
     model_version=SUMMARY_VERSION,
 ):
-    generated_at = datetime.utcnow().isoformat()
+    generated_at = datetime.now(timezone.utc).isoformat()
 
     cursor = conn.execute(
         """

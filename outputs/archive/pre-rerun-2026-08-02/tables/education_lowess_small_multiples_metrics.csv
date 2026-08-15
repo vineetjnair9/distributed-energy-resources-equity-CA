@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+pct_bachelors_plus,y_pv,-0.057275031058104164,-0.06363892339789352
+pct_bachelors_plus,y_storage,0.6074275779859981,0.6749195310955535
+pct_bachelors_plus,y_chargers,1.1723377298017348,1.3025974775574831

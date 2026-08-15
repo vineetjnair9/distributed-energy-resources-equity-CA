@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+log_median_household_income,y_chargers,-0.5946752333315517,-0.2817302357573628
+combined_nonwhite_share,y_chargers,-0.7877381848079512,-0.9045741032036934
+pct_bachelors_plus,y_chargers,0.8587094178924697,1.0494727082546813

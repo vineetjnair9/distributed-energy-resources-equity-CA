@@ -1,0 +1,4 @@
+predictor,outcome,endpoint_change,average_slope_mid90
+pct_single_family_units,y_pv,0.38575909001698167,0.4286212111299797
+pct_single_family_units,y_storage,1.9999156584749869,2.222128509416652
+pct_single_family_units,y_chargers,-1.248489855500333,-1.3872109505559256

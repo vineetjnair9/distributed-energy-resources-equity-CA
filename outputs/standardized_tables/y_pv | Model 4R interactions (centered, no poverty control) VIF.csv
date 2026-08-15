@@ -1,0 +1,9 @@
+feature,VIF
+pct_hispanic_c,1.893065331919636
+log_median_household_income_c,1.7715398635283504
+pct_asian_c,1.604001029011901
+log_median_household_income_c:pct_hispanic_c,1.569757113249919
+log_median_household_income_c:pct_asian_c,1.4884913200642724
+pct_black_c,1.2640163485331177
+log_median_household_income_c:pct_black_c,1.2542735882955076
+ghi_mean_kwh_m2_day_2023,1.151059725567218
