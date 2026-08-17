@@ -50,9 +50,18 @@ convention.
 
 ## What is not in this record, and why
 
-Raw third-party inputs are **not** redistributed here. They are public, and
-`SOURCES.md` cites each with a retrieval URL; `scripts/fetch_exact_public_data.py`
-in the repository downloads the pinned snapshots.
+Raw inputs that can be re-downloaded are **not** redistributed here:
+`scripts/fetch_exact_public_data.py` pins and fetches the CaliforniaDGStats
+interconnection archive, the USGS wind turbine database, the two Census TIGER/Line
+boundary sets, and the SCOUT utility service territories. `SOURCES.md` cites each with
+its retrieval URL.
+
+Raw inputs that **cannot** be re-downloaded are included, under `raw_inputs/`. Battery
+storage, EV charging, power plants, energy burden, and utility demand are dashboard
+exports with no stable permanent URL, so pointing at a source page would not let anyone
+rebuild the panel. They are ~60 MB in total and are reproduced here under the terms of
+their public agency sources, which retain their own citation requirements — see
+`SOURCES.md`.
 
 `tracking_the_sun.csv` is also excluded. It is a California-filtered copy of Lawrence
 Berkeley National Laboratory's *Tracking the Sun* dataset — 927 MB, and better cited
@@ -71,11 +80,16 @@ this response is what makes the housing results reproducible.
 |---|---|
 | `data/` | the processed panel and every intermediate behind it |
 | `model_outputs/` | the coefficient tables behind every figure in the paper, one CSV per outcome and specification, including VIF diagnostics |
+| `raw_inputs/` | the raw storage, EV charging, power plant, energy burden and demand exports, which have no re-downloadable URL |
 | `acs_snapshot/` | the exact Census API response and its query manifest |
 | `environment.yml`, `requirements.txt` | the pinned environment the pipeline runs under |
 
 `model_outputs/` is included so figures can be redrawn without refitting anything. If you
 only want the data, ignore that directory.
+
+Filenames in `model_outputs/` use ` - ` where the repository uses a pipe character, so
+the archive extracts cleanly on Windows. `y_pv | Model 1 baseline (climate controls).csv`
+in the repository is `y_pv - Model 1 baseline (climate controls).csv` here.
 
 ## Verifying this record
 

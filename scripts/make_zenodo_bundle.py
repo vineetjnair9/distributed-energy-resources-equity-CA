@@ -65,6 +65,25 @@ REQUIRED_PROCESSED = (
 # `conda env create -f environment.yml`, so the file has to travel with the record.
 ENVIRONMENT_FILES = ("environment.yml", "requirements.txt")
 
+# Raw families that fetch_exact_public_data.py cannot re-download. It pins only the
+# CaliforniaDGStats interconnection archive, USWTDB, the two TIGER boundary sets and the
+# SCOUT utility territories; everything below is a dashboard export with no stable URL,
+# so "public and re-fetchable" is not true of it. Without these the pipeline cannot be
+# rerun from raw at all. ~60 MB in total.
+RAW_UNFETCHABLE = ("storage", "ev_chargers", "plants", "energy_burden", "demand")
+
+# Windows rejects these in filenames, and the standardized tables are full of pipes:
+# "y_pv | Model 1 baseline (climate controls).csv". Extraction would fail for a Windows
+# user, so names are sanitized on the way into the bundle only.
+_ILLEGAL = r'<>:"/\|?*'
+
+
+def safe_name(name: str) -> str:
+    cleaned = "".join("-" if ch in _ILLEGAL else ch for ch in name)
+    while "--" in cleaned:
+        cleaned = cleaned.replace("--", "-")
+    return " ".join(cleaned.split()).replace(" -", " -").strip()
+
 
 def human(n: int) -> str:
     for unit in ("B", "KB", "MB", "GB"):
@@ -82,7 +101,8 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def plan(include_tts: bool, skip_tables: bool = False) -> list[tuple[Path, str]]:
+def plan(include_tts: bool, skip_tables: bool = False,
+         skip_raw: bool = False) -> list[tuple[Path, str]]:
     """Return (source, name-within-bundle) pairs."""
     items: list[tuple[Path, str]] = []
 
@@ -110,7 +130,15 @@ def plan(include_tts: bool, skip_tables: bool = False) -> list[tuple[Path, str]]
                 "Or pass --skip-tables to publish the data without them."
             )
         for csv in tables:
-            items.append((csv, f"model_outputs/{csv.name}"))
+            items.append((csv, f"model_outputs/{safe_name(csv.name)}"))
+
+    if not skip_raw:
+        for family in RAW_UNFETCHABLE:
+            src_dir = ROOT / "data" / "raw" / family
+            if not src_dir.exists():
+                sys.exit(f"missing raw input directory: {src_dir}")
+            for src in sorted(p for p in src_dir.iterdir() if p.is_file() and p.name != ".DS_Store"):
+                items.append((src, f"raw_inputs/{family}/{safe_name(src.name)}"))
 
     for name in ENVIRONMENT_FILES:
         src = ROOT / name
@@ -134,6 +162,15 @@ def plan(include_tts: bool, skip_tables: bool = False) -> list[tuple[Path, str]]
             sys.exit(f"missing required documentation file: {src}")
         items.append((src, dest))
 
+    # Sanitizing could map two distinct sources onto one destination, which would silently
+    # overwrite. Fail loudly instead.
+    seen: dict[str, Path] = {}
+    for src, dest in items:
+        if dest in seen:
+            sys.exit(f"bundle name collision after sanitizing: {dest}\n"
+                     f"  {seen[dest]}\n  {src}")
+        seen[dest] = src
+
     return items
 
 
@@ -143,11 +180,13 @@ def main() -> None:
     ap.add_argument("--include-tts", action="store_true", help="include the 927 MB tracking_the_sun.csv")
     ap.add_argument("--skip-tables", action="store_true",
                     help="omit outputs/standardized_tables (the coefficient tables behind the figures)")
+    ap.add_argument("--skip-raw", action="store_true",
+                    help="omit the raw inputs that fetch_exact_public_data.py cannot re-download")
     ap.add_argument("--archive", action="store_true", help="also write <out>.zip")
     ap.add_argument("--dry-run", action="store_true", help="show what would be bundled, copy nothing")
     args = ap.parse_args()
 
-    items = plan(args.include_tts, skip_tables=args.skip_tables)
+    items = plan(args.include_tts, skip_tables=args.skip_tables, skip_raw=args.skip_raw)
     total = sum(src.stat().st_size for src, _ in items)
 
     print(f"{len(items)} files, {human(total)}")
