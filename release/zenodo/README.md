@@ -65,9 +65,21 @@ list, the retrieval timestamp, the row count, and a SHA-256 of the response. The
 Census API serves current vintages rather than historical snapshots, so preserving
 this response is what makes the housing results reproducible.
 
+## What else is in the bundle
+
+| Path | Contents |
+|---|---|
+| `data/` | the processed panel and every intermediate behind it |
+| `model_outputs/` | the coefficient tables behind every figure in the paper, one CSV per outcome and specification, including VIF diagnostics |
+| `acs_snapshot/` | the exact Census API response and its query manifest |
+| `environment.yml`, `requirements.txt` | the pinned environment the pipeline runs under |
+
+`model_outputs/` is included so figures can be redrawn without refitting anything. If you
+only want the data, ignore that directory.
+
 ## Verifying this record
 
-`CHECKSUMS.sha256` covers every data file in the bundle:
+`CHECKSUMS.sha256` covers every file in the bundle:
 
 ```bash
 shasum -a 256 -c CHECKSUMS.sha256
@@ -75,14 +87,26 @@ shasum -a 256 -c CHECKSUMS.sha256
 
 ## Reproducing it
 
-The pipeline, notebooks, tests, and manuscript live in the accompanying repository.
+The pipeline, notebooks, tests, and manuscript live in the accompanying repository:
+
+**https://github.com/vineetjnair9/distributed-energy-resources-equity-CA**
+
+`environment.yml` is bundled here, so the environment can be created from this record
+before cloning anything:
 
 ```bash
 conda env create -f environment.yml
 conda activate der-data-urop
 python scripts/fetch_exact_public_data.py
-CENSUS_API_KEY=your_key python scripts/rebuild_processed_data.py
+CENSUS_API_KEY=your_key python scripts/run_all.py --only data
 pytest tests/
+```
+
+To redraw the figures from the bundled model outputs without refitting, copy
+`model_outputs/` into `outputs/standardized_tables/` in a clone and run:
+
+```bash
+python scripts/run_all.py --only figures
 ```
 
 The test suite checks the data contracts this release depends on: exhaustive housing
