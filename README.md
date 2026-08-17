@@ -122,10 +122,10 @@ python scripts/rebuild_processed_data.py --skip-external
 To rerun the main regression notebook and refresh the figures in one step:
 
 ```bash
-python scripts/run_regression_notebook.py
+python scripts/run_all.py --only models figures
 ```
 
-This script:
+This:
 
 - executes `notebooks/regression.ipynb`
 - saves an executed copy to `outputs/executed_notebooks/regression.executed.ipynb`
@@ -150,6 +150,13 @@ python scripts/run_all.py --only figures --skip-assets
 
 `build_site_index_assets.py` is also runnable on its own, and `--sync-only` mirrors
 existing figures without rebuilding them.
+
+To rerun only some outcomes, or to execute a single notebook without running a stage:
+
+```bash
+python scripts/run_all.py --only models --outcomes y_pv y_storage
+python scripts/run_all.py --run-notebook plotting_outcomes
+```
 
 ## Recommended workflow
 

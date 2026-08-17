@@ -18,17 +18,27 @@ Quick start
     # Just redraw figures after editing paper_figure_utils.py
     python scripts/run_all.py --only figures
 
+    # Results only, without the presentation panels or the site mirror
+    python scripts/run_all.py --only figures --skip-assets
+
+    # Execute one notebook and stop (replaces the old run_notebook.py)
+    python scripts/run_all.py --run-notebook plotting_outcomes
+
 Stages
 ------
     data       rebuild_processed_data.py       -> data/processed/*.csv
-    models     run_regression_notebook.py      -> outputs/{standardized_,}tables/*.csv
-    clustering run_notebook.py clustering      -> outputs/tables/pca_kmeans_*.csv
+    models     notebooks/regression.ipynb      -> outputs/{standardized_,}tables/*.csv
+    clustering notebooks/clustering.ipynb      -> outputs/tables/pca_kmeans_*.csv
     figures    regenerate_standardized_figures.py -> outputs/standardized_figures/*.png
                build_site_index_assets.py --sync  -> outputs/figures/**, site/assets
                                                      (skip with --skip-assets)
     database   backend/schemas/create_db.py
                backend/schemas/populate_tables.py
                backend/schemas/generate_summaries.py  -> data/der_tool.db
+
+Notebook execution lives here rather than in separate runner scripts. The models stage
+rewrites OUTCOMES_TO_RUN in regression.ipynb before executing it, so a partial rerun is
+`--outcomes y_pv y_storage`; every notebook is written to outputs/executed_notebooks/.
 
 The database stage is NOT run by default: it takes a while and the last step makes
 OpenAI calls. Run it explicitly with --only database.
@@ -58,8 +68,23 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
+NOTEBOOK_DIR = ROOT / "notebooks"
+EXECUTED_DIR = ROOT / "outputs" / "executed_notebooks"
 
 STAGES = ["data", "models", "clustering", "figures", "database"]
+
+DEFAULT_OUTCOMES = [
+    "y_pv",
+    "y_storage",
+    "y_chargers",
+    "y_wind_mw",
+    "any_turbines",
+    "y_level1_chargers",
+    "y_level2_chargers",
+    "y_dc_fast_chargers",
+    "energy_burden_pct",
+    "log_energy_gap_per_capita",
+]
 
 
 def _run(cmd: list[str], label: str) -> None:
@@ -71,6 +96,89 @@ def _run(cmd: list[str], label: str) -> None:
         raise SystemExit(f"[{label}] FAILED after {elapsed:.0f}s (exit {result.returncode})")
     print(f"[{label}] done in {elapsed:.0f}s", flush=True)
 
+
+# --------------------------------------------------------------------------- notebooks
+
+def _patched_source(source: str, *, outcomes: list[str]) -> str:
+    """Rewrite the OUTCOMES_TO_RUN assignment in regression.ipynb's second cell.
+
+    The assignment spans several lines, so this tracks bracket depth to skip the whole
+    literal rather than only its first line.
+    """
+    patched: list[str] = []
+    skipping_assignment = False
+    bracket_depth = 0
+    replaced = False
+
+    for line in source.splitlines():
+        stripped = line.strip()
+        if skipping_assignment:
+            bracket_depth += stripped.count("[") - stripped.count("]")
+            if bracket_depth <= 0:
+                skipping_assignment = False
+            continue
+        if stripped.startswith("OUTCOMES_TO_RUN = "):
+            patched.append(f"OUTCOMES_TO_RUN = {outcomes!r}")
+            replaced = True
+            rhs = stripped.split("=", 1)[1].strip()
+            bracket_depth = rhs.count("[") - rhs.count("]")
+            skipping_assignment = bracket_depth > 0
+            continue
+        patched.append(line)
+
+    if not replaced:
+        raise ValueError("Could not find OUTCOMES_TO_RUN in regression.ipynb cell 1.")
+    return "\n".join(patched) + ("\n" if source.endswith("\n") else "")
+
+
+def execute_notebook(
+    name: str,
+    *,
+    outcomes: list[str] | None = None,
+    timeout: int = 3600,
+    kernel: str = "python3",
+) -> Path:
+    """Execute a notebook and save an executed copy under outputs/executed_notebooks/.
+
+    Imported lazily so that stages which need no notebook (figures, database) do not
+    require nbclient to be installed.
+    """
+    import nbformat
+    from nbclient import NotebookClient
+
+    path = NOTEBOOK_DIR / (name if name.endswith(".ipynb") else f"{name}.ipynb")
+    if not path.exists():
+        available = ", ".join(sorted(p.stem for p in NOTEBOOK_DIR.glob("*.ipynb")))
+        raise SystemExit(f"No such notebook: {path}\nAvailable: {available}")
+
+    nb = nbformat.read(path, as_version=4)
+    if outcomes:
+        nb.cells[1].source = _patched_source(nb.cells[1].source, outcomes=outcomes)
+
+    NotebookClient(
+        nb,
+        timeout=timeout,
+        kernel_name=kernel,
+        resources={"metadata": {"path": str(NOTEBOOK_DIR)}},
+        allow_errors=False,
+    ).execute()
+
+    EXECUTED_DIR.mkdir(parents=True, exist_ok=True)
+    out = EXECUTED_DIR / f"{path.stem}.executed.ipynb"
+    nbformat.write(nb, out)
+    return out
+
+
+def _run_notebook_stage(name: str, label: str, args: argparse.Namespace,
+                        outcomes: list[str] | None = None) -> None:
+    print(f"\n{'=' * 72}\n[{label}] notebooks/{name}.ipynb\n{'=' * 72}", flush=True)
+    started = time.monotonic()
+    out = execute_notebook(name, outcomes=outcomes, timeout=args.timeout, kernel=args.kernel)
+    print(f"[{label}] done in {time.monotonic() - started:.0f}s -> {out.relative_to(ROOT)}",
+          flush=True)
+
+
+# ------------------------------------------------------------------------------ stages
 
 def stage_data(args: argparse.Namespace) -> None:
     cmd = [sys.executable, str(SCRIPTS / "rebuild_processed_data.py")]
@@ -84,14 +192,12 @@ def stage_data(args: argparse.Namespace) -> None:
 
 
 def stage_models(args: argparse.Namespace) -> None:
-    cmd = [sys.executable, str(SCRIPTS / "run_regression_notebook.py"), "--skip-figure-scripts"]
-    if args.outcomes:
-        cmd += ["--outcomes", *args.outcomes]
-    _run(cmd, "models")
+    _run_notebook_stage("regression", "models", args,
+                        outcomes=list(args.outcomes) if args.outcomes else DEFAULT_OUTCOMES)
 
 
 def stage_clustering(args: argparse.Namespace) -> None:
-    _run([sys.executable, str(SCRIPTS / "run_notebook.py"), "clustering"], "clustering")
+    _run_notebook_stage("clustering", "clustering", args)
 
 
 def stage_figures(args: argparse.Namespace) -> None:
@@ -152,7 +258,23 @@ def main() -> None:
         help="In the figures stage, build the coefficient figures but not the presentation "
              "panels or the site mirror. Results are unaffected.",
     )
+    parser.add_argument(
+        "--run-notebook",
+        metavar="NAME",
+        help="Execute one notebook by stem and exit, e.g. 'plotting_outcomes'.",
+    )
+    parser.add_argument("--timeout", type=int, default=3600,
+                        help="Per-cell notebook timeout in seconds.")
+    parser.add_argument("--kernel", default="python3", help="Jupyter kernel name.")
     args = parser.parse_args()
+
+    os.environ.setdefault("MPLBACKEND", "Agg")
+    os.environ.setdefault("FIGURE_BG", "transparent")
+
+    if args.run_notebook:
+        out = execute_notebook(args.run_notebook, timeout=args.timeout, kernel=args.kernel)
+        print(out.relative_to(ROOT))
+        return
 
     # "database" is opt-in only: it is slow and its last step costs OpenAI calls.
     default_stages = [s for s in STAGES if s != "database"]
@@ -165,9 +287,6 @@ def main() -> None:
             "Without a live ACS pull the housing-structure controls cannot be built, and "
             "the rebuild will stop rather than silently emit empty columns."
         )
-
-    os.environ.setdefault("MPLBACKEND", "Agg")
-    os.environ.setdefault("FIGURE_BG", "transparent")
 
     print(f"Stages: {' -> '.join(selected)}")
     print(f"Figure background: {os.environ['FIGURE_BG']}")

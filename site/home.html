@@ -105,7 +105,7 @@
         <div class="eyebrow">Repository Guide</div>
         <h2>How the files fit together</h2>
         <p>The processing notebooks build the ZIP/ZCTA-level DER panel, add predictor data, and produce exploratory plots. The regression notebook runs the main model specifications, robustness checks, LOWESS plots, and model-comparison figures.</p>
-        <p>For a clean rebuild, <code>scripts/rebuild_processed_data.py</code> recreates the processed files from raw inputs. For refreshed paper outputs, <code>scripts/run_regression_notebook.py</code> executes the regression notebook and syncs figures into the site asset folder.</p>
+        <p>For a clean rebuild, <code>scripts/rebuild_processed_data.py</code> recreates the processed files from raw inputs. For refreshed paper outputs, <code>scripts/run_all.py --only models figures</code> executes the regression notebook and syncs figures into the site asset folder.</p>
       </div>
       <div class="resource-list">
         <a href="../notebooks/processing_energy_data_zip.ipynb">Processing notebook</a>
