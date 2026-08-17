@@ -53,9 +53,16 @@ CENSUS_API_KEY=your_key python scripts/rebuild_processed_data.py --reuse-nasa
 ## 2023-aligned but not yet scripted exactly
 
 - `data/raw/solar/TTS_LBNL_public_file_21-Aug-2024_all.csv`
-  The rebuild uses this file because it is the first subsequent public Tracking the Sun release that covers data through the end of 2023.
-  Public page: https://emp.lbl.gov/tracking-the-sun/
-  The exact stable direct-download URL still needs to be pinned before it is safe to automate in `fetch_exact_public_data.py`.
+  The rebuild uses this file because it is the first public Tracking the Sun release that covers data through the end of 2023.
+  Public page: https://emp.lbl.gov/tracking-the-sun
+  Download route: https://bit.ly/trackingthesun2024, which redirects to Google Drive file
+  `1Wpkzx2fe3syIcwMeKo2GPCBxWxOqpDpA`.
+
+  There is no direct LBNL file URL to pin. Every edition is distributed as a bit.ly
+  shortener onto Google Drive, so the route is recorded rather than automated: a mutable
+  redirect onto a file that can be replaced in place could silently hand back a different
+  vintage than the published results were built on. `fetch_exact_public_data.py` prints
+  these steps and stops, and will verify a SHA-256 once `TTS_SHA256` is filled in there.
 
 ## Source page documented, exact export not yet reproducible
 

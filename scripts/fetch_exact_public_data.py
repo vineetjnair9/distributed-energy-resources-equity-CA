@@ -14,6 +14,7 @@ See data/raw/SOURCES.md for details.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import shutil
@@ -28,6 +29,16 @@ RAW = ROOT / "data" / "raw"
 
 TIMEOUT = 300
 CHUNK_SIZE = 1024 * 1024
+
+# Tracking the Sun. LBNL publishes no direct file URL; each edition is a bit.ly
+# shortener onto Google Drive. Recorded here so the acquisition route is written down,
+# but deliberately not fetched automatically -- see fetch_tts_2023_aligned.
+TTS_FILENAME = "TTS_LBNL_public_file_21-Aug-2024_all.csv"
+TTS_BITLY = "https://bit.ly/trackingthesun2024"
+TTS_DRIVE_FILE_ID = "1Wpkzx2fe3syIcwMeKo2GPCBxWxOqpDpA"
+TTS_LANDING_PAGE = "https://emp.lbl.gov/tracking-the-sun"
+# Fill in once the file is in hand; the fetcher then verifies instead of trusting.
+TTS_SHA256 = ""
 
 DG_2023_12_31_URL = "https://www.californiadgstats.ca.gov/download/interconnection_rule21_projects/Interconnected_Project_Sites_2023-12-31.zip/"
 USWTDB_CSV_ZIP_URL = "https://energy.usgs.gov/uswtdb/assets/data/uswtdbCSV.zip"
@@ -101,16 +112,55 @@ def extract_by_suffixes(zf: zipfile.ZipFile, suffixes: tuple[str, ...], out_dir:
             extract_member(zf, member, out_dir / name)
 
 
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def fetch_tts_2023_aligned(_: requests.Session, force: bool) -> None:
-    target = RAW / "solar" / "TTS_LBNL_public_file_21-Aug-2024_all.csv"
-    if should_skip(target, force):
-        print(f"skip {target.relative_to(ROOT)}")
+    """Tracking the Sun is a documented manual step, not an automated download.
+
+    LBNL does not publish a direct file URL. The download route, verified against
+    emp.lbl.gov, is a bit.ly shortener per edition that redirects to Google Drive:
+
+        2024 edition  https://bit.ly/trackingthesun2024
+                      -> https://drive.google.com/file/d/1Wpkzx2fe3syIcwMeKo2GPCBxWxOqpDpA/view
+
+    Neither hop is safe to automate in a reproducibility pipeline. The shortener is a
+    mutable third-party redirect that LBNL can retarget, the Drive file can be replaced
+    in place, and Drive's large-file flow needs an interactive confirm token. Fetching
+    through that chain could silently return a different vintage than the one the
+    published results were built on, which is exactly the failure this script exists to
+    prevent. So the URL is recorded rather than followed.
+
+    Set TTS_SHA256 below once the file is in hand and this becomes a verified step.
+    """
+    target = RAW / "solar" / TTS_FILENAME
+    if target.exists() and not force:
+        if TTS_SHA256:
+            digest = sha256_file(target)
+            if digest != TTS_SHA256:
+                raise RuntimeError(
+                    f"{target.relative_to(ROOT)} does not match the pinned checksum.\n"
+                    f"  expected {TTS_SHA256}\n  found    {digest}\n"
+                    "This is a different Tracking the Sun release than the results were built on."
+                )
+            print(f"verified {target.relative_to(ROOT)}")
+        else:
+            print(f"skip {target.relative_to(ROOT)} (present; no checksum pinned)")
         return
 
     raise RuntimeError(
-        "The rebuild uses the 2024 Tracking the Sun release as the 2023-aligned snapshot, "
-        "but the exact stable public download URL has not been pinned in this script yet. "
-        "Use the existing local file or update the script once that URL is confirmed."
+        f"{TTS_FILENAME} is missing and cannot be downloaded automatically.\n"
+        f"  1. Open {TTS_BITLY}\n"
+        f"     (currently redirects to Google Drive file {TTS_DRIVE_FILE_ID})\n"
+        f"  2. Download the public data file and unzip it\n"
+        f"  3. Place it at {target.relative_to(ROOT)}\n"
+        "The 2024 edition is the one to use: it is the first release covering "
+        "installations through year-end 2023, which is what this project is aligned to."
     )
 
 
