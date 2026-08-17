@@ -23,9 +23,9 @@ Stages
     data       rebuild_processed_data.py       -> data/processed/*.csv
     models     run_regression_notebook.py      -> outputs/{standardized_,}tables/*.csv
     clustering run_notebook.py clustering      -> outputs/tables/pca_kmeans_*.csv
-    figures    regenerate_standardized_figures.py
-               build_site_index_assets.py
-               sync_figure_assets.py           -> outputs/**/*.png, site/assets
+    figures    regenerate_standardized_figures.py -> outputs/standardized_figures/*.png
+               build_site_index_assets.py --sync  -> outputs/figures/**, site/assets
+                                                     (skip with --skip-assets)
     database   backend/schemas/create_db.py
                backend/schemas/populate_tables.py
                backend/schemas/generate_summaries.py  -> data/der_tool.db
@@ -95,8 +95,15 @@ def stage_clustering(args: argparse.Namespace) -> None:
 
 
 def stage_figures(args: argparse.Namespace) -> None:
-    for script in ["regenerate_standardized_figures.py", "build_site_index_assets.py", "sync_figure_assets.py"]:
-        _run([sys.executable, str(SCRIPTS / script)], f"figures:{script.replace('.py', '')}")
+    # Coefficient figures first: build_site_index_assets reads the standardized tables and
+    # mirrors the finished PNGs, so it has to run second.
+    _run([sys.executable, str(SCRIPTS / "regenerate_standardized_figures.py")],
+         "figures:standardized")
+    if args.skip_assets:
+        print("[figures] --skip-assets: panels and site mirror not rebuilt", flush=True)
+        return
+    _run([sys.executable, str(SCRIPTS / "build_site_index_assets.py"), "--sync"],
+         "figures:assets")
 
 
 def stage_database(args: argparse.Namespace) -> None:
@@ -139,6 +146,12 @@ def main() -> None:
         help="Make no network calls at all; reuse every existing external-derived file.",
     )
     parser.add_argument("--outcomes", nargs="+", help="Restrict the model stage to these outcomes.")
+    parser.add_argument(
+        "--skip-assets",
+        action="store_true",
+        help="In the figures stage, build the coefficient figures but not the presentation "
+             "panels or the site mirror. Results are unaffected.",
+    )
     args = parser.parse_args()
 
     # "database" is opt-in only: it is slow and its last step costs OpenAI calls.

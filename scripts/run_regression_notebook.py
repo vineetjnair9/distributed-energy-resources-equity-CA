@@ -100,12 +100,15 @@ def main() -> None:
         print(path.relative_to(ROOT))
 
     if not args.skip_figure_scripts:
-        for script in [
-            "regenerate_standardized_figures.py",
-            "build_site_index_assets.py",
-            "sync_figure_assets.py",
-        ]:
-            subprocess.run([sys.executable, str(ROOT / "scripts" / script)], check=True, cwd=ROOT)
+        for cmd in (
+            ["regenerate_standardized_figures.py"],
+            ["build_site_index_assets.py", "--sync"],
+        ):
+            subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / cmd[0]), *cmd[1:]],
+                check=True,
+                cwd=ROOT,
+            )
 
 
 if __name__ == "__main__":

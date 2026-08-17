@@ -117,9 +117,9 @@ python scripts/rebuild_processed_data.py --skip-external
 - The final analysis notebooks read `data/processed/combined_der_dataset_w_controls_predictors.csv`.
 - `data/processed/combined_der_dataset_full.csv` in the current workspace is a reconstructed base artifact derived from the base columns embedded in `combined_der_dataset_w_controls_predictors.csv`, because the earlier historical full-base file had been overwritten before this cleanup.
 
-## Rerunning models and syncing figures
+## Rerunning models and figures
 
-To rerun the main regression notebook and refresh the saved figure assets in one step:
+To rerun the main regression notebook and refresh the figures in one step:
 
 ```bash
 python scripts/run_regression_notebook.py
@@ -129,14 +129,27 @@ This script:
 
 - executes `notebooks/regression.ipynb`
 - saves an executed copy to `outputs/executed_notebooks/regression.executed.ipynb`
-- regenerates the standardized paper figures
-- mirrors figure outputs into `site/assets/figures/` so they remain easy to access later
+- regenerates the standardized figures under `outputs/standardized_figures/`
+- rebuilds the presentation panels and mirrors everything into `site/assets/figures/`
 
-If you only want to refresh the figure copies under the site assets folder without rerunning models:
+If you only want to redraw the figures without refitting the models:
 
 ```bash
-python scripts/sync_figure_assets.py
+python scripts/run_all.py --only figures
 ```
+
+The figures stage runs two steps in order. `regenerate_standardized_figures.py` draws the
+coefficient figures from the standardized tables, then `build_site_index_assets.py --sync`
+builds the descriptive panels, LOWESS gradients and coefficient paths and mirrors the PNGs
+into the site assets folder. Only the first is needed to reproduce the results, so if you
+want the analysis output without the presentation assets:
+
+```bash
+python scripts/run_all.py --only figures --skip-assets
+```
+
+`build_site_index_assets.py` is also runnable on its own, and `--sync-only` mirrors
+existing figures without rebuilding them.
 
 ## Recommended workflow
 

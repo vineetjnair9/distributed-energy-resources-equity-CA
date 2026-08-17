@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
+"""Build the presentation assets: descriptive panels, LOWESS gradients, coefficient paths.
+
+This is the one place asset building lives. The analysis itself does not need it - results
+come out of `run_all.py`'s data, models and clustering stages, and the coefficient figures
+come from `regenerate_standardized_figures.py`. Everything here exists to render the
+panels that were used in the paper and the project site, kept so they can be rebuilt.
+
+    python scripts/build_site_index_assets.py            # build panels into outputs/
+    python scripts/build_site_index_assets.py --sync     # build, then mirror to site/
+    python scripts/build_site_index_assets.py --sync-only  # mirror existing figures only
+
+The builder functions are also imported directly by notebooks/plotting_outcomes.ipynb.
+"""
 from __future__ import annotations
 
+import argparse
+import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -21,6 +36,7 @@ from paper_figure_utils import (
     TEXT,
     TRANSPARENT_BG,
     apply_paper_style,
+    sync_site_tree,
 )
 
 
@@ -29,6 +45,7 @@ DATASET = ROOT / "data" / "processed" / "combined_der_dataset_w_controls_predict
 OUTPUT_TABLES = ROOT / "outputs" / "tables"
 STANDARDIZED_TABLES = ROOT / "outputs" / "standardized_tables"
 OUTPUT_FIGURES = ROOT / "outputs" / "figures"
+STANDARDIZED_FIGURES = ROOT / "outputs" / "standardized_figures"
 SITE_FIGURES = ROOT / "site" / "assets" / "figures"
 GENERATED = OUTPUT_FIGURES / "generated"
 SITE_GENERATED = SITE_FIGURES / "generated"
@@ -404,7 +421,35 @@ def build_coefficient_path() -> None:
     _save(fig, "coefficient_path_across_models.png")
 
 
-def main() -> None:
+def sync_site_assets() -> list[Path]:
+    """Mirror the generated figures into site/assets/figures.
+
+    Absorbed from the former sync_figure_assets.py so that asset building and asset
+    publishing live in one script rather than two.
+    """
+    copied: list[Path] = []
+    copied.extend(sync_site_tree(STANDARDIZED_FIGURES, SITE_FIGURES))
+
+    if GENERATED.exists():
+        copied.extend(sync_site_tree(GENERATED, SITE_GENERATED))
+
+    cluster_map = OUTPUT_FIGURES / "cluster_choropleth_map.png"
+    if cluster_map.exists():
+        target = SITE_GENERATED / cluster_map.name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(cluster_map, target)
+        copied.append(target)
+
+    for subdir in ("pv_maps", "storage_maps", "chargers_maps", "wind_mw_maps"):
+        src = OUTPUT_FIGURES / subdir
+        if src.exists():
+            copied.extend(sync_site_tree(src, SITE_GENERATED / subdir, patterns=("*.png",)))
+
+    print(f"Copied {len(copied)} figure assets into site/assets/figures")
+    return copied
+
+
+def build_all() -> None:
     df = derive_analysis_frame()
     build_geography_panel()
     build_eda_panel(df)
@@ -438,6 +483,21 @@ def main() -> None:
             metrics_name="housing_structure_lowess_small_multiples_metrics.csv",
         )
     build_coefficient_path()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--sync", action="store_true",
+                        help="after building, mirror the figures into site/assets/figures")
+    parser.add_argument("--sync-only", action="store_true",
+                        help="skip building; only mirror figures that already exist")
+    args = parser.parse_args()
+
+    if not args.sync_only:
+        build_all()
+    if args.sync or args.sync_only:
+        sync_site_assets()
 
 
 if __name__ == "__main__":
