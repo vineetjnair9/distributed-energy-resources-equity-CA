@@ -37,8 +37,9 @@ TTS_FILENAME = "TTS_LBNL_public_file_21-Aug-2024_all.csv"
 TTS_BITLY = "https://bit.ly/trackingthesun2024"
 TTS_DRIVE_FILE_ID = "1Wpkzx2fe3syIcwMeKo2GPCBxWxOqpDpA"
 TTS_LANDING_PAGE = "https://emp.lbl.gov/tracking-the-sun"
-# Fill in once the file is in hand; the fetcher then verifies instead of trusting.
-TTS_SHA256 = ""
+# SHA-256 of the 21-Aug-2024 release, computed from the copy this project was built on
+# and cross-checked against the Git LFS object id, which is the same digest.
+TTS_SHA256 = "ba5a886d05538bd67c55f0d496e0cf0fba41e6c1158a1f2404ab8e651596f9bb"
 
 DG_2023_12_31_URL = "https://www.californiadgstats.ca.gov/download/interconnection_rule21_projects/Interconnected_Project_Sites_2023-12-31.zip/"
 USWTDB_CSV_ZIP_URL = "https://energy.usgs.gov/uswtdb/assets/data/uswtdbCSV.zip"

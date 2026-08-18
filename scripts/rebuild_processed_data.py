@@ -1300,12 +1300,79 @@ def build_final_analysis_dataset(
     return df
 
 
+# CEC Energy Equity Indicators, Deep Dive Energy. The exports are UTF-16 tab-separated
+# despite the .csv extension, which is what the Tableau dashboard emits.
+ENERGY_BURDEN_SOURCES = {
+    "energy_burden_pct": ("EB_data.csv", "EB.2"),
+    "energy_affordability_index": ("EAI_data.csv", "EA.7"),
+    "energy_affordability_gap": ("EA Gap_data.csv", "EA Gap.3"),
+}
+
+
+def _parse_energy_burden_value(series: pd.Series, *, as_percent: bool = False) -> pd.Series:
+    values = (
+        series.astype(str)
+        .str.replace("%", "", regex=False)
+        .str.replace(",", "", regex=False)
+        .replace({"nan": None, "None": None})
+    )
+    values = pd.to_numeric(values, errors="coerce")
+    return values / 100 if as_percent else values
+
+
+def build_energy_burden() -> pd.DataFrame:
+    """Build the ZIP-level energy burden metrics from the raw CEC exports.
+
+    This lived only in notebooks/adding_predictor_data.ipynb, which is not a pipeline
+    stage, so a rebuild from a clean tree logged one warning and silently produced a
+    panel three columns short of the published 50. Building it here is what makes this
+    script the release authority it claims to be.
+    """
+    source_dir = RAW / "energy_burden"
+    parts: list[pd.DataFrame] = []
+    for out_col, (filename, source_col) in ENERGY_BURDEN_SOURCES.items():
+        path = source_dir / filename
+        if not path.exists():
+            raise FileNotFoundError(f"missing energy burden export: {path.relative_to(ROOT)}")
+        raw = pd.read_csv(path, encoding="utf-16", sep="\t")
+        if source_col not in raw.columns:
+            raise ValueError(
+                f"{path.name}: expected column {source_col!r}, found {list(raw.columns)[:8]}"
+            )
+        zips = raw["ZIP_CODE"].astype(str).str.extract(r"(\d{5})", expand=False).str.zfill(5)
+        values = _parse_energy_burden_value(raw[source_col],
+                                            as_percent=(out_col == "energy_burden_pct"))
+        parts.append(pd.DataFrame({"zip_code": zips, out_col: values}))
+
+    energy = parts[0]
+    for part in parts[1:]:
+        energy = energy.merge(part, on="zip_code", how="outer")
+    energy = energy.drop_duplicates(subset="zip_code").copy()
+
+    metrics = list(ENERGY_BURDEN_SOURCES)
+    n_parsed = energy[metrics].notna().any(axis=1).sum()
+    if n_parsed < 0.5 * len(energy):
+        raise ValueError(
+            f"energy burden: only {n_parsed} of {len(energy)} ZIPs parsed a metric. The "
+            "exports are UTF-16 tab-separated; check the encoding before trusting this."
+        )
+
+    write_csv(energy, PROCESSED / "energy_burden.csv", index=True)
+    return energy
+
+
 def read_energy_burden() -> pd.DataFrame:
+    """Build from raw when possible, falling back to a previously written file."""
     path = PROCESSED / "energy_burden.csv"
-    if not path.exists():
-        LOGGER.warning("No existing energy burden file found at %s.", path.relative_to(ROOT))
+    try:
+        return build_energy_burden()
+    except FileNotFoundError as exc:
+        if path.exists():
+            LOGGER.warning("%s; reusing existing %s.", exc, path.relative_to(ROOT))
+            return pd.read_csv(path)
+        LOGGER.warning("%s, and no existing file to fall back on. The energy burden "
+                       "columns will be absent from the final panel.", exc)
         return pd.DataFrame({"zip_code": pd.Series(dtype="string")})
-    return pd.read_csv(path)
 
 
 def read_or_fetch_external(

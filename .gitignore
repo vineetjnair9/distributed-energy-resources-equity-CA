@@ -32,3 +32,8 @@ site/index_backup_*.docx
 # Verified: every member of tl_2023_us_county.zip matches the previously tracked copy.
 data/raw/boundaries/tl_2023_us_county/
 data/raw/boundaries/tl_2023_us_zcta520/
+
+# CaliforniaDGStats interconnection archive (~842MB). Pinned to a dated snapshot
+# (Interconnected_Project_Sites_2023-12-31.zip) and fetched rather than stored:
+#   python scripts/fetch_exact_public_data.py --only interconnection
+data/raw/interconnection/
