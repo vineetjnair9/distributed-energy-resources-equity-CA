@@ -1,4 +1,4 @@
-A harmonized, ZIP-code-level panel of distributed energy resources across California,
+A ZIP-code-level panel of distributed energy resources across California,
 built so that deployment can be compared across technologies rather than one at a time.
 
 Distributed energy data is scattered across agencies, geographies and vintages: rooftop

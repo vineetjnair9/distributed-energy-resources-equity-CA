@@ -1,4 +1,4 @@
-# Harmonized ZIP-Code-Level Data on Rooftop Solar, Battery Storage, and EV Charging in California, 2023
+# ZIP-Code-Level Data on Rooftop Solar, Battery Storage, and EV Charging in California, 2023
 
 A ZIP/ZCTA-level dataset for California that integrates rooftop solar PV, battery
 storage, EV charging, wind, and power-plant capacity with demographic, climate,
