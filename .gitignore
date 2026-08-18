@@ -25,3 +25,10 @@ data/processed/
 
 # Local safety copies taken before editing the manuscript (~18MB each).
 site/index_backup_*.docx
+
+# Census TIGER/Line 2023 boundary files (~950MB, almost all of it two .shp files).
+# Re-downloadable byte-for-byte from the Census, so they are fetched rather than stored:
+#   python scripts/fetch_exact_public_data.py --only boundaries
+# Verified: every member of tl_2023_us_county.zip matches the previously tracked copy.
+data/raw/boundaries/tl_2023_us_county/
+data/raw/boundaries/tl_2023_us_zcta520/

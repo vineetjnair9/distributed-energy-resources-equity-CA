@@ -35,6 +35,11 @@ CENSUS_API_KEY=your_key python scripts/rebuild_processed_data.py --reuse-nasa
 - `data/raw/boundaries/tl_2023_us_county/*`
 - `data/raw/boundaries/tl_2023_us_zcta520/*`
   Source: Census TIGER/Line shapefile zips.
+  **Not version-controlled.** These are ~950 MB, almost entirely the two `.shp` files, and
+  the Census still serves them byte-for-byte identical to the copies this project used, so
+  they are fetched rather than stored. Every member of `tl_2023_us_county.zip` was checked
+  against the previously tracked files and matched exactly. Run
+  `python scripts/fetch_exact_public_data.py --only boundaries` after cloning.
 
 - `data/raw/boundaries/ca_utility_territories.geojson`
   Source: California Electric Utility Service Territory SCOUT ArcGIS FeatureServer.

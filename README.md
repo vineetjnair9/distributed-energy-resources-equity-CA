@@ -63,9 +63,16 @@ execute the release checks:
 conda env create -f environment.yml
 conda activate der-data-urop
 set -a; source .env; set +a
+python scripts/fetch_exact_public_data.py
 python scripts/run_all.py
 pytest -q
 ```
+
+The fetch step is required on a fresh clone. The Census TIGER/Line boundary files are
+~950 MB and are re-downloadable byte-for-byte, so they are not version-controlled;
+`fetch_exact_public_data.py` retrieves them along with the interconnection archive, the
+wind turbine database, and the utility service territories. It also prints manual
+acquisition steps for Tracking the Sun, which has no stable download URL.
 
 `CENSUS_API_KEY` is needed for the live ACS pull. The default pipeline reuses the
 fixed 2023 NASA POWER files, avoiding thousands of redundant network requests. Use
