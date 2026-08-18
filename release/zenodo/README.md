@@ -63,9 +63,13 @@ rebuild the panel. They are ~60 MB in total and are reproduced here under the te
 their public agency sources, which retain their own citation requirements — see
 `SOURCES.md`.
 
-`tracking_the_sun.csv` is also excluded. It is a California-filtered copy of Lawrence
-Berkeley National Laboratory's *Tracking the Sun* dataset — 927 MB, and better cited
-from LBNL than mirrored here. The pipeline regenerates it from the raw source.
+*Tracking the Sun* is included, under `raw_inputs/solar/`. LBNL distributes it only
+through a link shortener onto Google Drive, with no stable URL that can be cited or
+scripted, so mirroring it here is what makes rebuilding from raw possible. It is 1.65 GB
+and remains LBNL's dataset: cite *Tracking the Sun* directly, and see `SOURCES.md`.
+
+The 927 MB `tracking_the_sun.csv` in `data/` is the California-filtered derivative the
+pipeline produces from that file, and is excluded as redundant.
 
 One exception is included deliberately: `acs_2023_5yr_housing_ca_zcta.csv` is the
 exact Census API response for the B25024 housing-structure and B25003 tenure tables,
@@ -80,7 +84,7 @@ this response is what makes the housing results reproducible.
 |---|---|
 | `data/` | the processed panel and every intermediate behind it |
 | `model_outputs/` | the coefficient tables behind every figure in the paper, one CSV per outcome and specification, including VIF diagnostics |
-| `raw_inputs/` | the raw storage, EV charging, power plant, energy burden and demand exports, which have no re-downloadable URL |
+| `raw_inputs/` | the raw inputs with no re-downloadable URL: storage, EV charging, power plants, energy burden, demand, and the 1.65 GB LBNL *Tracking the Sun* file |
 | `acs_snapshot/` | the exact Census API response and its query manifest |
 | `environment.yml`, `requirements.txt` | the pinned environment the pipeline runs under |
 
