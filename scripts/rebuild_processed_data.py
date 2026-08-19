@@ -28,6 +28,7 @@ Outputs written by this script:
   - data/processed/zip_to_utility.csv
   - data/processed/demand.csv
   - data/processed/combined_der_dataset_w_controls_predictors.csv
+  - data/processed/combined_der_dataset_w_shape.csv
 
 Notes
 -----
@@ -1300,6 +1301,53 @@ def build_final_analysis_dataset(
     return df
 
 
+# Columns the backend's geometries table reads, alongside zip_code and geometry.
+ZCTA_ID_COLUMNS = ("ZCTA5CE20", "GEOID20", "CLASSFP20", "MTFCC20", "ALAND20", "AWATER20")
+
+
+def build_zcta_geometry_panel(df: pd.DataFrame) -> pd.DataFrame:
+    """Join the analysis panel to ZCTA polygons and write the geometry-bearing copy.
+
+    backend/schemas/populate_tables.py reads this to fill the geometries table, but
+    nothing produced it: it was versioned once, then orphaned when data/processed
+    stopped being tracked, leaving the backend pointing at a path the pipeline never
+    wrote. Geometry is stored as WKT because the consumer expects text, not a
+    geo-format.
+    """
+    if not ZCTA_SHP.exists():
+        raise FileNotFoundError(
+            f"{ZCTA_SHP.relative_to(ROOT)} is missing. The TIGER boundaries are not "
+            "version-controlled; fetch them with\n"
+            "  python scripts/fetch_exact_public_data.py --only boundaries"
+        )
+    zcta = gpd.read_file(ZCTA_SHP).rename(columns={"ZCTA5CE20": "zip_code"})
+    zcta["zip_code"] = zcta["zip_code"].astype("string").str.strip()
+    keep = ["zip_code", "geometry"] + [c for c in ZCTA_ID_COLUMNS if c in zcta.columns]
+    zcta = zcta[keep]
+
+    # Inner join: only ZIPs with a polygon belong in a map layer, and the backend
+    # discards null geometry anyway. Roughly 30% of the panel has no ZCTA polygon,
+    # because ZIP codes and ZCTAs are not one-to-one -- PO-box-only and some other
+    # ZIPs simply have no Census area. That is expected, not a join failure, and the
+    # final-dataset builder already logs the same count as a county-match warning.
+    merged = df.merge(zcta, on="zip_code", how="inner")
+    matched, total = len(merged), len(df)
+    if matched < 1500 or matched < 0.6 * total:
+        raise ValueError(
+            f"only {matched} of {total} ZIPs matched a ZCTA polygon. About 1,780 is "
+            "normal for this panel; a number well below that means the TIGER vintage "
+            "or the zip_code formatting has drifted rather than that coverage is genuinely thin."
+        )
+    LOGGER.info(
+        "Geometry panel: %s of %s ZIPs have a ZCTA polygon; %s have none and cannot be mapped.",
+        matched, total, total - matched,
+    )
+
+    merged["geometry"] = gpd.GeoSeries(merged["geometry"], crs=zcta.crs).to_wkt()
+    write_csv(merged, PROCESSED / "combined_der_dataset_w_shape.csv")
+    return merged
+
+
 # CEC Energy Equity Indicators, Deep Dive Energy. The exports are UTF-16 tab-separated
 # despite the .csv extension, which is what the Tableau dashboard emits.
 ENERGY_BURDEN_SOURCES = {
@@ -1442,7 +1490,10 @@ def main() -> None:
     aggregated = aggregate_sources(tracking, ev_chargers, ev_cars, power_plant_der, storage_der, wind_zip)
     df_full = build_combined_der_dataset_full(aggregated)
     acs, _, ghi, temp, wind_means, zip_to_utility, demand, energy_burden = read_or_fetch_external(args, df_full)
-    build_final_analysis_dataset(df_full, acs, ghi, temp, wind_means, zip_to_utility, demand, energy_burden)
+    df_final = build_final_analysis_dataset(
+        df_full, acs, ghi, temp, wind_means, zip_to_utility, demand, energy_burden
+    )
+    build_zcta_geometry_panel(df_final)
     LOGGER.info("Processed dataset rebuild completed.")
 
 

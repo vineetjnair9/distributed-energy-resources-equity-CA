@@ -11,6 +11,29 @@ CSV_W_SHAPE_PATH = PROJECT_ROOT / "data" / "processed" / "combined_der_dataset_w
 CSV_UTILITY_PATH = PROJECT_ROOT / "data" / "processed" / "zip_to_utility.csv"
 MODEL_OUTPUTS_PATH = PROJECT_ROOT / "data" / "processed" / "model_outputs_by_region.csv"
 
+
+def _short(path):
+    try:
+        return path.resolve().relative_to(PROJECT_ROOT)
+    except ValueError:
+        return path
+
+
+def _read_required(path, command, what):
+    """Read a pipeline output, naming the command that creates it when absent.
+
+    These live under data/processed, which is not version-controlled, so a fresh
+    clone has none of them. Failing with a bare FileNotFoundError sends the reader
+    looking for a missing file rather than for the stage that writes it.
+    """
+    if not path.exists():
+        raise SystemExit(
+            f"missing {_short(path)} ({what}).\n"
+            f"Build it first:  {command}"
+        )
+    return pd.read_csv(path)
+
+
 REGION_ID_COL = "zip_code"
 
 METRIC_COLUMNS = {
@@ -585,8 +608,16 @@ def main():
     df_utils = pd.read_csv(CSV_UTILITY_PATH)
     df_utils["zip_code"] = df_utils["zip_code"].apply(clean_region_id)
     df_utils = df_utils.set_index("zip_code")
-    df_shape = pd.read_csv(CSV_W_SHAPE_PATH)
-    df_outputs = pd.read_csv(MODEL_OUTPUTS_PATH)
+    df_shape = _read_required(
+        CSV_W_SHAPE_PATH,
+        "python scripts/run_all.py --only data",
+        "ZCTA polygons for the geometries table",
+    )
+    df_outputs = _read_required(
+        MODEL_OUTPUTS_PATH,
+        "python scripts/run_all.py --only models",
+        "per-ZIP predictions and residuals, written by notebooks/regression.ipynb",
+    )
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
