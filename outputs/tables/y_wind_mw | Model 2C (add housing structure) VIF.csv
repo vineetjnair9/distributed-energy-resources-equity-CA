@@ -1,10 +1,10 @@
 feature,VIF
-log_median_household_income,3.45919234989197
-poverty_rate,2.77712420985229
-pct_mobile_home_units,1.5338496792741236
-pct_multifamily_units,1.4602155032194508
-pct_hispanic,1.3974579509418819
+log_median_household_income,3.459192349891967
+poverty_rate,2.777124209852291
+pct_mobile_home_units,1.5338496792741234
+pct_multifamily_units,1.4602155032194506
+pct_hispanic,1.397457950941882
 pct_asian,1.3673526727189886
 pct_black,1.124355850832527
-pct_other_housing_units,1.109920923711458
-wind_ws50m_mean_2023,1.0641499851232377
+pct_other_housing_units,1.1099209237114578
+wind_ws50m_mean_2023,1.0641499851232379

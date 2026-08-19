@@ -1,9 +1,9 @@
 feature,VIF
-pct_hispanic_c,1.8930653319196362
-log_median_household_income_c,1.7715398635283504
-pct_asian_c,1.6040010290119027
-log_median_household_income_c:pct_hispanic_c,1.5697571132499195
-log_median_household_income_c:pct_asian_c,1.488491320064272
-pct_black_c,1.264016348533114
-log_median_household_income_c:pct_black_c,1.2542735882955063
+pct_hispanic_c,1.8930653319196356
+log_median_household_income_c,1.771539863528349
+pct_asian_c,1.604001029011902
+log_median_household_income_c:pct_hispanic_c,1.5697571132499193
+log_median_household_income_c:pct_asian_c,1.4884913200642715
+pct_black_c,1.2640163485331162
+log_median_household_income_c:pct_black_c,1.254273588295506
 ghi_mean_kwh_m2_day_2023,1.1510597255672181

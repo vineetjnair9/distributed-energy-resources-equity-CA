@@ -1,10 +1,10 @@
 feature,VIF
 log_median_household_income_c,3.953297903065499
-poverty_rate,2.9226739818591763
-pct_hispanic_c,1.851006306794096
-log_median_household_income_c:pct_hispanic_c,1.7254013979331073
-pct_asian_c,1.6452249523220561
-log_median_household_income_c:pct_asian_c,1.5083771751059916
+poverty_rate,2.922673981859177
+pct_hispanic_c,1.851006306794095
+log_median_household_income_c:pct_hispanic_c,1.7254013979331067
+pct_asian_c,1.6452249523220532
+log_median_household_income_c:pct_asian_c,1.508377175105992
 log_median_household_income_c:pct_black_c,1.2612869204653268
-pct_black_c,1.2604550781210284
-wind_ws50m_mean_2023,1.0729842029859382
+pct_black_c,1.2604550781210277
+wind_ws50m_mean_2023,1.0729842029859376
