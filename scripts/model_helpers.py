@@ -10,6 +10,18 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
 DEFAULT_MIN_CLUSTER_SIZE = 5
+PV_KW_PER_MW = 1_000.0
+RESIDENTS_PER_THOUSAND = 1_000.0
+
+
+def pv_kw_per_1000(pv_capacity_mw, population):
+    """Convert aggregate PV MW to kW of capacity per 1,000 residents."""
+    return (
+        pv_capacity_mw
+        * PV_KW_PER_MW
+        * RESIDENTS_PER_THOUSAND
+        / population
+    )
 
 
 def run_ols(

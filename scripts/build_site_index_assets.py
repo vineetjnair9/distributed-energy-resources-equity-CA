@@ -21,6 +21,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+from model_helpers import pv_kw_per_1000
 import statsmodels.api as sm
 from matplotlib.gridspec import GridSpec
 from matplotlib.ticker import FuncFormatter
@@ -67,7 +69,9 @@ def derive_analysis_frame() -> pd.DataFrame:
     df["level1_chargers_per_1k"] = (df["level1_chargers"].fillna(0) * 1000.0) / pop
     df["level2_chargers_per_1k"] = (df["level2_chargers"].fillna(0) * 1000.0) / pop
     df["dc_fast_chargers_per_1k"] = (df["dc_fast_chargers"].fillna(0) * 1000.0) / pop
-    df["pv_kw_per_1k"] = (df["PV_system_size_DC"].fillna(0) * 1000.0) / pop
+    df["pv_kw_per_1k"] = pv_kw_per_1000(
+        df["PV_system_size_DC"].fillna(0), pop
+    )
     df["storage_mw_per_100k"] = (df["storage_capacity_mw"].fillna(0) * 100000.0) / pop
     df["wind_mw_per_100k"] = (df["wind_capacity_mw"].fillna(0) * 100000.0) / pop
 

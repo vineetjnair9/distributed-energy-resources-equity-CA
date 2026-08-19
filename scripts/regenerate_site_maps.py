@@ -39,6 +39,7 @@ import statsmodels.formula.api as smf
 
 sys.path.append(str(Path(__file__).resolve().parent))
 from paper_figure_utils import GRID, MUTED, TEXT, TRANSPARENT_BG, apply_paper_style  # noqa: E402
+from model_helpers import pv_kw_per_1000  # noqa: E402
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,7 +89,7 @@ def build_analysis_frame() -> pd.DataFrame:
     df = df[df["total_population"].notna() & (df["total_population"] >= MIN_POP)].copy()
 
     pop = df["total_population"].replace(0, np.nan)
-    df["y_pv"] = np.log1p(df["PV_system_size_DC"] * 1000 / pop)
+    df["y_pv"] = np.log1p(pv_kw_per_1000(df["PV_system_size_DC"], pop))
     df["y_chargers"] = np.log1p(df["total_chargers"] * 1000 / pop)
     df["y_storage"] = np.log1p(df["storage_capacity_mw"] * 100000 / pop)
     df[INCOME] = np.log(df["median_household_income"].where(df["median_household_income"] > 0))
