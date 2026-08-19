@@ -85,13 +85,14 @@ CREATE TABLE evidence_chunks (
 
 CREATE TABLE summary_responses (
     summary_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
     region_id TEXT NOT NULL,
     summary_text TEXT NOT NULL,
     metric_snapshot TEXT,
     model_version TEXT,
     generated_at TEXT,
     FOREIGN KEY (region_id) REFERENCES regions(region_id),
-    UNIQUE(region_id, model_version)
+    UNIQUE(region_id, category, model_version)
 );
 
 CREATE TABLE summary_evidence (

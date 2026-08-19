@@ -51,7 +51,9 @@ METRIC_COLUMNS = {
     "pct_mobile_home_units": ("share", "housing", "ACS 5-year"),
     "pct_other_housing_units": ("share", "housing", "ACS 5-year"),
     "owner_occupied_rate": ("share", "housing", "ACS 5-year"),
-    "PV_system_size_DC": ("kW", "der_observed", "LBNL Tracking the Sun processed"),
+    # rebuild_processed_data.py converts the source kW values to MW before
+    # aggregating them by ZCTA.
+    "PV_system_size_DC": ("MW", "der_observed", "LBNL Tracking the Sun processed"),
     "storage_capacity_mw": ("MW", "der_observed", "CEC Energy Storage System Survey export"),
     "total_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
     "level1_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
@@ -92,6 +94,78 @@ MODEL_COLUMNS = {
     "charger_model_score": "charger_adoption_score",
 }
 
+METRIC_INTERPRETATIONS = {
+    "pct_black": "This is the non-Hispanic Black share of the population.",
+    "pct_hispanic": "This is the Hispanic or Latino share of the population, of any race.",
+    "pct_asian": "This is the non-Hispanic Asian share of the population.",
+    "poverty_rate": (
+        "This is the share of the population for whom poverty status was determined "
+        "that is below the poverty line."
+    ),
+    "pct_bachelors_plus": (
+        "This is the share of residents age 25 or older with a bachelor's degree "
+        "or higher."
+    ),
+    "pct_single_family_units": (
+        "This is the share of all housing units that are single-family."
+    ),
+    "pct_multifamily_units": (
+        "This is the share of all housing units that are multifamily."
+    ),
+    "pct_mobile_home_units": (
+        "This is the share of all housing units that are mobile homes."
+    ),
+    "pct_other_housing_units": (
+        "This is the share of all housing units in other structures."
+    ),
+    "owner_occupied_rate": (
+        "This is the share of occupied housing units that are owner-occupied."
+    ),
+    "PV_system_size_DC": (
+        "This is aggregate reported PV capacity in the processed Tracking the Sun data."
+    ),
+    "kwh_annual_total": (
+        "This is the electricity usage reported for this ZIP in the utility export. "
+        "Coverage is uneven across ZIPs and utilities, so treat it as reported usage "
+        "for the accounts present in that export, not as total ZCTA consumption."
+    ),
+    "energy_burden_pct": (
+        "This is the percentage of income spent on energy annually. It is a "
+        "ZCTA-level figure and is not a household burden, so it cannot be compared "
+        "against the 7% household affordability threshold."
+    ),
+    "energy_affordability_gap": (
+        "The CEC defines this as a population-weighted measure of the gap between "
+        "affordable and unaffordable energy burdens; burdens above 7% are treated "
+        "as unaffordable in this analysis."
+    ),
+    "energy_affordability_index": (
+        "The CEC index combines the percentile of financial energy burden with the "
+        "percentile of disposable income per person to represent household burden "
+        "and ability to respond to energy-price changes."
+    ),
+}
+
+DER_PRIORITY_OUTCOMES = {
+    "y_pv",
+    "y_storage",
+    "y_chargers",
+    "y_level1_chargers",
+    "y_level2_chargers",
+    "y_dc_fast_chargers",
+    "y_wind_mw",
+}
+BURDEN_PRIORITY_OUTCOMES = {
+    "energy_burden_pct",
+    "energy_affordability_index",
+    "log_energy_gap_per_capita",
+}
+
+# Above this share of zero observations an outcome carries too little variation
+# for a residual percentile to describe an observed shortfall: the ranking is
+# driven by the fitted values instead.
+NEAR_DEGENERATE_ZERO_SHARE = 0.95
+
 
 def build_id_lookup(conn, table_name, id_column, lookup_column):
     """
@@ -130,6 +204,36 @@ def source_url_for(source_name):
     return SOURCE_URLS.get(source_name)
 
 
+def _trimmed_decimal(value, places):
+    formatted = f"{float(value):,.{places}f}".rstrip("0").rstrip(".")
+    return "0" if formatted == "-0" else formatted
+
+
+def format_metric_value(metric_value, metric_unit):
+    """Format a stored metric for people rather than exposing database precision."""
+    value = float(metric_value)
+    if metric_unit == "share":
+        return f"{value:.1%}"
+    if metric_unit == "dollars":
+        return f"${value:,.0f}"
+    if metric_unit in {"chargers", "turbines"}:
+        label = metric_unit[:-1] if round(value) == 1 else metric_unit
+        return f"{value:,.0f} {label}"
+    if metric_unit in {"people", "kWh"}:
+        return f"{value:,.0f} {metric_unit}"
+    if metric_unit == "degree_days":
+        return f"{value:,.0f} degree days"
+    if metric_unit == "index":
+        return f"{value:,.1f} index points"
+    if metric_unit == "MW":
+        return f"{_trimmed_decimal(value, 3)} MW"
+    if metric_unit == "kWh/m2/day":
+        return f"{_trimmed_decimal(value, 2)} kWh/m²/day"
+    if metric_unit == "m/s":
+        return f"{_trimmed_decimal(value, 2)} m/s"
+    return f"{_trimmed_decimal(metric_value, 3)} {metric_unit}".strip()
+
+
 def format_metric_evidence(row):
     """
     Build category-aware metric evidence text for the LLM prompt.
@@ -140,47 +244,218 @@ def format_metric_evidence(row):
     """
     region_id = row["region_id"]
     metric_name = row["metric_name"]
-    metric_value = row["metric_value"]
-    metric_unit = row["metric_unit"]
+    display_value = format_metric_value(row["metric_value"], row["metric_unit"])
     metric_category = row["metric_category"]
     source_name = row["source_name"]
+    evidence_text = (
+        f"For region {region_id}, {source_name} metric {metric_name} is "
+        f"{display_value}."
+    )
+
+    interpretation = METRIC_INTERPRETATIONS.get(metric_name)
+    if interpretation:
+        evidence_text += f" {interpretation}"
+
+    if row["observed_at"] is not None:
+        evidence_text += f" Observation period: {row['observed_at']}."
 
     if metric_category in {"weather", "solar_resource", "wind_resource"}:
-        return (
-            f"For region {region_id}, {source_name} {metric_name} is "
-            f"{metric_value} {metric_unit}. This is coarse gridded climate or resource "
-            "context based on the ZCTA centroid, not a precise ZIP-level "
-            "measurement."
+        evidence_text += (
+            " This is coarse gridded climate or resource context based on the ZCTA "
+            "centroid, not a precise ZIP-level measurement."
         )
 
-    if metric_category in {"demographic", "socioeconomic", "education", "housing"}:
-        return (
-            f"For region {region_id}, {source_name} {metric_name} is "
-            f"{metric_value} {metric_unit}."
-        )
+    return evidence_text
 
-    if metric_category == "der_observed":
-        return (
-            f"For region {region_id}, observed DER metric {metric_name} is "
-            f"{metric_value} {metric_unit}."
-        )
 
-    if metric_category == "energy_affordability":
-        return (
-            f"For region {region_id}, {source_name} {metric_name} is "
-            f"{metric_value} {metric_unit}."
-        )
+def _format_model_number(value):
+    if value is None:
+        return "not available"
+    return _trimmed_decimal(value, 4)
 
-    if metric_category == "demand":
-        return (
-            f"For region {region_id}, {source_name} {metric_name} is "
-            f"{metric_value} {metric_unit}."
-        )
 
+def _ordinal(percentile):
+    if 10 <= percentile % 100 <= 20:
+        suffix = "th"
+    else:
+        suffix = {1: "st", 2: "nd", 3: "rd"}.get(percentile % 10, "th")
+    return f"{percentile}{suffix}"
+
+
+def _cutoff_percentile_for_outcome(outcome_name):
+    """Return the whole-number percentile at which this outcome's flag switches."""
+    if outcome_name in DER_PRIORITY_OUTCOMES:
+        return 25
+    return 75
+
+
+def _ordinal_percentile(value):
+    percentile = max(0, min(100, round(float(value) * 100)))
+    return f"{_ordinal(percentile)} percentile"
+
+
+def _cutoff_tie_note(value, cutoff):
+    """Warn when a rounded percentile lands on the flag cutoff.
+
+    Rounding to a whole number puts values on both sides of a cutoff into the
+    same bucket: 0.2506 is flagged and 0.2508 is not, yet both round to the 25th
+    percentile. Reported alone that reads as a contradiction against the stated
+    "at or below the 25th-percentile cutoff" rule. The cutoff is an empirical
+    quantile rather than exactly 25.0, so the rounded figure cannot say which
+    side a near-tie falls on; point at the priority status instead.
+    """
+    if cutoff is None:
+        return ""
+    if max(0, min(100, round(float(value) * 100))) != cutoff:
+        return ""
     return (
-        f"For region {region_id}, {source_name} {metric_name} is "
-        f"{metric_value} {metric_unit}."
+        f" That rounds to the outcome-model's {_ordinal(cutoff)}-percentile cutoff, "
+        "so the priority status below, not the rounded percentile, determines "
+        "whether this region is flagged."
     )
+
+
+def direction_agreement(conn):
+    """Residual sign agreement across every fitted specification, per region.
+
+    The narrative compares a small selected subset, which cannot show how
+    contested a residual's direction is: two specs can agree while a third of the
+    remaining set disagrees. Counting the full set costs one clause and covers
+    every specification instead of only the selected ones.
+    """
+    return {
+        (row["region_id"], row["outcome_name"]): (
+            row["negative_count"],
+            row["total_count"],
+        )
+        for row in conn.execute(
+            """
+            SELECT
+                region_id,
+                outcome_name,
+                SUM(CASE WHEN residual_value < 0 THEN 1 ELSE 0 END) AS negative_count,
+                COUNT(*) AS total_count
+            FROM model_outputs
+            WHERE residual_value IS NOT NULL
+            GROUP BY region_id, outcome_name
+            """
+        ).fetchall()
+    }
+
+
+def zero_share_by_outcome(conn):
+    """Share of fitted regions whose observed value is zero, per outcome.
+
+    Used to mark outcomes that are so close to constant that a residual
+    percentile ranks fitted values rather than any observed shortfall.
+    """
+    return {
+        row["outcome_name"]: row["zero_share"]
+        for row in conn.execute(
+            """
+            SELECT
+                outcome_name,
+                AVG(CASE WHEN actual_value = 0 THEN 1.0 ELSE 0.0 END) AS zero_share
+            FROM model_outputs
+            WHERE actual_value IS NOT NULL
+            GROUP BY outcome_name
+            """
+        ).fetchall()
+    }
+
+
+def format_model_evidence(row, zero_shares=None, agreement=None):
+    """Format a model-output evidence row with explicit flag semantics.
+
+    zero_shares maps an outcome to the share of regions observed at zero, as
+    returned by zero_share_by_outcome. Supplying it adds the caveat that a
+    near-constant outcome cannot support an observed-shortfall reading.
+
+    agreement maps (region, outcome) to (negative_count, total_count) across all
+    fitted specifications, as returned by direction_agreement. Supplying it adds
+    the full-set directional agreement the selected subset cannot show.
+    """
+    outcome_name = row["outcome_name"]
+    actual = row["actual_value"]
+    predicted = row["predicted_value"]
+    evidence_text = (
+        f"For region {row['region_id']}, model {row['model_version']} "
+        f"for {outcome_name} estimated an actual value of "
+        f"{_format_model_number(actual)}, a predicted value of "
+        f"{_format_model_number(predicted)}, and a residual of "
+        f"{_format_model_number(row['residual_value'])}."
+    )
+
+    if row["residual_percentile"] is not None:
+        percentile = row["residual_percentile"]
+        evidence_text += (
+            f" The residual ranks at the {_ordinal_percentile(percentile)} "
+            "within the fitted sample."
+        )
+        evidence_text += _cutoff_tie_note(
+            percentile,
+            _cutoff_percentile_for_outcome(outcome_name),
+        )
+
+    # A linear specification can fit a value below zero for an outcome that
+    # cannot go below zero. Where it does, a positive residual only records that
+    # the fitted value was negative; it does not mean the region has more
+    # infrastructure than the model expected.
+    if predicted is not None and float(predicted) < 0:
+        evidence_text += (
+            " The predicted value is below zero, which this linear specification "
+            "permits even though the outcome cannot be negative."
+        )
+        if actual is not None and float(actual) == 0:
+            evidence_text += (
+                " The observed value is zero, so the positive residual reflects the "
+                "negative fitted value rather than observed deployment above the "
+                "prediction."
+            )
+
+    counts = (agreement or {}).get((row["region_id"], outcome_name))
+    if counts is not None:
+        negative, total = counts
+        if total:
+            majority, direction = (
+                (negative, "negative") if negative >= total - negative
+                else (total - negative, "positive")
+            )
+            evidence_text += (
+                f" Across all {total} fitted specifications for this region and "
+                f"outcome, the residual is {direction} in {majority}."
+            )
+
+    zero_share = (zero_shares or {}).get(outcome_name)
+    if zero_share is not None and zero_share >= NEAR_DEGENERATE_ZERO_SHARE:
+        evidence_text += (
+            f" This outcome is observed as zero in {round(zero_share * 100)}% of "
+            "fitted regions, so its residual percentile mainly orders fitted values "
+            "and is not evidence of an observed shortfall in this region."
+        )
+
+    if row["priority_flag"] is None:
+        return evidence_text
+
+    status = "flagged" if int(row["priority_flag"]) == 1 else "not flagged"
+    if outcome_name in DER_PRIORITY_OUTCOMES:
+        definition = (
+            "For DER outcomes, flagged means the residual is at or below the "
+            "outcome-model's 25th-percentile residual cutoff."
+        )
+    elif outcome_name in BURDEN_PRIORITY_OUTCOMES:
+        definition = (
+            "For affordability outcomes, flagged means the residual is at or above "
+            "the outcome-model's 75th-percentile residual cutoff."
+        )
+    else:
+        definition = (
+            "For this outcome, flagged means the absolute residual is at or above "
+            "the outcome-model's 75th-percentile absolute-residual cutoff, so a "
+            "flag can come from either an unusually low or an unusually high residual."
+        )
+
+    return f"{evidence_text} Priority status: {status}. {definition}"
 
 
 def populate_utilities_table(conn, df_utils):
@@ -539,15 +814,11 @@ def populate_evidence_chunks_table(conn):
         """
     ).fetchall()
 
+    zero_shares = zero_share_by_outcome(conn)
+    agreement = direction_agreement(conn)
+
     for row in model_rows:
-        evidence_text = (
-            f"For region {row['region_id']}, model {row['model_version']} "
-            f"for {row['outcome_name']} estimated an actual value of "
-            f"{row['actual_value']}, a predicted value of {row['predicted_value']}, "
-            f"and a residual of {row['residual_value']}. "
-            f"The residual percentile is {row['residual_percentile']}, "
-            f"and the priority flag is {row['priority_flag']}."
-        )
+        evidence_text = format_model_evidence(row, zero_shares, agreement)
 
         evidence_rows.append(
             (
