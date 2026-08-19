@@ -165,6 +165,39 @@ python scripts/run_all.py --only models --outcomes y_pv y_storage
 python scripts/run_all.py --run-notebook plotting_outcomes
 ```
 
+### Model taxonomy: ladder vs. control-block sensitivity
+
+`notebooks/regression.ipynb` produces two different kinds of robustness evidence per
+outcome, and the two should not be conflated:
+
+- **Models C1-C5 are the genuinely nested cumulative ladder.** Each rung's formula is
+  a strict superset of the previous rung's (core -> + education/housing value -> +
+  housing structure/tenure -> + utility FE -> + county FE in place of climate), and all
+  five are fit on one frozen common sample (`common_sample_index` in
+  `scripts/model_helpers.py`) so coefficient movement across rungs reflects added
+  controls, not a shifting sample. **Model S (saturated confounders)** is the same
+  specification as C5, reported under its own label. **Model O (over-controlled)** adds
+  the demand proxy and infrastructure-capacity controls on top of C5 - those sit on the
+  causal path from income/race to DER adoption, so Model O is a deliberately
+  conservative **lower bound** on the effect, not a preferred specification.
+- **Models 1-9 (and 2C/2D/3A-3D/4/4R/5C/6A/6B/7/7pc/9A) are control-block sensitivity
+  analyses, not a ladder.** Each varies exactly one block relative to the Model 1
+  baseline - swapping the climate control (3A/3B/3C), dropping climate for geography
+  (6A/6B), adding one SES block at a time - so the blocks are not cumulative with each
+  other, and reading across them left-to-right is not "adding more controls." They
+  remain valuable for asking which single block moves a coefficient, which the C-ladder
+  cannot show on its own.
+
+Two supporting artifacts sit alongside the ladder:
+
+- `outputs/tables/spec_curve.csv` - a specification curve over every combination of the
+  six confounder blocks (`CONFOUNDER_BLOCKS`), reporting only the focal terms
+  (income, `pct_black`, `pct_hispanic`, `pct_asian`). Skip it during quick iteration
+  with `RUN_SPEC_CURVE=0`.
+- `outputs/tables/oster_delta.csv` - Oster (2019) delta bounds comparing Model C1 to
+  Model S for each focal term, i.e. how much selection on unobservables (relative to
+  the observed confounders) would be needed to explain away the estimated effect.
+
 ## Recommended workflow
 
 If you want to understand the project from start to finish, the most useful order is:

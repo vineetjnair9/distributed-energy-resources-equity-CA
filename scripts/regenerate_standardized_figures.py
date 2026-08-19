@@ -7,6 +7,7 @@ from paper_figure_utils import (
     OUTCOME_DISPLAY,
     MissingModelError,
     load_all_coefs,
+    load_spec_curve,
     plot_charger_subtype_comparison,
     plot_dot_whisker_from_csvs,
     plot_energy_burden_der_m9_from_csvs,
@@ -14,6 +15,7 @@ from paper_figure_utils import (
     plot_heatmap_from_csvs,
     plot_housing_structure_across_outcomes,
     plot_housing_structure_attenuation,
+    plot_spec_curve_from_csv,
     plot_stability_from_csvs,
     sync_site_figure,
 )
@@ -21,6 +23,7 @@ from paper_figure_utils import (
 
 ROOT = Path(__file__).resolve().parents[1]
 TAB_DIR = ROOT / "outputs" / "standardized_tables"
+RAW_TAB_DIR = ROOT / "outputs" / "tables"
 FIG_DIR = ROOT / "outputs" / "standardized_figures"
 SITE_FIG_DIR = ROOT / "site" / "assets" / "figures"
 
@@ -37,6 +40,11 @@ PAPER_MAIN_MODELS = {
     "y_wind_mw": "Model 1 baseline (climate controls)",
 }
 
+# These are control-block sensitivity analyses, NOT a nested ladder: each swaps or adds
+# one block relative to Model 1 baseline, but the blocks are not cumulative with each
+# other (Model 2C does not include Model 2's bachelors term, etc.), so reading across
+# this list left-to-right is not "adding more controls." The genuinely nested,
+# cumulative ladder is PAPER_LADDER_MODELS (Models C1-C5) below.
 PAPER_ROBUSTNESS_MODELS = [
     "Model 1 baseline (climate controls)",
     "Model 2 (add bachelors)",
@@ -52,6 +60,20 @@ PAPER_ROBUSTNESS_MODELS = [
 ROBUSTNESS_MODELS_BY_OUTCOME = {
     "y_storage": PAPER_ROBUSTNESS_MODELS + ["Model 9 + pv control (most controlled)"],
 }
+
+# The genuinely nested cumulative ladder (REGRESSION_ROBUSTNESS_PLAN.md): each rung is
+# a strict RHS superset of the previous one, fit on one frozen common sample per
+# outcome. Model S (saturated confounders) is byte-identical to C5 and Model O (over-
+# controlled, + demand and infrastructure) is a conservative lower bound on the same
+# focal coefficients — both are reported separately rather than folded into this list
+# since they are not additional rungs of the same confounders-only ladder.
+PAPER_LADDER_MODELS = [
+    "Model C1 (core, common sample)",
+    "Model C2 (+ education, housing value)",
+    "Model C3 (+ housing structure, tenure)",
+    "Model C4 (+ utility FE)",
+    "Model C5 (+ county FE, county-clustered SEs)",
+]
 
 TERMS_MAIN = [
     "log_median_household_income",
@@ -115,6 +137,22 @@ ROBUSTNESS_TERMS_BY_OUTCOME = {
 # would be a single point in an otherwise empty row. They get their own dedicated
 # before/after figure instead (plot_housing_structure_attenuation).
 
+LADDER_OUTCOMES = ROBUSTNESS_OUTCOMES
+LADDER_TERMS_BY_OUTCOME = ROBUSTNESS_TERMS_BY_OUTCOME
+
+# Display labels for the spec-curve block-membership panel; keys match CONFOUNDER_BLOCKS
+# in notebooks/regression.ipynb.
+SPEC_CURVE_BLOCK_LABELS = {
+    "education": "Education",
+    "housing_value": "Housing value",
+    "housing_structure": "Housing structure",
+    "tenure": "Tenure",
+    "utility_fe": "Utility FE",
+    "county_fe": "County FE",
+}
+SPEC_CURVE_OUTCOMES = HEATMAP_OUTCOMES
+SPEC_CURVE_TERM = "log_median_household_income"
+
 
 def main() -> None:
     all_coefs = load_all_coefs(TAB_DIR)
@@ -144,6 +182,49 @@ def main() -> None:
             save_path=save_path,
         )
         generated.append(save_path)
+
+    available_models = set(all_coefs["model"].unique())
+    if not available_models.intersection(PAPER_LADDER_MODELS):
+        skipped.append(
+            f"{'_'.join(LADDER_OUTCOMES)}_ladder.png: none of the C1-C5 ladder "
+            "specifications are in the tables yet (rerun the models stage)"
+        )
+    else:
+        for outcome in LADDER_OUTCOMES:
+            save_path = FIG_DIR / f"{outcome}_ladder.png"
+            plot_stability_from_csvs(
+                all_coefs=all_coefs,
+                outcome=outcome,
+                models_keep=PAPER_LADDER_MODELS,
+                terms_keep=LADDER_TERMS_BY_OUTCOME[outcome],
+                outcome_display=OUTCOME_DISPLAY,
+                save_path=save_path,
+            )
+            generated.append(save_path)
+
+    spec_curve_csv = RAW_TAB_DIR / "spec_curve.csv"
+    if spec_curve_csv.exists():
+        spec_curve_df = load_spec_curve(spec_curve_csv)
+        for outcome in SPEC_CURVE_OUTCOMES:
+            save_path = FIG_DIR / f"spec_curve_{outcome}.png"
+            try:
+                plot_spec_curve_from_csv(
+                    spec_curve_df=spec_curve_df,
+                    outcome=outcome,
+                    term=SPEC_CURVE_TERM,
+                    block_names=list(SPEC_CURVE_BLOCK_LABELS.keys()),
+                    outcome_display=OUTCOME_DISPLAY,
+                    block_labels=SPEC_CURVE_BLOCK_LABELS,
+                    save_path=save_path,
+                )
+                generated.append(save_path)
+            except MissingModelError as exc:
+                skipped.append(f"spec_curve_{outcome}.png: {exc}")
+    else:
+        skipped.append(
+            f"spec_curve_*.png: {spec_curve_csv} not found "
+            "(run the models stage with RUN_SPEC_CURVE=1)"
+        )
 
     heatmap_path = FIG_DIR / "coef_heatmap_appendix.png"
     plot_heatmap_from_csvs(
