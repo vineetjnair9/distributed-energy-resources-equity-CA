@@ -1,7 +1,13 @@
 import numpy as np
 import pandas as pd
 
-from scripts.model_helpers import run_ols, vif_from_formula
+from scripts.model_helpers import pv_kw_per_1000, run_ols, vif_from_formula
+
+
+def test_pv_rate_converts_mw_to_kw_per_1000_residents():
+    assert pv_kw_per_1000(3.52, 56_403) == np.float64(
+        3.52 * 1_000_000 / 56_403
+    )
 
 
 def test_vif_keeps_intercept_and_is_scale_invariant():
