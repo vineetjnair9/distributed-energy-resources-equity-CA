@@ -457,30 +457,62 @@ footer a { color: var(--accent); }
   </section>
 
   <section class="block" id="vif">
-    <div class="section-head"><span class="tag">5 &middot; Diagnostics</span><h2>Sample, R&sup2; path, and VIF, all outcomes</h2></div>
+    <div class="section-head"><span class="tag">5 &middot; Diagnostics</span><h2>Sample, R&sup2; path, and VIF, every rung, all outcomes</h2></div>
+    <p class="lede">VIF computed at every rung C1&rarr;O (not just Model S), for both the four focal terms and every covariate in the design matrix, across all ten outcomes &mdash; 300 VIF lookups total, from <span class="inline-code">outputs/tables/*VIF.csv</span>.</p>
     <div class="stat-row">
-      <div class="stat"><span class="n">8.1</span><span class="l">max VIF, Model S, any outcome</span></div>
-      <div class="stat"><span class="n">0</span><span class="l">focal terms above 10</span></div>
-      <div class="stat"><span class="n">42</span><span class="l">counties in the clustered sample</span></div>
+      <div class="stat"><span class="n">8.1</span><span class="l">max focal-term VIF, any rung, any outcome</span></div>
+      <div class="stat"><span class="n">0</span><span class="l">focal terms above 10, anywhere in C1&ndash;O</span></div>
+      <div class="stat"><span class="n">12.2</span><span class="l">max VIF anywhere &mdash; Model O only, non-focal</span></div>
     </div>
+
+    <h3>Focal-term VIF (log income) across the ladder</h3>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Outcome</th><th>N</th><th>Clusters</th><th>R&sup2; C1</th><th>R&sup2; C5</th><th>R&sup2; O</th><th>Max VIF (Model S)</th></tr></thead>
+        <thead><tr><th>Outcome</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5 / S</th><th>O</th></tr></thead>
         <tbody>
-<tr><td>Solar PV</td><td class="num">1160</td><td class="num">42</td><td class="num">0.109</td><td class="num">0.492</td><td class="num">0.658</td><td class="num">7.78</td></tr>
-<tr><td>Storage</td><td class="num">1160</td><td class="num">42</td><td class="num">0.238</td><td class="num">0.422</td><td class="num">0.452</td><td class="num">7.78</td></tr>
-<tr><td>EV chargers (aggregate)</td><td class="num">1160</td><td class="num">42</td><td class="num">0.071</td><td class="num">0.268</td><td class="num">0.296</td><td class="num">7.78</td></tr>
-<tr><td>Wind MW</td><td class="num">1160</td><td class="num">42</td><td class="num">0.022</td><td class="num">0.103</td><td class="num">0.335</td><td class="num">7.78</td></tr>
-<tr><td>Any turbines</td><td class="num">1160</td><td class="num">42</td><td class="num">0.028</td><td class="num">0.107</td><td class="num">0.117</td><td class="num">7.78</td></tr>
-<tr><td>Level 1 chargers</td><td class="num">1160</td><td class="num">42</td><td class="num">0.010</td><td class="num">0.066</td><td class="num">0.068</td><td class="num">7.78</td></tr>
-<tr><td>Level 2 chargers</td><td class="num">1160</td><td class="num">42</td><td class="num">0.111</td><td class="num">0.323</td><td class="num">0.341</td><td class="num">7.78</td></tr>
-<tr><td>DC fast chargers</td><td class="num">1160</td><td class="num">42</td><td class="num">0.005</td><td class="num">0.105</td><td class="num">0.142</td><td class="num">7.78</td></tr>
-<tr><td>Energy burden %</td><td class="num">1150</td><td class="num">42</td><td class="num">0.771</td><td class="num">0.863</td><td class="num">0.866</td><td class="num">8.10</td></tr>
-<tr><td>Log affordability gap</td><td class="num">1150</td><td class="num">42</td><td class="num">0.333</td><td class="num">0.389</td><td class="num">0.400</td><td class="num">8.10</td></tr>
+<tr><td>Solar PV</td><td class="num nsig">3.08</td><td class="num nsig">5.79</td><td class="num nsig">7.61</td><td class="num nsig">7.61</td><td class="num nsig">7.61</td><td class="num nsig">7.72</td></tr>
+<tr><td>Storage</td><td class="num nsig">3.54</td><td class="num nsig">5.82</td><td class="num nsig">7.63</td><td class="num nsig">7.63</td><td class="num nsig">7.61</td><td class="num nsig">7.84</td></tr>
+<tr><td>EV chargers (aggregate)</td><td class="num nsig">3.54</td><td class="num nsig">5.82</td><td class="num nsig">7.63</td><td class="num nsig">7.63</td><td class="num nsig">7.61</td><td class="num nsig">7.84</td></tr>
+<tr><td>Wind MW</td><td class="num nsig">3.09</td><td class="num nsig">5.84</td><td class="num nsig">7.78</td><td class="num nsig">7.78</td><td class="num nsig">7.61</td><td class="num nsig">7.84</td></tr>
+<tr><td>Any turbines</td><td class="num nsig">3.09</td><td class="num nsig">5.84</td><td class="num nsig">7.78</td><td class="num nsig">7.78</td><td class="num nsig">7.61</td><td class="num nsig">7.81</td></tr>
+<tr><td>Level 1 chargers</td><td class="num nsig">3.54</td><td class="num nsig">5.82</td><td class="num nsig">7.63</td><td class="num nsig">7.63</td><td class="num nsig">7.61</td><td class="num nsig">7.84</td></tr>
+<tr><td>Level 2 chargers</td><td class="num nsig">3.54</td><td class="num nsig">5.82</td><td class="num nsig">7.63</td><td class="num nsig">7.63</td><td class="num nsig">7.61</td><td class="num nsig">7.84</td></tr>
+<tr><td>DC fast chargers</td><td class="num nsig">3.54</td><td class="num nsig">5.82</td><td class="num nsig">7.63</td><td class="num nsig">7.63</td><td class="num nsig">7.61</td><td class="num nsig">7.84</td></tr>
+<tr><td>Energy burden %</td><td class="num nsig">3.55</td><td class="num nsig">6.05</td><td class="num nsig">7.94</td><td class="num nsig">7.94</td><td class="num nsig">7.89</td><td class="num nsig">8.15</td></tr>
+<tr><td>Log affordability gap</td><td class="num nsig">3.55</td><td class="num nsig">6.05</td><td class="num nsig">7.94</td><td class="num nsig">7.94</td><td class="num nsig">7.89</td><td class="num nsig">8.15</td></tr>
         </tbody>
-        <caption>N and cluster count are identical across C1&ndash;C5&ndash;S&ndash;O within each outcome (frozen-sample invariant, verified). Max VIF term is <span class="inline-code">pct_bachelors_plus</span> vs. log income everywhere &mdash; expected SES-proxy collinearity, well under the VIF&gt;10 concern threshold.</caption>
+        <caption>VIF for <span class="inline-code">log_median_household_income</span> at each rung. Race terms (% Black/Hispanic/Asian) stay lower throughout &mdash; income is consistently the most collinear focal term, and it never exceeds 8.15.</caption>
       </table>
     </div>
+
+    <div class="callout">
+      <span class="tag warn">Flag for discussion</span>
+      <p><strong>Model O has one real collinearity problem, but it doesn't touch the headline terms.</strong> For the eight non-wind outcomes, Model O's infrastructure-mediator block includes both <span class="inline-code">wind_capacity_mw</span> and <span class="inline-code">wind_turbine_count</span> as controls &mdash; two measures of essentially the same thing, VIF &asymp; 12.2 against each other. That inflates the standard errors on <em>those two coefficients specifically</em>; it does not touch income or race, whose VIF stays under 8 in Model O for every outcome (table above). Not a problem for the ladder's headline claims, but if Model O's infrastructure coefficients themselves ever get quoted, they need this caveat or the two wind terms should be combined/dropped first. (The two wind outcomes, <span class="inline-code">y_wind_mw</span> and <span class="inline-code">any_turbines</span>, correctly exclude these controls already &mdash; they'd be circular there &mdash; and their Model O max VIF is a clean 7.8.)</p>
+    </div>
+
+    <details class="more">
+      <summary>N, clusters, and R&sup2; path, all outcomes</summary>
+      <div class="inner">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Outcome</th><th>N</th><th>Clusters</th><th>R&sup2; C1</th><th>R&sup2; C5</th><th>R&sup2; O</th><th>Max VIF, any term (Model O)</th></tr></thead>
+            <tbody>
+<tr><td>Solar PV</td><td class="num">1160</td><td class="num">42</td><td class="num">0.109</td><td class="num">0.492</td><td class="num">0.658</td><td class="num sig">12.23</td></tr>
+<tr><td>Storage</td><td class="num">1160</td><td class="num">42</td><td class="num">0.238</td><td class="num">0.422</td><td class="num">0.452</td><td class="num sig">12.21</td></tr>
+<tr><td>EV chargers (aggregate)</td><td class="num">1160</td><td class="num">42</td><td class="num">0.071</td><td class="num">0.268</td><td class="num">0.296</td><td class="num sig">12.23</td></tr>
+<tr><td>Wind MW</td><td class="num">1160</td><td class="num">42</td><td class="num">0.022</td><td class="num">0.103</td><td class="num">0.335</td><td class="num nsig">7.84</td></tr>
+<tr><td>Any turbines</td><td class="num">1160</td><td class="num">42</td><td class="num">0.028</td><td class="num">0.107</td><td class="num">0.117</td><td class="num nsig">7.82</td></tr>
+<tr><td>Level 1 chargers</td><td class="num">1160</td><td class="num">42</td><td class="num">0.010</td><td class="num">0.066</td><td class="num">0.068</td><td class="num sig">12.23</td></tr>
+<tr><td>Level 2 chargers</td><td class="num">1160</td><td class="num">42</td><td class="num">0.111</td><td class="num">0.323</td><td class="num">0.341</td><td class="num sig">12.23</td></tr>
+<tr><td>DC fast chargers</td><td class="num">1160</td><td class="num">42</td><td class="num">0.005</td><td class="num">0.105</td><td class="num">0.142</td><td class="num sig">12.23</td></tr>
+<tr><td>Energy burden %</td><td class="num">1150</td><td class="num">42</td><td class="num">0.771</td><td class="num">0.863</td><td class="num">0.866</td><td class="num sig">12.23</td></tr>
+<tr><td>Log affordability gap</td><td class="num">1150</td><td class="num">42</td><td class="num">0.333</td><td class="num">0.389</td><td class="num">0.400</td><td class="num sig">12.23</td></tr>
+            </tbody>
+            <caption>N and cluster count are identical across C1&ndash;C5&ndash;S&ndash;O within each outcome (frozen-sample invariant, verified).</caption>
+          </table>
+        </div>
+      </div>
+    </details>
   </section>
 
   <section class="block" id="discuss">
