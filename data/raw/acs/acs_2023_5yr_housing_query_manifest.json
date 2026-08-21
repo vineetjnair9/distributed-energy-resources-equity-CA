@@ -38,7 +38,7 @@
     "for": "zip code tabulation area:*",
     "panel": "DER panel ZIP/ZCTAs"
   },
-  "retrieved_at_utc": "2026-08-21T22:53:45.625801+00:00",
+  "retrieved_at_utc": "2026-08-18T21:12:13.059327+00:00",
   "row_count": 1782,
   "sha256": "c0bfb5933778f020ef934e0bb1a6b7398e3a115133d4004575ac2b0c19ed4fc5",
   "credentials_persisted": false

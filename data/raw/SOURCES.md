@@ -103,6 +103,41 @@ workbook cannot yet be re-fetched by URL and checksummed.
   Public page: https://www.energy.ca.gov/data-reports/data-exploration-tools/energy-equity-indicators-dashboard-collection/deep-dive-energy
   Exports are UTF-16 tab-separated despite the `.csv` extension.
 
+  Known characteristic of the EA Gap export, observed 2026-08-19. A minority of ZIPs
+  carry gap values orders of magnitude above the rest, and they are not the
+  low-income ZIPs: 161 ZIPs exceed $1,000 of gap per resident and together hold 92%
+  of the statewide total, with a median energy burden of 2.3% and a median household
+  income of $73,074. The largest, 92618, reports $14.7B for 62,296 residents
+  ($236,464 per resident) at a 1.1% burden and $135,609 median income. Summed across
+  ZIPs the export totals $59.2B, above published estimates of California's entire
+  annual residential energy spend. Dropping the ZIPs above $1,000 per resident moves
+  the correlation between gap per capita and energy burden from -0.09 to +0.51, and
+  poverty from +0.01 to +0.41.
+
+  We are carrying these values through as published rather than filtering them,
+  on the assumption that the CEC validates its own dashboard exports. This note
+  exists so that a later pull can be compared against what we actually ingested.
+  Values are read from the `EA Gap.3` column, which is the ZIP-level measure; the
+  other seven `EA Gap` columns in the export are empty. 31 rows carry malformed ZIP
+  codes and are dropped by the ZCTA join, so none reach the database.
+
+  Fingerprint of the snapshot in use, for diffing against a future export:
+
+  | | |
+  |---|---|
+  | rows with a ZIP-level gap | 1,719 |
+  | statewide sum | $59,216,846,261 |
+  | 92618 | $14,730,770,878 |
+  | 95134 | $5,914,536,672 |
+  | 92123 | $3,080,558,446 |
+  | 92614 | $3,077,834,639 |
+  | 92612 | $2,545,190,689 |
+
+  Downstream exposure: `log_energy_gap_per_capita` is fitted on 1,374 ZIPs, 132 of
+  which (9.6%) sit above the $1,000-per-resident mark, so the affordability-gap
+  residuals and every `model_affordability_gap` summary inherit whatever these
+  values turn out to be.
+
 - `data/raw/demand/PGE_2023_Q*.csv`, `SCE_2023_Q*.xlsx`, `SDGE-ELEC-2023-Q*.csv`
   Source: the three investor-owned utilities' public quarterly electric usage by ZIP
   code. All four quarters are present for each utility, so demand coverage is statewide

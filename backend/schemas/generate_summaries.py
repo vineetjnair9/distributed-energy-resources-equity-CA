@@ -281,6 +281,18 @@ MODEL_CATEGORIES = {
 }
 
 OVERVIEW_CATEGORY = "overview"
+
+# A region with too few sections cannot support a synthesized overview, but
+# leaving the row absent makes every consumer reimplement a fallback and invites
+# silently dropping those regions. Store fixed text instead, so an overview
+# exists for every region and says plainly why it is thin. Written by the
+# pipeline rather than the model, which the snapshot records.
+INSUFFICIENT_DATA_OVERVIEW = (
+    "There is not enough data for this ZCTA to produce an integrated overview: "
+    "only reported DER observations are available, demographics, affordability "
+    "and model screening were not assessed, and recorded zeros reflect an "
+    "absence of records rather than confirmed absence of infrastructure."
+)
 SECTION_CATEGORIES = tuple(DESCRIPTIVE_CATEGORIES) + tuple(MODEL_CATEGORIES)
 SUMMARY_CATEGORIES = SECTION_CATEGORIES + (OVERVIEW_CATEGORY,)
 CATEGORY_ORDER = {category: index for index, category in enumerate(SUMMARY_CATEGORIES)}
@@ -614,6 +626,39 @@ def select_model_evidence(
         selected.append(rows[0])
 
     return selected[:limit]
+
+
+def categories_without_evidence(
+    conn: sqlite3.Connection,
+    region_id: str,
+    limit: int = DEFAULT_CATEGORY_EVIDENCE_LIMIT,
+) -> list[str]:
+    """Section categories this region has no evidence for at all.
+
+    A region reduced to a single section carries no overview, and the overview is
+    where the not-assessed disclosure lives. Recording the gap on the sections
+    themselves lets a consumer state it wherever a lone section stands in for the
+    region.
+    """
+    return [
+        category
+        for category in SECTION_CATEGORIES
+        if not get_evidence_for_category(conn, region_id, category, limit=limit)
+    ]
+
+
+def observed_der_is_all_zero(conn: sqlite3.Connection, region_id: str) -> bool:
+    """Whether every reported DER observation for this region is zero."""
+    rows = conn.execute(
+        """
+        SELECT metric_value
+        FROM metric_observations
+        WHERE region_id = ?
+          AND metric_category = 'der_observed'
+        """,
+        (region_id,),
+    ).fetchall()
+    return bool(rows) and all(row["metric_value"] == 0 for row in rows)
 
 
 def get_evidence_for_category(
@@ -1094,6 +1139,10 @@ def generate_and_store_section_batch(
     batch_categories = [
         category for category in SECTION_CATEGORIES if category in evidence_by_category
     ]
+    unavailable_categories = categories_without_evidence(
+        conn, region_id, evidence_limit
+    )
+    all_zero_der = observed_der_is_all_zero(conn, region_id)
     stored_ids = dict(existing_ids)
 
     try:
@@ -1119,6 +1168,8 @@ def generate_and_store_section_batch(
                     }
                 ),
                 "batch_categories": batch_categories,
+                "unavailable_categories": unavailable_categories,
+                "observed_der_all_zero": all_zero_der,
                 "summary_model": SUMMARY_MODEL,
                 "summary_version": SUMMARY_VERSION,
             }
@@ -1359,11 +1410,9 @@ def generate_and_store_overview(
         )
 
     if len(sources) < MIN_OVERVIEW_SOURCE_SECTIONS:
-        print(
-            f"Skipping {region_id}/overview: requires at least "
-            f"{MIN_OVERVIEW_SOURCE_SECTIONS} category summaries."
+        return store_insufficient_data_overview(
+            conn, region_id, sources, existing_id
         )
-        return None
 
     missing_categories = missing_section_categories(conn, region_id, sources)
     result = generate_overview_with_llm(region_id, sources, missing_categories)
@@ -1404,6 +1453,66 @@ def generate_and_store_overview(
 
     action = "Replaced" if existing_id is not None else "Generated"
     print(f"{action} {region_id}/overview: summary_id={summary_id}")
+    return StoredSummary(summary_id, changed=True)
+
+
+def store_insufficient_data_overview(
+    conn: sqlite3.Connection,
+    region_id: str,
+    sources: Sequence[OverviewSource],
+    existing_id: int | None = None,
+) -> StoredSummary | None:
+    """Record the fixed not-enough-data overview for a thin region.
+
+    The text is identical for every such region: a region with one section has
+    nothing to distinguish it, and generating the sentence per region would only
+    introduce wording drift across the set.
+    """
+    if not sources:
+        print(f"Skipping {region_id}/overview: no category summaries to cite.")
+        return None
+
+    evidence_ids = [
+        evidence_id for source in sources for evidence_id in source.evidence_ids
+    ]
+    if not evidence_ids:
+        print(f"Skipping {region_id}/overview: no linked evidence to cite.")
+        return None
+
+    payload = SummaryPayload(
+        summary_text=INSUFFICIENT_DATA_OVERVIEW,
+        evidence_ids_used=evidence_ids,
+    )
+    metric_snapshot = {
+        "region_id": region_id,
+        "category": OVERVIEW_CATEGORY,
+        "source_summary_ids": [source.summary_id for source in sources],
+        "source_categories": [source.category for source in sources],
+        "unavailable_categories": missing_section_categories(
+            conn, region_id, sources
+        ),
+        "evidence_ids_linked": evidence_ids,
+        "insufficient_data": True,
+        "summary_model": None,
+        "summary_version": SUMMARY_VERSION,
+    }
+    try:
+        summary_id = store_summary_response(
+            conn,
+            region_id,
+            OVERVIEW_CATEGORY,
+            payload,
+            metric_snapshot,
+            existing_summary_id=existing_id,
+            generated_at=datetime.now(timezone.utc).isoformat(),
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
+    action = "Replaced" if existing_id is not None else "Stored"
+    print(f"{action} {region_id}/overview: not-enough-data text (id={summary_id})")
     return StoredSummary(summary_id, changed=True)
 
 
