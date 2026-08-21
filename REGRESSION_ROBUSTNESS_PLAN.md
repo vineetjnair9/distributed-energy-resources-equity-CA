@@ -1,8 +1,14 @@
 # Implementation plan: nested control ladder, saturated model, spec curve, Oster bounds
 
 **Repo:** `distributed-energy-resources-equity-CA` · branch `main`
-**Status:** approved plan, not yet implemented. Written for a fresh session — no prior
-conversation context required.
+**Status:** partially implemented, 2026-08-21.
+
+- Done: §3.1 `fit_stats` and `common_sample_index`; §3.2 the C1–C5 / S / O ladder and
+  the fit-stats export; §3.6 tests for the two helpers. Verified per §4 items 1–4:
+  all C-rungs share one frozen sample, `Model C5` clusters on 42 counties, and no
+  focal term exceeds VIF 10 in `Model S` (income peaks at 7.6).
+- Outstanding: §3.1 `oster_delta`, §3.3 spec curve, §3.4 δ table, §3.5 figures and
+  prose, and the `oster_delta` test in §3.6.
 
 ---
 

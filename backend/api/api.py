@@ -138,6 +138,7 @@ def get_region_summary(region_id: str):
                 sr.region_id,
                 sr.summary_text,
                 sr.metric_snapshot,
+                sr.category,
                 sr.model_version,
                 sr.generated_at,
                 ec.evidence_id,
@@ -167,10 +168,11 @@ def compare_regions(region_ids: list[str] = Query(...)):
             summary_id,
             summary_text,
             metric_snapshot,
+            category,
             model_version,
             generated_at
         FROM summary_responses
-        WHERE region_id IN ({placeholders})
+        WHERE region_id IN ({placeholders}) AND category = 'overview'
         ORDER BY region_id, generated_at DESC
     """
 

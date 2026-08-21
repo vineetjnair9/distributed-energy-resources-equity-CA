@@ -1,0 +1,7 @@
+statistic,value
+nobs,1257
+df_resid,1248
+rsquared,0.08410602394598177
+rsquared_adj,0.07823490871486627
+cov_type,cluster
+n_clusters,42
