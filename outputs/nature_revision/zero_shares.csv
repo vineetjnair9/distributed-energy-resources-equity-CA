@@ -1,0 +1,8 @@
+outcome,raw_var,N,pct_zero,median,mean,max
+y_pv,PV_system_size_DC,1422,5.3,6.378,12.474,142.1
+y_storage,storage_capacity_mw,1422,6.6,0.951,1.443,8.2
+y_chargers,total_chargers,1422,19.0,16.0,37.012,800.0
+y_level1_chargers,level1_chargers,1422,97.8,0.0,0.148,52.0
+y_level2_chargers,level2_chargers,1422,22.3,9.0,27.568,768.0
+y_dc_fast_chargers,dc_fast_chargers,1422,44.2,2.0,9.444,235.0
+y_wind_mw,wind_capacity_mw,1422,97.5,0.0,2.558,1542.5
