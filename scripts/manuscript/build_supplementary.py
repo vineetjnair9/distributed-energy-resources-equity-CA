@@ -239,20 +239,23 @@ for part in ['comments','commentsExtended','commentsExtensible','commentsIds','p
 open(cp,'w',encoding='utf8').write(s)
 
 
-# Close the gap the SI figure series picks up once displaced figures are assigned, so
-# the numbers run consecutively and match the main text.
+# Supplementary figure numbering. The assembly step assigns numbers by mapping each
+# old main-text figure to its new SI slot, which leaves a gap where the wind figure
+# lands; this closes it so the series runs consecutively. Both builders must use the
+# same map — the main text's references and the SI's captions are renumbered by it
+# independently.
 dest = DEST_DOCX
 
-SI_FIG_RENUMBER = {1:1,2:2,3:3,4:4,6:5,7:6,8:7,9:8,10:9,11:10,12:11,13:12,14:13,15:14,16:15,17:16}
+SI_FIG_RENUMBER = {1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9,
+                   11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16}
 _t2 = ET.parse(os.path.join(OUT,'word','document.xml'))
 _body = _t2.getroot().find(W+'body')
 for _p in _body.iter(W+'p'):
     if _p.find('.//'+W+'drawing') is not None: continue
     _ts=[x for x in _p.iter(W+'t')]; _s=''.join(x.text or '' for x in _ts)
     if not _s: continue
-    _s2 = _s.replace('Supplementary Fig. S5 |','Supplementary Fig. S4 |')
     _s2 = re.sub(r'Supplementary Fig\. S(\d+)',
-                 lambda m: 'Supplementary Fig. S%d'%SI_FIG_RENUMBER.get(int(m.group(1)),int(m.group(1))), _s2)
+                 lambda m: 'Supplementary Fig. S%d'%SI_FIG_RENUMBER.get(int(m.group(1)),int(m.group(1))), _s)
     if _s2!=_s:
         _ts[0].text=_s2; _ts[0].set('{http://www.w3.org/XML/1998/namespace}space','preserve')
         for _x in _ts[1:]: _x.text=''

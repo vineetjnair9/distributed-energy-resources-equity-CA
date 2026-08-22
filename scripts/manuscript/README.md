@@ -13,26 +13,39 @@ stacked-model subsection, and Discussion. Edit the text there, not in the builde
 
 The source `site/index.docx` is only ever read.
 
-## Status — read before relying on these
+## Status
 
-`build_supplementary.py` reproduces the delivered Supplementary Information exactly.
+Both scripts reproduce the delivered documents exactly — paragraph for paragraph,
+verified against them. The manuscript passes all nine compliance checks on every run,
+and its bibliography audits clean: 29 entries, 29 cited, nothing unresolved, nothing
+uncited, and every data-source citation resolving to the right entry.
 
-`build_manuscript.py` reproduces the delivered manuscript's structure, prose, figures,
-tables and every compliance check — but **its bibliography stage does not reproduce the
-delivered reference numbering.** It currently keeps 26 references where the delivered
-file has 29, and assigns different numbers to several data-source citations.
+### The bug that was here, so it does not come back
 
-**`site/index_nature_submission.docx` as delivered is authoritative for references.** It
-was verified entry by entry: every in-text citation resolves to the correct source
-(Tracking the Sun → the Tracking the Sun entry, TIGER/Line → the TIGER/Line entry, and
-so on), with no unresolved and no uncited entries.
+The reference list lives in two places: entries [1]–[24] inside the citation-manager
+field, and the typed data-source paragraphs [25]–[36] after it. Removing the duplicated
+entry shifts the second group, and the shorter Introduction leaves several entries
+uncited, so both groups have to be renumbered together.
 
-The bug is in `fix_bibliography`. The list lives in two places — entries [1]–[24] inside
-the citation-manager field, and the typed data-source paragraphs [25]–[36] after it —
-and reconciling the removal of the duplicated entry across both, together with the
-uncited-entry pruning, is what is not yet right. Finish that stage before using this
-script to regenerate the manuscript, or regenerate everything except the bibliography
-and carry the delivered reference list across.
+For a while the assembly step *also* repaired and renumbered the bibliography, and
+`fix_bibliography` then ran over its output. The typed entries got shifted twice, and
+the four entries whose titles are retyped lost their numbers to the position-based
+renumbering, so they dropped out of the list entirely — 26 references instead of 29,
+with every data-source citation silently pointing at its neighbour. Nothing failed
+loudly; the document still opened and every internal check still passed.
+
+**Repair, pruning and renumbering happen once, in `fix_bibliography()`, after the body
+is assembled.** The assembly step carries the reference paragraphs across untouched. Do
+not reintroduce renumbering at assembly time.
+
+Two smaller traps in the same area:
+
+- `find_bibliography_sdt()` exists because the document holds twenty `sdt` elements —
+  hyperlink fields wrap themselves in one — so taking the first is wrong. The
+  bibliography is the one whose *direct* children are numbered paragraphs.
+- `SI_FIG_RENUMBER` is shared by both builders. The main text's references and the SI's
+  captions are renumbered independently by the same map; changing it in one place only
+  will desynchronise them.
 
 ## Structure
 

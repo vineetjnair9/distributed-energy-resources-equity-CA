@@ -355,44 +355,14 @@ add(P('Heading1','Acknowledgements'))
 add(P(None,"[To be completed.]"))
 
 # ---------------------- references ----------------------
-add(keep(253))
-sdt=declean(keep(255))
-cont=sdt.find(W+'sdtContent')
-FIXES={
- 6:"A. Drehobl, L. Ross, R. Ayala, A. Zaman, and J. Amann, “How high are household energy "
-   "burdens? An assessment of national and metropolitan energy burden across the United "
-   "States,” American Council for an Energy-Efficient Economy, Report U2006, Sep. 2020.",
- 13:"R. McAllister, M. Coddington, M. Kolb, S. Murtishaw, L. Schwartz, and S. Sergici, "
-    "“Distributed energy resources: technological and policy considerations of hosting "
-    "capacity and locational value,” Western Interstate Energy Board, 2016.",
- 15:"U.S. Department of Energy, “Distributed energy resource interconnection roadmap,” "
-    "i2X initiative, 2023. [Online]. Available: https://www.energy.gov/eere/i2x",
- 20:"Solar Energy Industries Association and Vote Solar, “Opening brief before the Public "
-    "Utilities Commission of the State of California,” Rulemaking 20-08-020, 2021.",
-}
-if cont is not None:
-    ps=[c for c in list(cont) if c.tag==W+'p']
-    for c in list(cont):
-        if c.tag==W+'p': cont.remove(c)
-    kept=[]
-    for j,p in enumerate(ps):
-        if j==19: continue                       # duplicate of ref [9]
-        if j in FIXES: settext(p, FIXES[j])
-        kept.append(p)
-    # renumber [n]
-    n=0
-    for p in kept:
-        ts=list(p.iter(W+'t'))
-        if ts and ts[0].text and ts[0].text.strip().startswith('['):
-            n+=1; ts[0].text=f"[{n}]"
-        cont.append(p)
-add(sdt)
-for i in range(256,268):
-    el=declean(keep(i))
-    ts=list(el.iter(W+'t'))
-    if ts and ts[0].text and ts[0].text.strip().startswith('['):
-        old=int(re.findall(r'\d+',ts[0].text)[0]); ts[0].text=f"[{old-1}]"
-    add(el)
+add(keep(253))                                   # "References" heading
+# The reference list is carried across untouched here. Repair, pruning and renumbering
+# all happen once, in fix_bibliography(), after the body is assembled: doing any of it
+# at assembly time and again afterwards double-shifts the typed data-source entries and
+# strips the numbers off the entries whose titles get retyped.
+add(declean(keep(255)))                          # citation-manager field, [1]-[24]
+for i in range(256, 268):                        # typed data sources, [25]-[36]
+    add(declean(keep(i)))
 add(keep(269))                                   # sectPr
 
 for c in list(body): body.remove(c)
@@ -465,7 +435,7 @@ LATE_EDITS = [
      "text use standardised predictors, so a coefficient is the change in the log(1 + rate) "
      "outcome associated with a one-standard-deviation change in the predictor; one standard "
      "deviation is 6.6 percentage points for Black share, 23.8 for Hispanic share and 14.1 "
-     "for Asian share, and a coefficient near -0.10 corresponds to roughly a 10 per cent "
+     "for Asian share, and a coefficient near −0.10 corresponds to roughly a 10 per cent "
      "lower deployment rate (Supplementary Table S3)."),
     # The two conventions gave different coefficient pairs for the same quantity. The
     # attenuation percentage is a ratio and is invariant to either, so the percentage
@@ -507,9 +477,12 @@ LATE_EDITS = [
     ("model ladder", "model series"),
 ]
 
-# The Supplementary figure series ends up with a gap once the displaced figures are
-# assigned; close it so the SI numbers run consecutively.
-SI_FIG_RENUMBER = {1: 1, 2: 2, 3: 3, 4: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9,
+# Supplementary figure numbering. The assembly step assigns numbers by mapping each
+# old main-text figure to its new SI slot, which leaves a gap where the wind figure
+# lands; this closes it so the series runs consecutively. Both builders must use the
+# same map — the main text's references and the SI's captions are renumbered by it
+# independently.
+SI_FIG_RENUMBER = {1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9,
                    11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16}
 
 # Descriptive SI items that the compressed main text no longer mentions individually.
