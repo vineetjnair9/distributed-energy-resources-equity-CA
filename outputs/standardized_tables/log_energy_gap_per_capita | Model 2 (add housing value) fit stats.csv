@@ -1,0 +1,2 @@
+nobs,df_resid,rsquared,rsquared_adj,cov_type
+1366,1356.0,0.3266038625672737,0.3221344191772335,HC1

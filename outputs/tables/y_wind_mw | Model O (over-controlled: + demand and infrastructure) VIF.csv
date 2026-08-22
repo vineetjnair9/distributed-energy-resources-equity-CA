@@ -1,0 +1,17 @@
+feature,VIF
+log_median_household_income,7.835079304308743
+pct_bachelors_plus,7.822827989565034
+owner_occupied_rate,6.134065344932893
+log_median_housing_value,5.70756698617868
+pct_multifamily_units,5.395418967540725
+pct_hispanic,3.14606170165353
+poverty_rate,2.838066440182031
+PV_system_size_DC,1.7972504431202743
+storage_capacity_mw,1.667321097662949
+pct_mobile_home_units,1.6224701674056496
+pct_asian,1.395542604904017
+log_kwh,1.256063069707614
+pct_black,1.1601017998775247
+pct_other_housing_units,1.1285650785790364
+plant_capacity_mw,1.0917163890582822
+wind_turbine_count,1.0212715295258978
