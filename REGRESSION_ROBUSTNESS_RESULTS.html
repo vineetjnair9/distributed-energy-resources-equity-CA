@@ -204,9 +204,9 @@ footer a { color: var(--accent); }
   <header class="masthead">
     <p class="kicker">Robustness rebuild &middot; comprehensive edition &middot; for discussion</p>
     <h1>Nested confounder ladder, spec curve, and Oster bounds are in</h1>
-    <p class="dek">A rerun of the DER-equity regressions on the real analysis sample (2,549 CA ZIP/ZCTAs, filtered to a frozen common sample of 1,150&ndash;1,160 rows per outcome) implementing <span class="inline-code">REGRESSION_ROBUSTNESS_PLAN.md</span> in full: a genuinely nested ladder (C1&ndash;C5, plus a saturated model S and an over-controlled lower bound O) replaces the mislabeled M1&ndash;M8 chain; a 48-specification curve stress-tests every income/race coefficient; Oster (2019) &delta; bounds quantify how much unobserved selection would be needed to explain each effect away. This version covers all ten outcomes and is meant to be read without the repo open.</p>
+    <p class="dek">A rerun of the DER-equity regressions on the real analysis sample (2,549 CA ZIP/ZCTAs, filtered to a frozen common sample of 1,150&ndash;1,160 rows per outcome) implementing <span class="inline-code">REGRESSION_ROBUSTNESS_PLAN.md</span> in full: a genuinely nested ladder (C1&ndash;C5, plus a saturated model S and an over-controlled lower bound O) replaces the mislabeled M1&ndash;M8 chain; a 48-specification curve stress-tests every income/race coefficient; Oster (2019) &delta; bounds quantify how much unobserved selection would be needed to explain each effect away. <span class="inline-code">main</span> already has this ladder running for two outcomes (PV, storage) - the new work lives entirely in a separate notebook (<span class="inline-code">notebooks/regression_robustness_ladder.ipynb</span>) that extends it to all ten without touching a single file <span class="inline-code">main</span> already has. This version is meant to be read without the repo open.</p>
     <div class="meta-row">
-      <span>Branch <strong class="mono">claude/regression-robustness-figures-fc88eb</strong></span>
+      <span>New files only <strong class="mono">notebooks/regression_robustness_ladder.ipynb</strong></span>
       <span>10 outcomes &times; 2 modes</span>
       <span>Clusters <strong>42</strong> counties</span>
       <span>Tests <strong>32/32</strong> passing</span>
@@ -529,7 +529,7 @@ footer a { color: var(--accent); }
   <footer>
     <div>Generated from a full notebook rerun (regression.ipynb, 44s, 10 outcomes &times; 2 modes) against the real processed dataset. All 32 unit/integration tests pass.</div>
     <div>Source tables: <span class="mono">outputs/tables/oster_delta.csv</span>, <span class="mono">outputs/tables/spec_curve.csv</span>, <span class="mono">outputs/tables/*fit stats.csv</span>, <span class="mono">outputs/standardized_tables/*.csv</span></div>
-    <div>Committed at <span class="mono">8b99964</span> on <span class="mono">claude/regression-robustness-figures-fc88eb</span> (not merged to main)</div>
+    <div>New, additive files only: <span class="mono">notebooks/regression_robustness_ladder.ipynb</span>, <span class="mono">scripts/oster_delta_helpers.py</span>, <span class="mono">scripts/regenerate_ladder_extras.py</span>, plus outputs/tables and figures. Zero files modified relative to <span class="mono">main</span> (verified: <span class="mono">git diff main --name-status --diff-filter=M</span> is empty).</div>
   </footer>
 
 </div>

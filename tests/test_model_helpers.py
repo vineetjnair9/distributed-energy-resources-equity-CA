@@ -1,11 +1,9 @@
 import numpy as np
 import pandas as pd
-import statsmodels.formula.api as smf
 
 from scripts.model_helpers import (
     common_sample_index,
     fit_stats,
-    oster_delta,
     pv_kw_per_1000,
     run_ols,
     vif_from_formula,
@@ -69,98 +67,55 @@ def test_county_fixed_effect_drops_missing_without_pseudo_county():
     assert not any("nan" in name.lower() for name in result.params.index)
 
 
-def test_fit_stats_reports_n_clusters_on_clustered_fit():
+def _ladder_frame():
+    rng = np.random.default_rng(7)
+    n = 60
     frame = pd.DataFrame(
         {
-            "y": np.arange(30, dtype=float),
-            "x": np.linspace(0, 1, 30),
-            "county": (["a"] * 10) + (["b"] * 10) + (["c"] * 10),
+            "y": rng.normal(size=n),
+            "x": rng.normal(size=n),
+            "z": rng.normal(size=n),
+            "county": ["small"] * 3 + ["large_a"] * 29 + ["large_b"] * 28,
         }
     )
-    clustered = run_ols("y ~ x", frame, cluster_col="county", min_cluster_size=5)
-    stats = fit_stats(clustered)
-
-    assert stats["nobs"] == 30
-    assert stats["cov_type"] == "cluster"
-    assert stats["n_clusters"] == 3
-    assert stats["rsquared"] == clustered.rsquared
+    # z is missing on rows the x-only formula can still use, which is exactly the
+    # drift a cumulative ladder has to freeze out.
+    frame.loc[frame.index[:5], "z"] = np.nan
+    return frame
 
 
-def test_fit_stats_omits_n_clusters_when_not_clustered():
-    frame = pd.DataFrame({"y": np.arange(10, dtype=float), "x": np.linspace(0, 1, 10)})
-    ordinary = run_ols("y ~ x", frame)
-    stats = fit_stats(ordinary)
+def test_common_sample_index_intersects_across_formulas():
+    frame = _ladder_frame()
 
-    assert stats["cov_type"] == "HC1"
-    assert "n_clusters" not in stats
+    index = common_sample_index(["y ~ x", "y ~ x + z"], frame)
 
-
-def test_common_sample_index_returns_intersection_under_injected_nans():
-    rng = np.random.default_rng(0)
-    frame = pd.DataFrame(
-        {
-            "y": rng.normal(size=50),
-            "x1": rng.normal(size=50),
-            "x2": rng.normal(size=50),
-        }
-    )
-    frame.loc[0:4, "x1"] = np.nan
-    frame.loc[10:14, "x2"] = np.nan
-
-    common = common_sample_index(["y ~ x1", "y ~ x1 + x2"], frame)
-
-    expected = frame.dropna(subset=["x1", "x2"]).index
-    assert set(common) == set(expected)
+    assert len(index) == 55
+    assert frame.loc[index, "z"].notna().all()
+    assert run_ols("y ~ x", frame).nobs == 60
+    assert run_ols("y ~ x", frame.loc[index]).nobs == 55
 
 
 def test_common_sample_index_honors_min_cluster_size():
-    frame = pd.DataFrame(
-        {
-            "y": np.arange(16, dtype=float),
-            "x": np.linspace(0, 1, 16),
-            "county": ["small"] * 4 + ["large_a"] * 6 + ["large_b"] * 6,
-        }
+    frame = _ladder_frame()
+
+    index = common_sample_index(
+        ["y ~ x", "y ~ x + z"], frame, cluster_col="county", min_cluster_size=5
     )
 
-    common = common_sample_index(["y ~ x"], frame, cluster_col="county", min_cluster_size=5)
-
-    assert len(common) == 12
-    assert "small" not in frame.loc[common, "county"].unique()
-
-
-def test_oster_delta_recovers_known_delta_with_planted_confound():
-    # Proportional-selection design (Oster 2019's own validity check): the omitted
-    # confound u and the observed control w load onto x identically, and onto y
-    # identically, with x's *direct* effect on y set to exactly zero by construction
-    # (the oracle regression y ~ x + w + u recovers beta_x = 0). Under equal selection
-    # the true coefficient of proportionality is delta = 1, so solving for the delta
-    # that zeroes the coefficient - using the oracle regression's R^2 as Rmax instead
-    # of the 1.3x heuristic - must recover delta close to 1.
-    rng = np.random.default_rng(7)
-    n = 200_000
-    w = rng.normal(size=n)
-    u = rng.normal(size=n)
-    x = w + u + 1.0 * rng.normal(size=n)
-    y = 1.0 * w + 1.0 * u + 0.5 * rng.normal(size=n)
-    frame = pd.DataFrame({"y": y, "x": x, "w": w, "u": u})
-
-    res_restricted = smf.ols("y ~ x", data=frame).fit()
-    res_full = smf.ols("y ~ x + w", data=frame).fit()
-    res_oracle = smf.ols("y ~ x + w + u", data=frame).fit()
-
-    assert np.isclose(res_oracle.params["x"], 0.0, atol=0.02)
-
-    rmax = res_oracle.rsquared
-    delta = oster_delta(res_restricted, res_full, "x", rmax_multiplier=rmax / res_full.rsquared)
-
-    assert np.isclose(delta, 1.0, atol=0.05)
+    # The three "small" rows are also among the five with a missing z, so the cluster
+    # filter has to be judged on what survives the intersection, not on the raw frame.
+    assert set(frame.loc[index, "county"]) == {"large_a", "large_b"}
+    assert len(index) == 55
 
 
-def test_oster_delta_returns_nan_when_r_squared_does_not_increase():
-    rng = np.random.default_rng(1)
-    frame = pd.DataFrame({"y": rng.normal(size=200), "x": rng.normal(size=200)})
-    res_restricted = smf.ols("y ~ x", data=frame).fit()
-    # "Full" model with the same regressor: R^2 cannot increase.
-    res_full = smf.ols("y ~ x", data=frame).fit()
+def test_fit_stats_reports_clusters_only_when_clustered():
+    frame = _ladder_frame()
 
-    assert np.isnan(oster_delta(res_restricted, res_full, "x"))
+    ordinary = fit_stats(run_ols("y ~ x", frame))
+    clustered = fit_stats(run_ols("y ~ x", frame, cluster_col="county", min_cluster_size=5))
+
+    assert ordinary["nobs"] == 60
+    assert ordinary["cov_type"] == "HC1"
+    assert "n_clusters" not in ordinary
+    assert clustered["cov_type"] == "cluster"
+    assert clustered["n_clusters"] == 2

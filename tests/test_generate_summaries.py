@@ -463,3 +463,65 @@ def test_batch_skips_regions_whose_sections_already_exist(summary_db):
     requests, skipped = gsb.build_section_requests(summary_db, ["90001"], 20)
     assert requests == []
     assert skipped == ["90001"]
+
+
+def test_solo_section_records_what_was_not_assessed(summary_db):
+    missing = generate_summaries.categories_without_evidence(summary_db, "90001")
+
+    # The fixture supplies only demographic and der_observed evidence.
+    assert "community_demographics" not in missing
+    assert "observed_der" not in missing
+    assert "energy_affordability" in missing
+    assert "model_pv" in missing
+
+
+def test_all_zero_der_is_detected(summary_db):
+    assert generate_summaries.observed_der_is_all_zero(summary_db, "90001") is False
+
+    summary_db.execute(
+        "UPDATE metric_observations SET metric_value = 0 WHERE metric_category = 'der_observed'"
+    )
+    summary_db.commit()
+    assert generate_summaries.observed_der_is_all_zero(summary_db, "90001") is True
+
+    # A region with no DER observations at all is not "all zero".
+    assert generate_summaries.observed_der_is_all_zero(summary_db, "99999") is False
+
+
+def test_thin_region_gets_the_fixed_not_enough_data_overview(summary_db, monkeypatch):
+    monkeypatch.setattr(generate_summaries, "MIN_OVERVIEW_SOURCE_SECTIONS", 2)
+    summary_db.execute(
+        """
+        INSERT INTO summary_responses (
+            category, region_id, summary_text, metric_snapshot,
+            model_version, generated_at
+        ) VALUES ('observed_der', '90001', 'Only DER.', '{}', ?, '2026-01-01')
+        """,
+        (generate_summaries.SUMMARY_VERSION,),
+    )
+    summary_id = summary_db.execute(
+        "SELECT summary_id FROM summary_responses WHERE category = 'observed_der'"
+    ).fetchone()["summary_id"]
+    evidence_id = summary_db.execute(
+        "SELECT evidence_id FROM evidence_chunks LIMIT 1"
+    ).fetchone()["evidence_id"]
+    summary_db.execute(
+        "INSERT INTO summary_evidence (summary_id, evidence_id) VALUES (?, ?)",
+        (summary_id, evidence_id),
+    )
+    summary_db.commit()
+
+    # One section cannot support a synthesis, but the row must still exist so no
+    # consumer has to special case the regions with the least data.
+    stored = generate_summaries.generate_and_store_overview(summary_db, "90001")
+    assert stored is not None and stored.changed
+
+    row = summary_db.execute(
+        "SELECT summary_text, metric_snapshot FROM summary_responses"
+        " WHERE region_id = '90001' AND category = 'overview'"
+    ).fetchone()
+    assert row["summary_text"] == generate_summaries.INSUFFICIENT_DATA_OVERVIEW
+    snapshot = json.loads(row["metric_snapshot"])
+    assert snapshot["insufficient_data"] is True
+    # Fixed text is not model output and must not be attributed to one.
+    assert snapshot["summary_model"] is None

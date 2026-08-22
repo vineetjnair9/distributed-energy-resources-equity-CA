@@ -56,6 +56,8 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -991,6 +993,11 @@ def fetch_acs_predictors(df_full: pd.DataFrame, census_api_key: str) -> tuple[pd
 
 def fetch_nasa_power_table(parameter_string: str, zip_points: pd.DataFrame) -> list[dict]:
     session = requests.Session()
+    # NASA POWER rate-limits this endpoint under sustained per-point polling; retry
+    # with backoff on 429/5xx rather than aborting ~5,500 requests in.
+    retry = Retry(total=8, backoff_factor=5, status_forcelist=[429, 500, 502, 503, 504],
+                  respect_retry_after_header=True, allowed_methods=["GET"])
+    session.mount("https://", HTTPAdapter(max_retries=retry))
     rows: list[dict] = []
     for _, row in zip_points.iterrows():
         url = (

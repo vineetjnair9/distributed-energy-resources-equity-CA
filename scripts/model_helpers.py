@@ -73,90 +73,6 @@ def run_ols(
     return model.fit(cov_type="cluster", cov_kwds={"groups": groups})
 
 
-def fit_stats(res) -> dict:
-    """Summarize N, degrees of freedom, fit, and covariance type for one OLS result.
-
-    Exported alongside every coefficient table so sample composition and fit quality
-    travel with the model, not just the coefficients.
-    """
-    stats = {
-        "nobs": int(res.nobs),
-        "df_resid": float(res.df_resid),
-        "rsquared": float(res.rsquared),
-        "rsquared_adj": float(res.rsquared_adj),
-        "cov_type": res.cov_type,
-    }
-    if res.cov_type == "cluster":
-        groups = (res.cov_kwds or {}).get("groups")
-        if groups is not None:
-            stats["n_clusters"] = int(pd.Series(groups).nunique())
-    return stats
-
-
-def common_sample_index(
-    formulas: list[str],
-    df: pd.DataFrame,
-    cluster_col: str | None = None,
-    min_cluster_size: int = DEFAULT_MIN_CLUSTER_SIZE,
-) -> pd.Index:
-    """Intersect the non-missing rows implied by every formula, plus the cluster filter.
-
-    Fitting each rung of a cumulative ladder on its own listwise-deleted sample lets
-    coefficient movement across rungs mix control effects with sample composition.
-    Fitting every rung on this shared index isolates the control effect.
-    """
-    common_index: pd.Index | None = None
-    for formula in formulas:
-        _, design = patsy.dmatrices(
-            formula, df, return_type="dataframe", NA_action="drop"
-        )
-        common_index = (
-            design.index if common_index is None else common_index.intersection(design.index)
-        )
-
-    if common_index is None or common_index.empty:
-        raise ValueError("No rows are common across the provided formulas.")
-
-    if cluster_col is not None:
-        if cluster_col not in df.columns:
-            raise KeyError(f"Cluster column is missing: {cluster_col}")
-        groups = df.loc[common_index, cluster_col].astype("string")
-        common_index = common_index[groups.notna().to_numpy()]
-        groups = df.loc[common_index, cluster_col].astype("string")
-        group_sizes = groups.value_counts(dropna=True)
-        eligible_groups = group_sizes[group_sizes >= min_cluster_size].index
-        common_index = common_index[groups.isin(eligible_groups).to_numpy()]
-
-    return common_index
-
-
-def oster_delta(res_restricted, res_full, focal_term: str, rmax_multiplier: float = 1.3) -> float:
-    """Oster (2019) delta: how much selection on unobservables (relative to observables)
-    would be needed to drive the focal coefficient to zero.
-
-    beta_full = beta_restricted - delta * (beta_restricted - beta_full)
-                * (rmax - r2_full) / (r2_full - r2_restricted)   [rearranged for delta=0 case]
-
-    Solving beta*(delta) = 0 for delta gives the formula below. Returns nan rather than
-    a misleading number when R^2 does not increase from restricted to full, or when the
-    denominator collapses (no observable selection, or r2_full already at rmax).
-    """
-    beta_restricted = res_restricted.params[focal_term]
-    beta_full = res_full.params[focal_term]
-    r2_restricted = res_restricted.rsquared
-    r2_full = res_full.rsquared
-    rmax = min(rmax_multiplier * r2_full, 1.0)
-
-    if r2_full <= r2_restricted:
-        return float("nan")
-
-    denominator = (beta_restricted - beta_full) * (rmax - r2_full)
-    if np.isclose(denominator, 0.0):
-        return float("nan")
-
-    return float(beta_full * (r2_full - r2_restricted) / denominator)
-
-
 def vif_from_formula(
     formula: str,
     df: pd.DataFrame,
@@ -190,3 +106,88 @@ def vif_from_formula(
         .sort_values("VIF", ascending=False)
         .reset_index(drop=True)
     )
+
+
+def _n_clusters(res) -> int | None:
+    """Number of clusters behind a cluster-robust covariance, or None if not clustered."""
+    if getattr(res, "cov_type", None) != "cluster":
+        return None
+    cov_kwds = getattr(res, "cov_kwds", None) or {}
+    n_groups = getattr(res, "n_groups", None)
+    if n_groups is None:
+        n_groups = cov_kwds.get("n_groups")
+    if n_groups is None:
+        groups = cov_kwds.get("groups")
+        if groups is None:
+            return None
+        return int(pd.Series(np.asarray(groups).ravel()).nunique())
+    # Multiway clustering reports one count per grouping dimension; the first is the
+    # one this project uses (single-dimension county clusters).
+    return int(np.asarray(n_groups).ravel()[0])
+
+
+def fit_stats(res) -> dict:
+    """Sample size and fit summary for a statsmodels result.
+
+    ``summary2().tables[1]`` carries coefficients only, so exported tables cannot tell
+    a reader whether a coefficient moved because a control was added or because the
+    estimation sample changed. These are the numbers that separate the two.
+    """
+    stats = {
+        "nobs": int(res.nobs),
+        "df_resid": int(res.df_resid),
+        "rsquared": float(res.rsquared),
+        "rsquared_adj": float(res.rsquared_adj),
+        "cov_type": str(getattr(res, "cov_type", "nonrobust")),
+    }
+    n_clusters = _n_clusters(res)
+    if n_clusters is not None:
+        stats["n_clusters"] = n_clusters
+    return stats
+
+
+def common_sample_index(
+    formulas,
+    df: pd.DataFrame,
+    cluster_col: str | None = None,
+    min_cluster_size: int = DEFAULT_MIN_CLUSTER_SIZE,
+) -> pd.Index:
+    """Rows usable by every one of ``formulas``, for fitting a nested ladder.
+
+    Control blocks differ in missingness, so a cumulative ladder fitted naively loses
+    observations as it climbs and coefficient movement then mixes control effects with
+    sample composition. Intersecting the patsy-droppable row sets up front freezes the
+    sample across every rung.
+
+    ``cluster_col`` applies the same minimum-cluster-size rule ``run_ols`` uses, so a
+    clustered rung shares the frozen sample rather than silently dropping small
+    counties out from under the rungs below it.
+    """
+    if isinstance(formulas, str):
+        formulas = [formulas]
+    formulas = list(formulas)
+    if not formulas:
+        raise ValueError("common_sample_index requires at least one formula.")
+
+    index: pd.Index | None = None
+    for formula in formulas:
+        _, design = patsy.dmatrices(
+            formula,
+            df,
+            return_type="dataframe",
+            NA_action="drop",
+        )
+        rows = pd.Index(design.index)
+        index = rows if index is None else index.intersection(rows)
+
+    if cluster_col is not None:
+        if cluster_col not in df.columns:
+            raise KeyError(f"Cluster column is missing: {cluster_col}")
+        groups = df.loc[index, cluster_col].astype("string")
+        groups = groups.loc[groups.notna()]
+        group_sizes = groups.value_counts(dropna=True)
+        eligible_groups = group_sizes[group_sizes >= min_cluster_size].index
+        index = pd.Index(groups.index[groups.isin(eligible_groups)])
+
+    # Intersect back against df so the returned index keeps the frame's row order.
+    return df.index.intersection(index)

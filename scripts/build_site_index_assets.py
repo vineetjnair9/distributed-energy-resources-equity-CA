@@ -352,20 +352,18 @@ def load_coef(path: Path) -> pd.DataFrame:
 
 def build_coefficient_path() -> None:
     apply_paper_style()
-    # C1-C5 is the genuinely nested cumulative ladder (REGRESSION_ROBUSTNESS_PLAN.md):
-    # each rung's formula is a strict RHS superset of the previous rung's, and all five
-    # are fit on one frozen common sample, so this is the only place a left-to-right
-    # coefficient-path reading is actually valid. The old M1-M8 mapping here read like a
-    # ladder but was not one: M3 swapped the climate control rather than adding to it,
-    # and M6 dropped climate for county FE rather than accumulating on top of M5. Those
-    # models remain available as the separate "control-block sensitivity" panel
-    # (regenerate_standardized_figures.py's PAPER_ROBUSTNESS_MODELS).
     model_map = [
-        ("C1", "Model C1 (core, common sample)"),
-        ("C2", "Model C2 (+ education, housing value)"),
-        ("C3", "Model C3 (+ housing structure, tenure)"),
-        ("C4", "Model C4 (+ utility FE)"),
-        ("C5", "Model C5 (+ county FE, county-clustered SEs)"),
+        # Was "Model 1 baseline (CDD+HDD)", a label no current notebook produces — this
+        # figure had been silently drawing an M1 column from a stale table left over
+        # from an earlier notebook version.
+        ("M1", "Model 1 baseline (climate controls)"),
+        ("M2", "Model 2 (add bachelors)"),
+        ("M3", "Model 3B (temp only)"),
+        ("M4", "Model 4R interactions (centered, no poverty control)"),
+        ("M5", "Model 5 utility FE"),
+        ("M6", "Model 6B county fe"),
+        ("M7", "Model 7 (infrastructure controls, outcome-safe)"),
+        ("M8", "Model 8 add demand proxy"),
     ]
     outcomes = {
         "y_pv": "Solar PV",
