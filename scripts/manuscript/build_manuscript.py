@@ -25,6 +25,7 @@ import copy, os, re, shutil, sys, zipfile
 import xml.etree.ElementTree as ET
 sys.path.insert(0, os.path.dirname(__file__))
 import content as C
+from spelling import americanize
 
 W='{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 A='{http://schemas.openxmlformats.org/drawingml/2006/main}'
@@ -145,16 +146,21 @@ FIGCAP={
  1:"Fig. 1 | Distributed energy deployment across California ZIP Code Tabulation Areas. "
    "Rooftop photovoltaics, battery storage and aggregate EV charging, before any regression "
    "adjustment. Blank areas indicate excluded or missing observations.",
- 2:"Fig. 2 | Coefficients across the nested cumulative ladder, C1 to C5. Standardised "
-   "predictors; each panel traces one coefficient as confounder blocks accumulate on a frozen "
-   "common sample of 1,160 ZCTAs. Filled markers denote p < 0.05.",
+ 2:"Fig. 2 | Focal coefficients across the model series, by technology. Standardised "
+   "predictors. Each specification adds or substitutes one control block against a fixed "
+   "core of income, race and ethnicity shares, poverty rate and the outcome-specific "
+   "resource control; specifications are siblings rather than nested rungs, and are defined "
+   "in Supplementary Note S1. The storage coefficients (b) are the largest and the "
+   "flattest; the charging coefficients (c) are the only set in which race terms cross "
+   "zero.",
  3:"Fig. 3 | Race-coefficient attenuation after adding housing structure and tenure. Hollow "
    "points are the baseline specification; filled points add exhaustive ACS B25024 structure "
-   "shares (single-family reference) and B25003 owner occupancy (renter reference).",
- 4:"Fig. 4 | Charger-type decomposition. Baseline coefficients for aggregate charging and for "
-   "Level 1, Level 2 and DC fast units separately. The positive association with poverty is "
-   "carried by Level 2 units; Level 1 is zero in 97.8 per cent of ZCTAs and is shown for "
-   "completeness only.",
+   "shares (single-family reference) and B25003 owner occupancy (renter reference). Housing "
+   "composition absorbs 32 to 53 per cent of these coefficients without eliminating any.",
+ 4:"Fig. 4 | Charger-type decomposition. Baseline coefficients for aggregate charging and "
+   "for Level 1, Level 2 and DC fast units separately. The positive association with "
+   "poverty is carried by Level 2 units; Level 1 is zero in 97.8 per cent of ZCTAs and is "
+   "shown for completeness only.",
 }
 def emit(items):
     for kind,val in items:
@@ -175,25 +181,34 @@ def seg(name):
         if on: out.append(txt)
     return out
 
-emit([('H2','Disparities differ by technology')])
-for x in seg('Disparities differ by technology')[:1]: add(P(None,x))
+# Figures follow the order of first mention: geography, model series, housing, subtype.
+S1='Disparities differ by technology'
+emit([('H2',S1)])
+add(P(None,seg(S1)[0]))
 emit([('FIG',132),('CAP',1),
-      ('TBLCAP','Table 1 | Baseline associations between neighbourhood composition and distributed energy deployment. Standardised predictors; heteroskedasticity-robust (HC1) standard errors in parentheses. *p < 0.05, **p < 0.01, ***p < 0.001.'),
+      ('TBLCAP','Table 1 | Baseline associations between neighbourhood composition and distributed energy deployment. Standardised predictors; heteroskedasticity-robust (HC1) standard errors in parentheses. Full coefficient tables for every specification in the model series are in Supplementary Note S1. *p < 0.05, **p < 0.01, ***p < 0.001.'),
       ('TBL',table(T1))])
-for x in seg('Disparities differ by technology')[1:]: add(P(None,x))
+for x in seg(S1)[1:]: add(P(None,x))
 emit([('FIG',32),('CAP',2)])
 
-emit([('H2','Rooftop solar and storage')])
-for x in seg('Rooftop solar and storage'): add(P(None,x))
+S2='Battery storage: the deepest and most persistent disparities'
+emit([('H2',S2)])
+for x in seg(S2): add(P(None,x))
+
+S3='Rooftop solar: disparities that housing composition partly explains'
+emit([('H2',S3)])
+for x in seg(S3): add(P(None,x))
 emit([('FIG',236),('CAP',3)])
 
-emit([('H2','Charging measures infrastructure, not access')])
-for x in seg('Charging measures infrastructure, not access'): add(P(None,x))
+S4='Charging measures infrastructure, not usable access'
+emit([('H2',S4)])
+for x in seg(S4): add(P(None,x))
 emit([('FIG',62),('CAP',4)])
 
-emit([('H2','Disparities under a fully stacked specification')])
-for x in seg('Disparities under a fully stacked specification'): add(P(None,x))
-emit([('TBLCAP','Table 2 | Robustness of the focal coefficients. β C1 and β C5 are the bottom and top rungs of the nested cumulative ladder (standardised predictors, frozen sample of 1,160 ZCTAs, 42 county clusters). Conley HAC reports significance under spatially robust standard errors at distance cutoffs from 50 to 200 km. Spec curve counts specifications, out of 48 confounder-block combinations, in which the coefficient is significant and same-signed as the median. Oster δ is reported only where adding controls attenuates the coefficient. *p < 0.05, **p < 0.01, ***p < 0.001.'),
+S5='Disparities under a fully stacked specification'
+emit([('H2',S5)])
+for x in seg(S5): add(P(None,x))
+emit([('TBLCAP','Table 2 | Robustness of the focal coefficients. \u03b2 C1 and \u03b2 C5 are the bottom and top rungs of the nested cumulative ladder (standardised predictors, frozen sample of 1,160 ZCTAs, 42 county clusters). Conley HAC reports significance under spatially robust standard errors at distance cutoffs from 50 to 200 km. Spec curve counts specifications, out of 48 confounder-block combinations, in which the coefficient is significant and same-signed as the median. Oster \u03b4 is reported only where adding controls attenuates the coefficient. *p < 0.05, **p < 0.01, ***p < 0.001.'),
       ('TBL',table(T2))])
 
 emit([('H2','Affordability context')])
@@ -215,24 +230,24 @@ GLOBAL=[("ZIP/ZCTA","ZCTA"),("ZIP/ZCTAs","ZCTAs"),
  ("Section 6.9","Methods"),("Section 6.2","Methods"),("Section 6.3","Methods"),
  ("Section 4.1","Results"),("Section 4.2","Results"),("Section 4.3","Results"),
  ("Section 4.4","Results"),("Section 4.5","Results"),("Section 4.7","Results"),
- ("Section 4.8","Supplementary Information"),("Section 4.9","Results"),
+ ("Section 4.8","Supplementary Note S10"),("Section 4.9","Results"),
  ("Appendix: Additional Robustness Visuals","the Supplementary Information"),
  ("the refreshed aggregate charger baseline","the aggregate charger baseline"),
  ("The regenerated deterministic LOWESS audit","The LOWESS fits"),
  ("source files used in the repo","assembled source files"),
- ("Table 7","Supplementary Table S13"),("Table 8","Supplementary Table S7"),
- ("Table 9","Supplementary Table S8"),("Table 4","Supplementary Table S6"),
- ("Table 5","Supplementary Table S4"),("Table 6","Supplementary Table S14"),
- ("Table 3","Table 1"),("Table 1:","Supplementary Table S1:"),("Table 2:","Supplementary Table S15:"),
- ("Figure 21","Figure 3"),("Figure 16","Supplementary Fig. S5"),
- ("Figure 17","Supplementary Fig. S6"),("Figure 18","Supplementary Fig. S7"),
- ("Figure 19","Supplementary Fig. S8"),("Figure 20","Supplementary Fig. S9"),
- ("Figure 13","Supplementary Fig. S10"),("Figure 14","Supplementary Fig. S11"),
- ("Figure 15","Supplementary Fig. S12"),("Figure 10","Supplementary Fig. S13"),
- ("Figure 11","Supplementary Fig. S14"),("Figure 12","Supplementary Fig. S15"),
- ("Figure 2","Supplementary Fig. S16"),("Figure 3","Figure 2"),
- ("Figure 5","Supplementary Fig. S17"),("Figure 6","Supplementary Fig. S1"),
- ("Figure 7","Supplementary Fig. S2"),("Figure 8","Supplementary Fig. S18"),
+ ("Table 7","Supplementary Table S17"),("Table 8","Supplementary Table S18"),
+ ("Table 9","Supplementary Table S19"),("Table 4","Supplementary Table S6"),
+ ("Table 5","Supplementary Table S4"),("Table 6","Supplementary Table S16"),
+ ("Table 3","Table 1"),("Table 1:","Supplementary Table S14:"),("Table 2:","Supplementary Table S15:"),
+ ("Figure 21","Figure 3"),("Figure 16","Supplementary Fig. S13"),
+ ("Figure 17","Supplementary Fig. S14"),("Figure 18","Supplementary Fig. S15"),
+ ("Figure 19","Supplementary Fig. S17"),("Figure 20","Supplementary Fig. S16"),
+ ("Figure 13","Supplementary Fig. S6"),("Figure 14","Supplementary Fig. S7"),
+ ("Figure 15","Supplementary Fig. S9"),("Figure 10","Supplementary Fig. S10"),
+ ("Figure 11","Supplementary Fig. S11"),("Figure 12","Supplementary Fig. S12"),
+ ("Figure 2","Supplementary Fig. S8"),("Figure 3","Figure 2"),
+ ("Figure 5","Supplementary Fig. S5"),("Figure 6","Supplementary Fig. S1"),
+ ("Figure 7","Supplementary Fig. S2"),("Figure 8","Supplementary Fig. S3"),
  ("Figure 9","Figure 4"),("Figure 4","Figure 2"),
 ]
 def M(i, extra=None, new=None):
@@ -378,8 +393,6 @@ for f in ['comments.xml','commentsExtended.xml','commentsExtensible.xml','commen
     if os.path.exists(fp): os.remove(fp)
 # swap Figure 2 image
 import subprocess
-shutil.copy(os.path.join(ROOT,'outputs/standardized_figures/coefficient_path_c1_c5.png'),
-            os.path.join(OUT,'word','media','image2.png'))
 t.write(os.path.join(OUT,'word','document.xml'),xml_declaration=True,encoding='UTF-8',default_namespace=None)
 print("written")
 
@@ -477,26 +490,28 @@ LATE_EDITS = [
     ("model ladder", "model series"),
 ]
 
-# Supplementary figure numbering. The assembly step assigns numbers by mapping each
-# old main-text figure to its new SI slot, which leaves a gap where the wind figure
-# lands; this closes it so the series runs consecutively. Both builders must use the
-# same map — the main text's references and the SI's captions are renumbered by it
-# independently.
-SI_FIG_RENUMBER = {1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9,
-                   11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16}
+SI_FIG_RENUMBER = {}  # numbering is written explicitly; no renumbering pass
 
 # Descriptive SI items that the compressed main text no longer mentions individually.
 # Nature requires every Supplementary item to be cited, so they are collected here.
 SUPPLEMENTARY_POINTER = (
-    "Descriptive material supporting the analysis sample is reported in the Supplementary "
-    "Information: variable definitions (Supplementary Table S1), summary statistics "
-    "(Supplementary Table S15), the distribution of raw deployment rates (Supplementary "
-    "Fig. S15), non-parametric gradients against non-white share and educational attainment "
-    "(Supplementary Figs. S9 and S10), the two affordability outcomes and their model "
-    "coefficients (Supplementary Figs. S12, S13 and S14), the exploratory principal-component "
-    "and K-means neighbourhood typology (Supplementary Fig. S11 and Supplementary Table S14), "
-    "spatial residual maps (Supplementary Fig. S7) and the baseline cross-outcome comparison "
-    "(Supplementary Fig. S16)."
+    "The Supplementary Information reports the specifications and robustness evidence behind "
+    "these results as thirteen Notes. Supplementary Note S1 defines every specification in the "
+    "model series and traces each coefficient across it (Supplementary Figs. S1 to S3, "
+    "Supplementary Table S1); Note S2 the nested cumulative ladder; Note S3 the specification "
+    "curve (Supplementary Fig. S5); Note S4 the Oster bounds (Supplementary Table S7); and "
+    "Note S5 the alternative functional form, weighting and spatial specifications "
+    "(Supplementary Table S9). Note S6 reports the housing-attenuation coefficients, Note S7 "
+    "the descriptive gradients and raw distributions (Supplementary Figs. S6 to S8), Note S8 "
+    "the exploratory neighbourhood typology (Supplementary Fig. S9, Supplementary Table S16), "
+    "Note S9 the energy-burden and affordability models (Supplementary Figs. S10 to S12), and "
+    "Note S10 the wind comparison (Supplementary Fig. S13). Note S11 reports the "
+    "cross-validated predictive model comparisons and spatial residual maps (Supplementary "
+    "Figs. S14 to S17); Note S12 the multicollinearity, spatial-autocorrelation and "
+    "spatially robust standard-error diagnostics (Supplementary Tables S17 to S19); and "
+    "Note S13 the data-construction decisions, including zero shares by outcome, the storage "
+    "customer-sector sensitivity, variable definitions and summary statistics "
+    "(Supplementary Tables S12 to S15)."
 )
 
 
@@ -694,6 +709,28 @@ def fix_bibliography(body):
     return len(keep), dropped
 
 
+def americanize_document(body):
+    """Convert British spellings to American across the document.
+
+    Skips the bibliography: reference titles are reproduced as published, so
+    "Characterizing local rooftop solar adoption inequity" and its neighbours keep
+    whatever spelling their journals used.
+    """
+    sdt = find_bibliography_sdt(body)
+    skip = {id(p) for p in sdt.iter(W + 'p')}
+    in_refs = False
+    for p in body.iter(W + 'p'):
+        s = para_text(p)
+        if s.strip() == 'References':
+            in_refs = True
+            continue
+        if id(p) in skip or in_refs:
+            continue
+        new = americanize(s)
+        if new != s:
+            set_para_text(p, new)
+
+
 def repackage(unpacked, dest):
     if os.path.exists(dest):
         os.remove(dest)
@@ -761,12 +798,11 @@ print('assembled body: %d elements' % len(list(body)))
 edits = apply_text_passes(body)
 print('sentence-level corrections applied: %d paragraphs' % edits)
 n_refs, dropped = fix_bibliography(body)
+americanize_document(body)
+print('spellings converted to American English')
 print('references: %d kept, dropped as uncited: %s' % (n_refs, dropped or 'none'))
 t.write(os.path.join(OUT, 'word', 'document.xml'), xml_declaration=True, encoding='UTF-8')
 
-# Figure 2 becomes the nested-ladder panel, which has a different aspect ratio than the
-# figure whose drawing it reuses.
-fix_image_extent(OUT, 'rId11', 'image2.png')
 strip_comment_parts(OUT)
 repackage(OUT, DEST_DOCX)
 print('wrote %s (%.1f MB)' % (DEST_DOCX, os.path.getsize(DEST_DOCX) / 1e6))
