@@ -56,8 +56,8 @@ The script also rewrites the main aggregated intermediate files and controls:
 
 ## Release quick start
 
-Create the pinned Python 3.11 environment, run the complete release pipeline, and
-execute the release checks:
+Create the pinned Python 3.11 environment. Copy `.env.example` to `.env` and fill in
+your `CENSUS_API_KEY`, then run the analysis pipeline and release checks:
 
 ```bash
 conda env create -f environment.yml
@@ -75,13 +75,80 @@ wind turbine database, and the utility service territories. It also prints manua
 acquisition steps for Tracking the Sun, which has no stable download URL.
 
 `CENSUS_API_KEY` is needed for the live ACS pull. The default pipeline reuses the
-fixed 2023 NASA POWER files, avoiding thousands of redundant network requests. Use
+fixed 2023 NASA POWER files when all three cached files exist. A fresh checkout or
+incomplete NASA cache triggers a fetch, which can add about an hour to the first
+build. `--skip-external` requires existing processed files and fails before changing
+outputs if any required cache file is missing. Use
 `python scripts/run_all.py --skip-data` to refit models and redraw figures without
 rebuilding processed data.
 
-The database is deterministic except for five optional LLM summaries and is not
-version-controlled. Rebuild it with `python scripts/run_all.py --only database`;
-without `OPENAI_API_KEY`, the schema and source-backed tables are still generated.
+The database is not version-controlled and its build stage is opt-in. Core database
+setup does not require an OpenAI key and never generates summaries automatically.
+
+## Run the backend
+
+From the repository root, in the environment above and with `.env` exported, build
+the application data and launch the API:
+
+```bash
+python scripts/fetch_exact_public_data.py
+python scripts/run_all.py --only data models database
+python -m uvicorn backend.api.api:app --host 127.0.0.1 --port 8000
+```
+
+The data and models stages create the four inputs required for database population:
+`combined_der_dataset_w_controls_predictors.csv`, `zip_to_utility.csv`,
+`combined_der_dataset_w_shape.csv`, and `model_outputs_by_region.csv`, all under
+`data/processed/`. If those files already exist, just run:
+
+```bash
+python scripts/run_all.py --only database
+```
+
+Check readiness at `http://127.0.0.1:8000/health` and API documentation at
+`http://127.0.0.1:8000/docs`. Readiness returns HTTP 200 when the schema is compatible
+and the regions, geometries, metrics, model outputs, and evidence tables contain
+data. Missing, unreadable, incompatible, or empty databases return HTTP 503 with
+setup instructions. Summaries may be empty. The server checks readiness at startup
+and on every health request, so publishing a valid database restores readiness
+without restarting the server.
+
+Startup never creates or rebuilds a database. API connections are read-only.
+`DER_DB_PATH` optionally sets the database location; export it for the builder,
+API, and summary scripts (relative paths resolve from the current working directory).
+
+### Safely replace an existing database
+
+An existing database is preserved unless replacement is explicitly requested:
+
+```bash
+python scripts/run_all.py --only database --replace-database
+```
+
+The builder checks input files, populates a temporary database beside the destination,
+validates its schema, core data, integrity, and foreign keys, and only then publishes
+it with an atomic replacement. Failed builds leave the existing database untouched.
+Before replacement, it saves the old database, including any generated summaries, to
+a timestamped `.backup-...sqlite3` file and prints the backup path. The new database
+contains the rebuilt core data; summaries must be generated separately for that data.
+Stop any summary-generation or other database-writing process before replacement.
+
+The lower-level `create_db.py` command refuses to reset an existing nonempty file;
+`populate_tables.py` uses the same safe builder. Neither command is part of API
+startup. Schema upgrades should be published through a validated rebuild, not by
+running destructive initialization against a serving database.
+
+### Backend checks
+
+These checks use temporary databases and mocked external requests; they do not
+require a generated research dataset, a Census key, or an OpenAI key:
+
+```bash
+python -m pytest -q tests/test_api.py tests/test_database.py tests/test_database_build.py tests/test_data_bootstrap.py tests/test_pipeline_database.py tests/test_generate_summaries.py
+```
+
+The full `pytest -q` release suite additionally expects the processed research data
+and its analysis dependencies.
 
 ## Rebuilding processed data
 

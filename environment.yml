@@ -38,3 +38,4 @@ dependencies:
       - openai==3.0.0
       - python-dotenv==1.2.2
       - python-docx==1.2.0
+      - httpx==0.28.1
