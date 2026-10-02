@@ -100,6 +100,13 @@ ACS_HOUSING_MANIFEST = RAW / "acs" / f"acs_{YEAR}_5yr_housing_query_manifest.jso
 
 LOGGER = logging.getLogger("rebuild_processed_data")
 
+NASA_CACHE_FILES = (
+    "ca_zip_ghi_mean_2023.csv",
+    "ca_zip_temperature_controls_2023.csv",
+    "ca_zip_wind_means_2023.csv",
+)
+EXTERNAL_CACHE_FILES = ("acs_predictors_ca_zip.csv", *NASA_CACHE_FILES, "zip_to_utility.csv", "demand.csv")
+
 
 STATE_TO_ABBR = {
     "alabama": "AL",
@@ -253,15 +260,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-external",
         action="store_true",
-        help="Reuse existing external outputs (ACS/NASA) instead of making live requests.",
+        help="Require cached ACS/NASA, utility and demand outputs; fail before rebuilding if any are missing.",
     )
     parser.add_argument(
         "--reuse-nasa",
         action="store_true",
         help=(
-            "Pull ACS live but reuse the existing NASA POWER files. NASA POWER for a "
-            "completed year is a fixed historical reanalysis, so re-pulling it returns "
-            "identical values at the cost of ~5,500 requests (~1 hour). The local "
+            "Pull ACS live and reuse NASA POWER files when all three cached CSVs exist. "
+            "Fetch NASA POWER if any are missing (about 5,500 requests, roughly 1 hour). The local "
             "utility, demand and geo steps still rebuild. Ignored with --skip-external."
         ),
     )
@@ -275,6 +281,20 @@ def parse_args() -> argparse.Namespace:
 
 def configure_logging(level: str) -> None:
     logging.basicConfig(level=getattr(logging, level), format="%(levelname)s %(message)s")
+
+
+def validate_external_cache() -> None:
+    """Reject an incomplete offline rebuild before any outputs are changed."""
+    missing = [PROCESSED / name for name in EXTERNAL_CACHE_FILES if not (PROCESSED / name).is_file()]
+    if missing:
+        paths = "\n".join(f"  - {path}" for path in missing)
+        raise FileNotFoundError(
+            "--skip-external requires existing processed files. Missing:\n"
+            f"{paths}\n"
+            "Restore these files from a previous rebuild, or run "
+            "python scripts/rebuild_processed_data.py --reuse-nasa with "
+            "CENSUS_API_KEY set to fetch the external data. No processed files were changed."
+        )
 
 
 def load_name_to_fips() -> dict[str, str]:
@@ -1467,15 +1487,19 @@ def read_or_fetch_external(
         return acs, df_acs, ghi, temp, wind, zip_to_utility, demand, energy_burden
 
     acs, df_acs = fetch_acs_predictors(df_full, args.census_api_key)
-    if args.reuse_nasa:
-        LOGGER.warning(
-            "Reusing existing NASA POWER files (--reuse-nasa). 2023 is a completed "
-            "year, so these values are fixed; re-pulling would return the same numbers."
-        )
+    missing_nasa = [name for name in NASA_CACHE_FILES if not (PROCESSED / name).is_file()]
+    if args.reuse_nasa and not missing_nasa:
+        LOGGER.info("Reusing all three cached 2023 NASA POWER files (--reuse-nasa).")
         ghi = pd.read_csv(PROCESSED / "ca_zip_ghi_mean_2023.csv")
         temp = pd.read_csv(PROCESSED / "ca_zip_temperature_controls_2023.csv")
         wind = pd.read_csv(PROCESSED / "ca_zip_wind_means_2023.csv")
     else:
+        if args.reuse_nasa:
+            LOGGER.warning(
+                "NASA POWER cache is incomplete (missing: %s). Fetching all three "
+                "2023 NASA outputs; this can take about an hour on the first rebuild.",
+                ", ".join(missing_nasa),
+            )
         wind, ghi, temp = build_nasa_outputs()
     zip_to_utility = build_zip_to_utility()
     demand = build_demand_controls()
@@ -1486,6 +1510,8 @@ def read_or_fetch_external(
 def main() -> None:
     args = parse_args()
     configure_logging(args.log_level)
+    if args.skip_external:
+        validate_external_cache()
     PROCESSED.mkdir(parents=True, exist_ok=True)
 
     name_to_fips = load_name_to_fips()

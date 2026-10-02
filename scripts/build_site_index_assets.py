@@ -89,11 +89,18 @@ def derive_analysis_frame() -> pd.DataFrame:
     return df
 
 
+# When set, figures are written here instead of GENERATED and the site mirror is
+# skipped. build_manuscript_lowess_figures.py uses this to emit opaque-white copies for
+# journal submission without disturbing the transparent web/slide assets.
+_OUTPUT_DIR_OVERRIDE = None
+
+
 def _save(fig: plt.Figure, name: str) -> None:
     # PNG only, and honour FIGURE_BG like every other figure in the project. This used
     # to hard-code transparent=True and additionally emit an SVG.
-    GENERATED.mkdir(parents=True, exist_ok=True)
-    path = GENERATED / name
+    dest_dir = _OUTPUT_DIR_OVERRIDE if _OUTPUT_DIR_OVERRIDE is not None else GENERATED
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    path = dest_dir / name
     if TRANSPARENT_BG:
         fig.patch.set_alpha(0)
         for ax in fig.axes:
@@ -104,8 +111,9 @@ def _save(fig: plt.Figure, name: str) -> None:
             ax.patch.set_facecolor(PANEL_BG)
     fig.savefig(path, dpi=320, bbox_inches="tight", transparent=TRANSPARENT_BG,
                 facecolor=fig.get_facecolor())
-    SITE_GENERATED.mkdir(parents=True, exist_ok=True)
-    (SITE_GENERATED / path.name).write_bytes(path.read_bytes())
+    if _OUTPUT_DIR_OVERRIDE is None:
+        SITE_GENERATED.mkdir(parents=True, exist_ok=True)
+        (SITE_GENERATED / path.name).write_bytes(path.read_bytes())
     plt.close(fig)
 
 
@@ -357,7 +365,7 @@ def build_coefficient_path() -> None:
         # figure had been silently drawing an M1 column from a stale table left over
         # from an earlier notebook version.
         ("M1", "Model 1 baseline (climate controls)"),
-        ("M2", "Model 2 (add bachelors)"),
+        ("M2A", "Model 2A (add bachelors)"),
         ("M3", "Model 3B (temp only)"),
         ("M4", "Model 4R interactions (centered, no poverty control)"),
         ("M5", "Model 5 utility FE"),

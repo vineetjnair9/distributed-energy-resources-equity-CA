@@ -89,8 +89,8 @@ ENERGY_BURDEN_OUTCOME_LABELS = {
 
 ENERGY_BURDEN_LADDER_MODELS = [
     ("Model 1 baseline (climate controls)", "M1\nBaseline"),
-    ("Model 2 (add bachelors)", "M2\n+ Education"),
-    ("Model 2 (add housing value)", "M2\n+ Housing"),
+    ("Model 2A (add bachelors)", "M2A\n+ Education"),
+    ("Model 2B (add housing value)", "M2B\n+ Housing"),
     ("Model 5C clustered SEs by county", "M5C\nCounty SEs"),
     ("Model 7 (infrastructure controls, outcome-safe)", "M7\nInfrastructure"),
     ("Model 8 add demand proxy", "M8\nDemand"),

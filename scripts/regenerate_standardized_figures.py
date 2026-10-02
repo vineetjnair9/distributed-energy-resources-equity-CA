@@ -39,8 +39,8 @@ PAPER_MAIN_MODELS = {
 
 PAPER_ROBUSTNESS_MODELS = [
     "Model 1 baseline (climate controls)",
-    "Model 2 (add bachelors)",
-    "Model 2 (add housing value)",
+    "Model 2A (add bachelors)",
+    "Model 2B (add housing value)",
     "Model 2C (add housing structure)",
     "Model 2D (add housing structure and tenure)",
     "Model 4 interactions (centered)",

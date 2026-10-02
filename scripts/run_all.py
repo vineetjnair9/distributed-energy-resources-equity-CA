@@ -6,7 +6,7 @@ the "what order do things go in" documentation that was previously only in the R
 
 Quick start
 -----------
-    # Everything, reusing the fixed 2023 climate pulls (~15 min)
+    # Analysis stages, reusing 2023 climate files when available
     CENSUS_API_KEY=... python scripts/run_all.py
 
     # Everything, re-pulling NASA POWER too (~1 hour longer, same values)
@@ -32,27 +32,27 @@ Stages
     figures    regenerate_standardized_figures.py -> outputs/standardized_figures/*.png
                build_site_index_assets.py --sync  -> outputs/figures/**, site/assets
                                                      (skip with --skip-assets)
-    database   backend/schemas/create_db.py
-               backend/schemas/populate_tables.py
-               backend/schemas/generate_summaries.py  -> data/der_tool.db
+    database   backend/schemas/build_database.py  -> data/der_tool.db
 
 Notebook execution lives here rather than in separate runner scripts. The models stage
 rewrites OUTCOMES_TO_RUN in regression.ipynb before executing it, so a partial rerun is
 `--outcomes y_pv y_storage`; every notebook is written to outputs/executed_notebooks/.
 
-The database stage is NOT run by default: it takes a while and the last step makes
-OpenAI calls. Run it explicitly with --only database.
+The database stage is NOT run by default. Run it explicitly with --only database,
+after data and models, or use --only data models database for an application build.
+It never makes OpenAI calls. Generate summaries separately when needed.
 
 data/der_tool.db is deliberately not version-controlled. It is ~300MB, exceeds
 GitHub's 100MB per-file limit, and is fully rebuildable from the processed CSVs. Of its
-ten tables only summary_responses is LLM-generated, and that is five rows -- everything
-else, including the 246k evidence_chunks, is deterministic string formatting over
-metric_observations and model_outputs.
+nine tables, the optional summaries and their evidence links are produced separately;
+the core database is deterministic formatting over observations and model outputs.
+Existing databases are replaced only with --replace-database, after a staged build
+passes validation and the previous database has been archived.
 
 Environment
 -----------
     CENSUS_API_KEY   required unless --skip-data or --skip-external
-    OPENAI_API_KEY   required for the database stage's summary step
+    DER_DB_PATH      optional database destination (default: data/der_tool.db)
     FIGURE_BG        'transparent' (default) or 'white' (opaque, for journals)
 """
 
@@ -185,8 +185,8 @@ def stage_data(args: argparse.Namespace) -> None:
     if args.skip_external:
         cmd.append("--skip-external")
     elif not args.full_external:
-        # Default: pull ACS live (needed for the housing-structure controls) but reuse
-        # the 2023 NASA POWER files, which are a fixed historical reanalysis.
+        # Pull ACS live and reuse fixed NASA files when present. The builder fetches
+        # them on a fresh checkout or when the cache is incomplete.
         cmd.append("--reuse-nasa")
     _run(cmd, "data")
 
@@ -213,16 +213,11 @@ def stage_figures(args: argparse.Namespace) -> None:
 
 
 def stage_database(args: argparse.Namespace) -> None:
-    """Rebuild data/der_tool.db from the processed CSVs."""
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("[database] OPENAI_API_KEY not set - schema and tables will be rebuilt, "
-              "but the five LLM summaries will be skipped.", flush=True)
-    scripts = ["create_db.py", "populate_tables.py"]
-    if os.environ.get("OPENAI_API_KEY"):
-        scripts.append("generate_summaries.py")
-    for script in scripts:
-        _run([sys.executable, str(ROOT / "backend" / "schemas" / script)],
-             f"database:{script.replace('.py', '')}")
+    """Build and validate a replacement before publishing a database."""
+    cmd = [sys.executable, "-m", "backend.schemas.build_database"]
+    if args.replace_database:
+        cmd.append("--replace-existing")
+    _run(cmd, "database")
 
 
 RUNNERS = {
@@ -239,6 +234,10 @@ def main() -> None:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument("--only", nargs="+", choices=STAGES, help="Run only these stages.")
+    parser.add_argument(
+        "--replace-database", action="store_true",
+        help="Explicitly replace an existing database after validation, keeping a backup.",
+    )
     for stage in STAGES:
         parser.add_argument(f"--skip-{stage}", action="store_true", help=f"Skip the {stage} stage.")
     parser.add_argument(
@@ -276,7 +275,7 @@ def main() -> None:
         print(out.relative_to(ROOT))
         return
 
-    # "database" is opt-in only: it is slow and its last step costs OpenAI calls.
+    # Database publication is an explicit offline operation.
     default_stages = [s for s in STAGES if s != "database"]
     selected = args.only or [s for s in default_stages if not getattr(args, f"skip_{s}")]
 
