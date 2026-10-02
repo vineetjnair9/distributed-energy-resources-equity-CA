@@ -503,7 +503,7 @@
                 <h4>Additional Socioeconomic Controls</h4>
                 <p>I then add another socioeconomic proxy, typically percent bachelor’s degree or higher or log median housing value, to test whether the race/ethnicity coefficients are sensitive to richer measures of social and housing advantage. This step is important because income alone may not fully capture adoption capacity.</p>
                 <p><code>Model 2C</code> separately adds the three non-reference structure shares from the exhaustive B25024 composition: multifamily, mobile-home, and boat/RV/van/other units. Single-family units are the omitted reference. <code>Model 2D</code> adds owner occupancy from B25003; renters are the omitted tenure reference. The notebook fails rather than silently simplifying these specifications if any required housing variable is absent or constant.</p>
-                <p>Exported names: <code>Model 2 (add bachelors)</code>; <code>Model 2 (add housing value)</code>; <code>Model 2C (add housing structure)</code>; <code>Model 2D (add housing structure and tenure)</code></p>
+                <p>Exported names: <code>Model 2A (add bachelors)</code>; <code>Model 2B (add housing value)</code>; <code>Model 2C (add housing structure)</code>; <code>Model 2D (add housing structure and tenure)</code></p>
                 <div class="equation" id="eq-6">
                   <code class="model-formula">y_z = β₀ + β RaceSES_z + θ SESextra_z + γ Climate_z + ε_z</code>
                   <span class="equation-number">(6)</span>
