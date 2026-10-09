@@ -1,30 +1,38 @@
 export function AboutPage() {
   return (
-    <article className="prose card narrow">
-      <h1>How this works</h1>
+    <article className="prose">
+      <h1>Method</h1>
+      <p className="dek">What the numbers are, where they come from, and what they can't tell you.</p>
+      <h2>The unit</h2>
       <p>
-        Every record in the tool hangs off one key: the five-character California ZCTA (<code>region_id</code>). Metrics, model outputs, evidence, and summaries are stored in separate tables and joined only on that key.
+        Everything is organized by ZIP Code Tabulation Area (ZCTA), the Census Bureau's approximation of a ZIP code. Each one has a
+        five-digit ID that ties every indicator, model result, and summary back to the same place.
       </p>
       <h2>Indicators</h2>
       <p>
-        Observed DER (LBNL Tracking the Sun PV, CEC storage and EV charger exports, USGS wind turbines) are aggregated to ZCTAs and merged with ACS 2023 five-year demographics, CEC energy-burden indicators, utility usage reports, and NASA POWER climate. Weather and resource values are coarse gridded estimates at each ZCTA's centroid.
+        Rooftop solar comes from LBNL's Tracking the Sun; battery storage and EV chargers from California Energy Commission exports;
+        wind turbines from the USGS turbine database. These are joined to ACS 2023 five-year demographics, CEC energy-burden measures,
+        utility usage reports, and NASA POWER climate data. Climate values are coarse grid estimates taken at each ZCTA's center.
       </p>
-      <h2>Model screening</h2>
+      <h2>Model results</h2>
       <p>
-        Regressions are fit offline (<code>notebooks/regression.ipynb</code>) across a ladder of specifications, from climate controls only to demographic, housing, and infrastructure controls with county fixed effects. Each ZCTA's residual is ranked within the fitted sample. For DER outcomes, a residual at or below the 25th percentile flags a <strong>priority</strong> region: adoption lower than similar places would predict. For energy burden, at or above the 75th percentile flags burden higher than predicted. Agreement across specifications is the robustness signal. Residuals are screening signals, not causal effects.
+        Each outcome is regressed (OLS) on a ladder of specifications, from climate alone up to demographic, housing, and
+        infrastructure controls with county fixed effects. A ZIP code's residual is ranked against every other ZIP code in the fit.
+        For adoption, the bottom quarter is flagged: less solar, storage, or charging than similar places. For energy burden, the
+        top quarter is flagged.
       </p>
-      <h2>Grounded summaries</h2>
       <p>
-        Summaries are generated offline, never per request. For each region and category the generator retrieves a bounded evidence packet of metric and model records, generates from that packet with structured output, and stores the evidence IDs it cited. The API then:
+        One specification flagging a place is weak evidence; all of them agreeing is stronger. Either way it's a prompt to look closer,
+        not a causal finding.
       </p>
-      <ul>
-        <li>returns the cited evidence with every summary, with sources;</li>
-        <li>withholds a summary that cites no evidence or cites another region's evidence;</li>
-        <li>when no summary exists, says so and shows the retrieved evidence instead of text;</li>
-        <li>flags thin regions with an explicit not-enough-data overview.</li>
-      </ul>
+      <h2>Summaries</h2>
       <p>
-        Full API reference: <a href="/api/docs">/api/docs</a>.
+        Summaries are written ahead of time by a language model working only from a fixed packet of each ZIP code's records, and it must
+        cite the records it used. The site shows a summary only when every citation checks out against that ZIP code's data; otherwise
+        it says so and lists the records instead.
+      </p>
+      <p>
+        The full API is documented at <a href="/api/docs">/api/docs</a>.
       </p>
     </article>
   );

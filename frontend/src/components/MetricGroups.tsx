@@ -9,29 +9,32 @@ export function MetricGroups({ metrics, missing }: { metrics: Metric[]; missing:
   }
   const order = [...CATEGORY_ORDER, ...[...groups.keys()].filter((key) => !CATEGORY_ORDER.includes(key))];
   return (
-    <div className="metric-groups">
+    <div className="facts">
       {order
         .filter((category) => groups.has(category) || missing.includes(category))
-        .map((category) => (
-          <section key={category} className="card metric-card" aria-labelledby={`cat-${category}`}>
-            <h3 id={`cat-${category}`}>{label(CATEGORY_LABELS, category)}</h3>
-            {groups.has(category) ? (
-              <dl>
-                {groups.get(category)!.map((metric) => (
-                  <div key={metric.metric_name} className="metric-row">
-                    <dt title={metric.metric_name}>{label(METRIC_LABELS, metric.metric_name)}</dt>
-                    <dd>{metric.display_value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : (
-              <p className="missing">Not reported for this ZCTA.</p>
-            )}
-            {groups.has(category) && (
-              <p className="source">Source: {[...new Set(groups.get(category)!.map((m) => m.source_name))].join("; ")}</p>
-            )}
-          </section>
-        ))}
+        .map((category) => {
+          const rows = groups.get(category);
+          return (
+            <section key={category} className="fact-group" aria-labelledby={`cat-${category}`}>
+              <h3 id={`cat-${category}`}>{label(CATEGORY_LABELS, category)}</h3>
+              {rows ? (
+                <>
+                  <dl>
+                    {rows.map((metric) => (
+                      <div key={metric.metric_name} className="fact">
+                        <dt title={metric.metric_name}>{label(METRIC_LABELS, metric.metric_name)}</dt>
+                        <dd>{metric.display_value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  <p className="fact-source">{[...new Set(rows.map((m) => m.source_name))].join("; ")}</p>
+                </>
+              ) : (
+                <p className="empty">Not reported for this ZIP code.</p>
+              )}
+            </section>
+          );
+        })}
     </div>
   );
 }
@@ -39,9 +42,9 @@ export function MetricGroups({ metrics, missing }: { metrics: Metric[]; missing:
 export function KeyStats({ metrics, keys }: { metrics: Metric[]; keys: string[] }) {
   const byName = new Map(metrics.map((metric) => [metric.metric_name, metric]));
   return (
-    <dl className="key-stats">
+    <dl className="figures">
       {keys.map((key) => (
-        <div key={key} className="stat">
+        <div key={key} className="figure">
           <dt>{label(METRIC_LABELS, key)}</dt>
           <dd>{byName.get(key)?.display_value ?? <span className="na">Not reported</span>}</dd>
         </div>

@@ -13,7 +13,7 @@ export function App() {
         <Route path="regions/:regionId" element={<RegionPage />} />
         <Route path="compare" element={<ComparePage />} />
         <Route path="about" element={<AboutPage />} />
-        <Route path="*" element={<div className="card narrow"><h1>Page not found</h1><p><Link to="/">Back to Explore</Link></p></div>} />
+        <Route path="*" element={<div className="prose"><h1>Page not found</h1><p><Link to="/">Back to regions</Link></p></div>} />
       </Route>
     </Routes>
   );

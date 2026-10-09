@@ -63,6 +63,21 @@ export const OUTCOME_LABELS: Record<string, string> = {
   log_energy_gap_per_capita: "Affordability gap",
 };
 
+// Lower-case phrases for running text ("Where rooftop solar is lower than ...").
+export const OUTCOME_PHRASES: Record<string, string> = {
+  y_pv: "rooftop solar",
+  y_storage: "battery storage",
+  y_chargers: "EV charging",
+  y_level1_chargers: "Level 1 charging",
+  y_level2_chargers: "Level 2 charging",
+  y_dc_fast_chargers: "DC fast charging",
+  y_wind_mw: "wind capacity",
+  any_turbines: "turbine presence",
+  energy_burden_pct: "energy burden",
+  energy_affordability_index: "the affordability index",
+  log_energy_gap_per_capita: "the affordability gap",
+};
+
 // Matches populate_tables: DER outcomes flag low residuals, burden outcomes high
 // ones, and any other outcome flags large absolute residuals.
 export const DER_OUTCOMES = new Set(["y_pv", "y_storage", "y_chargers", "y_level1_chargers", "y_level2_chargers", "y_dc_fast_chargers", "y_wind_mw"]);

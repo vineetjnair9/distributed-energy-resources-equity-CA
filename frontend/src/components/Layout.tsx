@@ -9,40 +9,43 @@ export function Layout() {
   return (
     <div className="app">
       <a className="skip-link" href="#main">Skip to content</a>
-      <header className="topbar">
-        <div className="topbar-inner">
-          <Link to="/" className="brand">
-            <span className="brand-mark" aria-hidden>◉</span>
-            <span>
-              <span className="brand-name">CA DER Explorer</span>
-              <span className="brand-sub">Distributed energy decision support</span>
-            </span>
-          </Link>
+      <header className="masthead">
+        <div className="masthead-inner">
+          <div>
+            <Link to="/" className="wordmark">California DER Atlas</Link>
+            {health.data?.synthetic && (
+              <span
+                className="demo-tag"
+                role="note"
+                title="Values, model outputs, and summaries are synthetic demo data, not research findings."
+              >
+                SYNTHETIC DATA
+              </span>
+            )}
+          </div>
           <nav aria-label="Primary">
-            <NavLink to="/" end>Explore</NavLink>
+            <NavLink to="/" end>Regions</NavLink>
             <NavLink to={selection.ids.length ? `/compare?ids=${selection.ids.join(",")}` : "/compare"}>
-              Compare{selection.ids.length ? <span className="count">{selection.ids.length}</span> : null}
+              Compare{selection.ids.length ? <span className="count">({selection.ids.length})</span> : null}
             </NavLink>
             <NavLink to="/about">Method</NavLink>
             <a href="/api/docs">API</a>
           </nav>
         </div>
       </header>
-      {health.data?.synthetic && (
-        <div className="banner banner-synthetic" role="note">
-          <strong>Synthetic demo data.</strong> Values, model outputs, and summaries are generated for development and are not research findings.
-        </div>
-      )}
       {health.error && (
-        <div className="banner banner-error" role="alert">
+        <div className="service-down" role="alert">
           The data service is not ready: {health.error.message}
         </div>
       )}
-      <main id="main" className="main">
+      <main id="main" className="page">
         <Outlet />
       </main>
-      <footer className="footer">
-        California ZCTA-level DER adoption, ACS demographics, and regression screening. Model outputs are computed offline; summaries are generated offline from cited evidence.
+      <footer className="colophon">
+        <div className="colophon-inner">
+          <span>Sources: ACS 2023 5-year, LBNL Tracking the Sun, CEC, USGS, NASA POWER.</span>
+          <span>Model results are screening signals, not causal estimates.</span>
+        </div>
       </footer>
     </div>
   );

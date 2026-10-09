@@ -1,73 +1,74 @@
+import { Fragment } from "react";
 import type { ModelOutput } from "../api/client";
-import { OUTCOME_LABELS, flagDirection, flagMeaning, label, modelName, number, percentile } from "../lib/labels";
+import { OUTCOME_LABELS, flagDirection, label, modelName, number, percentile } from "../lib/labels";
+
+const OUTCOME_ORDER = Object.keys(OUTCOME_LABELS);
+export const outcomeRank = (outcome: string) => OUTCOME_ORDER.indexOf(outcome) + 1 || OUTCOME_ORDER.length + 1;
 
 export function PercentileBar({ value, outcome }: { value: number | null; outcome: string }) {
   if (value === null) return <span className="na">—</span>;
   const direction = flagDirection(outcome);
   return (
-    <span className="pbar" title={`${percentile(value)} percentile residual`}>
-      <span className="pbar-track">
-        {direction !== "absolute" && <span className={`pbar-zone zone-${direction}`} />}
-        <span className="pbar-dot" style={{ left: `${value * 100}%` }} />
+    <span className="rank" title={`Residual ranks at the ${percentile(value)} percentile`}>
+      <span className="rank-track" aria-hidden>
+        {direction !== "absolute" && <span className={`rank-zone zone-${direction}`} />}
+        <span className="rank-dot" style={{ left: `${value * 100}%` }} />
       </span>
-      <span className="pbar-label">{percentile(value)}</span>
+      <span className="rank-label">{percentile(value)}</span>
     </span>
   );
 }
 
 export function FlagBadge({ flag }: { flag: boolean | null | undefined }) {
   if (flag === null || flag === undefined) return <span className="na">—</span>;
-  return flag ? <span className="badge badge-flag">Priority</span> : <span className="badge">Not flagged</span>;
+  return flag ? <span className="flag">Priority</span> : <span className="noflag">—</span>;
 }
-
-const OUTCOME_ORDER = Object.keys(OUTCOME_LABELS);
-export const outcomeRank = (outcome: string) => (OUTCOME_ORDER.indexOf(outcome) + 1 || OUTCOME_ORDER.length + 1);
 
 export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
   const byOutcome = new Map<string, ModelOutput[]>();
   for (const output of outputs) byOutcome.set(output.outcome_name, [...(byOutcome.get(output.outcome_name) ?? []), output]);
+  const outcomes = [...byOutcome.entries()].sort(([a], [b]) => outcomeRank(a) - outcomeRank(b));
   return (
-    <div className="model-blocks">
-      {[...byOutcome.entries()].sort(([a], [b]) => outcomeRank(a) - outcomeRank(b)).map(([outcome, rows]) => {
-        const flagged = rows.filter((row) => row.priority_flag).length;
-        return (
-          <section key={outcome} className="card model-card">
-            <header className="model-head">
-              <h3>{label(OUTCOME_LABELS, outcome)}</h3>
-              <span className={`agreement ${flagged ? "agreement-flag" : ""}`}>
-                {flagged} of {rows.length} specifications flag this region
-              </span>
-            </header>
-            <div className="table-scroll">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th scope="col">Specification</th>
-                    <th scope="col" className="num">Actual</th>
-                    <th scope="col" className="num">Predicted</th>
-                    <th scope="col" className="num">Residual</th>
-                    <th scope="col">Residual rank</th>
-                    <th scope="col">Status</th>
+    <div className="table-scroll">
+      <table className="table">
+        <thead>
+          <tr>
+            <th scope="col">Specification</th>
+            <th scope="col" className="num">Actual</th>
+            <th scope="col" className="num">Predicted</th>
+            <th scope="col" className="num">Residual</th>
+            <th scope="col">Residual rank</th>
+            <th scope="col">Flag</th>
+          </tr>
+        </thead>
+        <tbody>
+          {outcomes.map(([outcome, rows]) => {
+            const flagged = rows.filter((row) => row.priority_flag).length;
+            return (
+              <Fragment key={outcome}>
+                <tr className="group-row">
+                  <th colSpan={6} scope="colgroup">
+                    {label(OUTCOME_LABELS, outcome)}{" "}
+                    <span className={flagged ? "flag" : "muted"} style={{ fontFamily: "var(--sans)", fontSize: "0.8rem", fontWeight: 500 }}>
+                      {flagged ? `flagged by ${flagged} of ${rows.length}` : `not flagged by any of ${rows.length}`}
+                    </span>
+                  </th>
+                </tr>
+                {rows.map((row) => (
+                  <tr key={row.model_output_id}>
+                    <th scope="row">{modelName(row.model_version)}</th>
+                    <td className="num">{number(row.actual_value)}</td>
+                    <td className="num">{number(row.predicted_value)}</td>
+                    <td className="num">{number(row.residual_value)}</td>
+                    <td><PercentileBar value={row.residual_percentile} outcome={outcome} /></td>
+                    <td><FlagBadge flag={row.priority_flag} /></td>
                   </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.model_output_id}>
-                      <th scope="row" className="spec">{modelName(row.model_version)}</th>
-                      <td className="num">{number(row.actual_value)}</td>
-                      <td className="num">{number(row.predicted_value)}</td>
-                      <td className={`num ${row.residual_value !== null && row.residual_value < 0 ? "neg" : ""}`}>{number(row.residual_value)}</td>
-                      <td><PercentileBar value={row.residual_percentile} outcome={outcome} /></td>
-                      <td><FlagBadge flag={row.priority_flag} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="caption">{flagMeaning(outcome)} {rows[0]?.assumptions}</p>
-          </section>
-        );
-      })}
+                ))}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
