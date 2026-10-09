@@ -23,7 +23,7 @@ export function RegionPicker({ onPick, exclude }: { onPick: (region: Region) => 
       <input
         id="picker-input"
         className="input"
-        placeholder="Add a ZIP code or county…"
+        placeholder="Add a ZIP code or county"
         value={text}
         autoComplete="off"
         onChange={(event) => setText(event.target.value)}
@@ -41,7 +41,7 @@ export function RegionPicker({ onPick, exclude }: { onPick: (region: Region) => 
                   setText("");
                 }}
               >
-                <strong>{region.region_id}</strong> {region.county} County
+                <span className="id">{region.region_id}</span> {region.county} County
                 {region.utility ? ` · ${region.utility.utility_acronym ?? region.utility.utility_name}` : ""}
               </button>
             </li>

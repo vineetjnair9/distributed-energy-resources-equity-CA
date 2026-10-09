@@ -4,16 +4,18 @@ export function CompareToggle({ regionId, compact = false }: { regionId: string;
   const selection = useCompareSelection();
   const selected = selection.has(regionId);
   const full = !selected && selection.ids.length >= MAX_COMPARE;
+  const label = compact ? (selected ? "added" : "compare") : selected ? "In comparison" : "Add to comparison";
   return (
     <button
       type="button"
-      className={`btn ${selected ? "btn-selected" : "btn-ghost"} ${compact ? "btn-sm" : ""}`}
+      className={`toggle ${compact ? "toggle-sm" : ""}`}
       aria-pressed={selected}
+      aria-label={compact ? `${selected ? "Remove" : "Add"} ${regionId} ${selected ? "from" : "to"} comparison` : undefined}
       disabled={full}
       title={full ? `Compare holds up to ${MAX_COMPARE} regions` : undefined}
       onClick={() => selection.toggle(regionId)}
     >
-      {selected ? "✓ In compare" : "+ Compare"}
+      {label}
     </button>
   );
 }

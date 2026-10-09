@@ -30,32 +30,30 @@ export function ComparePage() {
   const comparison = useApi(ids.length >= 2 ? () => api.compare(ids) : null, `compare-${ids.join(",")}`);
 
   return (
-    <div className="compare">
-      <header className="page-head">
-        <h1>Compare regions</h1>
-        <p className="lede">Choose 2 to {MAX_COMPARE} ZIP codes. Highest and lowest values in each row are marked; blank cells mean the indicator is not reported.</p>
+    <>
+      <header className="index-head">
+        <h1>Compare ZIP codes</h1>
+        <p className="dek">Up to {MAX_COMPARE} side by side. ▲ and ▼ mark the highest and lowest value in each row; a dash means not reported.</p>
       </header>
-      <div className="card compare-picker">
-        <div className="chips" aria-label="Selected regions">
-          {ids.map((id) => (
-            <span key={id} className="chip">
-              <Link to={`/regions/${id}`}>{id}</Link>
-              <button type="button" aria-label={`Remove ${id}`} onClick={() => selection.toggle(id)}>×</button>
-            </span>
-          ))}
-          {ids.length > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={selection.clear}>Clear</button>}
-        </div>
-        {ids.length < MAX_COMPARE ? (
-          <RegionPicker exclude={ids} onPick={(region) => selection.toggle(region.region_id)} />
-        ) : (
-          <p className="caption">Compare holds up to {MAX_COMPARE} regions. Remove one to add another.</p>
-        )}
+      <div className="picked" aria-label="Selected regions">
+        {ids.map((id) => (
+          <span key={id} className="picked-item">
+            <Link to={`/regions/${id}`}>{id}</Link>
+            <button type="button" aria-label={`Remove ${id}`} onClick={() => selection.toggle(id)}>×</button>
+          </span>
+        ))}
+        {ids.length > 0 && <button type="button" className="textbtn" onClick={selection.clear}>clear all</button>}
       </div>
-      {ids.length < 2 && <Empty>Add {2 - ids.length} more region{ids.length === 1 ? "" : "s"} to compare.</Empty>}
+      {ids.length < MAX_COMPARE ? (
+        <RegionPicker exclude={ids} onPick={(region) => selection.toggle(region.region_id)} />
+      ) : (
+        <p className="note">That's the maximum. Remove one to add another.</p>
+      )}
+      {ids.length < 2 && <Empty>Add {2 - ids.length} more to compare.</Empty>}
       {comparison.error && <ErrorNotice error={comparison.error} />}
       {comparison.loading && !comparison.data && <Loading label="Comparing" />}
       {comparison.data && ids.length >= 2 && <CompareTables data={comparison.data} />}
-    </div>
+    </>
   );
 }
 
@@ -78,8 +76,8 @@ export function CompareTables({ data }: { data: CompareResponse }) {
         <th scope="col" className="sticky-col">{first}</th>
         {data.regions.map((region) => (
           <th key={region.region_id} scope="col" className="num">
-            <Link to={`/regions/${region.region_id}`}>{region.region_id}</Link>
-            <span className="col-sub">{region.county}</span>
+            <Link to={`/regions/${region.region_id}`} className="id">{region.region_id}</Link>
+            <span className="sub">{region.county}</span>
           </th>
         ))}
       </tr>
@@ -87,11 +85,11 @@ export function CompareTables({ data }: { data: CompareResponse }) {
   );
   return (
     <>
-      <section className="card">
-        <h2>Indicators</h2>
+      <section className="section">
+        <div className="section-head"><h2>Indicators</h2></div>
         <div className="table-scroll">
           <table className="table compare-table">
-            {head("Indicator")}
+            {head("")}
             {categories.map((category) => (
               <tbody key={category}>
                 <tr className="group-row"><th colSpan={ids.length + 1} scope="colgroup">{label(CATEGORY_LABELS, category)}</th></tr>
@@ -119,18 +117,18 @@ export function CompareTables({ data }: { data: CompareResponse }) {
         </div>
       </section>
 
-      <section className="card">
-        <h2>Model screening</h2>
-        {data.model_outputs.length === 0 ? <Empty>None of these regions has model outputs.</Empty> : (
+      <section className="section">
+        <div className="section-head"><h2>Model results</h2></div>
+        {data.model_outputs.length === 0 ? <Empty>None of these ZIP codes has model results.</Empty> : (
           <div className="table-scroll">
             <table className="table compare-table">
-              {head("Outcome · specification")}
+              {head("Outcome and specification")}
               <tbody>
                 {[...data.model_outputs].sort((a, b) => outcomeRank(a.outcome_name) - outcomeRank(b.outcome_name)).map((row) => (
                   <tr key={`${row.outcome_name}-${row.model_version}`}>
                     <th scope="row" className="sticky-col">
                       {label(OUTCOME_LABELS, row.outcome_name)}
-                      <span className="col-sub">{modelName(row.model_version)}</span>
+                      <span className="sub">{modelName(row.model_version)}</span>
                     </th>
                     {ids.map((id) => (
                       <td key={id}>
@@ -146,12 +144,12 @@ export function CompareTables({ data }: { data: CompareResponse }) {
         )}
       </section>
 
-      <section>
-        <h2 className="section-title">Overviews</h2>
+      <section className="section">
+        <div className="section-head"><h2>Summaries</h2></div>
         <div className="overview-grid">
           {data.regions.map((region) => (
-            <div key={region.region_id} className="card">
-              <h3><Link to={`/regions/${region.region_id}`}>{region.region_id}</Link> <span className="col-sub">{region.county}</span></h3>
+            <div key={region.region_id}>
+              <h3><Link to={`/regions/${region.region_id}`} className="id">{region.region_id}</Link> <span className="sub" style={{ display: "inline" }}>{region.county}</span></h3>
               <SummaryBody summary={data.overviews[region.region_id]} />
             </div>
           ))}

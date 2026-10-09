@@ -12,6 +12,9 @@
     "gen:types": "openapi-typescript ../docs/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
+    "@fontsource-variable/source-serif-4": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
     "leaflet": "^1.9.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

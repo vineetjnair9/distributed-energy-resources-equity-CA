@@ -17,7 +17,7 @@ export function RegionMap({ wkt, label }: { wkt: string; label: string }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {polygons.map((rings, index) => (
-          <Polygon key={index} positions={rings} pathOptions={{ color: "#b45309", weight: 2, fillOpacity: 0.18 }} />
+          <Polygon key={index} positions={rings} pathOptions={{ color: "#c8361b", weight: 2, fillColor: "#c8361b", fillOpacity: 0.12 }} />
         ))}
       </MapContainer>
     </div>
