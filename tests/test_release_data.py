@@ -13,7 +13,15 @@ ROOT = Path(__file__).resolve().parents[1]
 PROCESSED = ROOT / "data" / "processed"
 RAW_ACS = ROOT / "data" / "raw" / "acs"
 
+# data/processed/ is generated (and gitignored), so a clean clone has none.
+# Skip loudly rather than fail; the release build itself still runs these.
+requires_processed = pytest.mark.skipif(
+    not (PROCESSED / "combined_der_dataset_w_controls_predictors.csv").is_file(),
+    reason="data/processed not built: python scripts/run_all.py --only data",
+)
 
+
+@requires_processed
 def test_released_dataset_has_complete_housing_composition():
     path = PROCESSED / "combined_der_dataset_w_controls_predictors.csv"
     frame = pd.read_csv(path, dtype={"zip_code": "string", "county_geoid": "string"})
@@ -34,6 +42,7 @@ def test_released_dataset_has_complete_housing_composition():
     assert frame["zip_code"].is_unique
 
 
+@requires_processed
 def test_small_county_zctas_remain_in_shared_release_dataset():
     frame = pd.read_csv(
         PROCESSED / "combined_der_dataset_w_controls_predictors.csv",
@@ -42,6 +51,7 @@ def test_small_county_zctas_remain_in_shared_release_dataset():
     assert {"95023", "95045", "95223", "96120"}.issubset(set(frame["zip_code"]))
 
 
+@requires_processed
 def test_release_and_clusters_exclude_non_california_zips():
     release = pd.read_csv(
         PROCESSED / "combined_der_dataset_w_controls_predictors.csv",

@@ -41,3 +41,10 @@ data/raw/boundaries/tl_2023_us_zcta520/
 # (Interconnected_Project_Sites_2023-12-31.zip) and fetched rather than stored:
 #   python scripts/fetch_exact_public_data.py --only interconnection
 data/raw/interconnection/
+
+# Synthetic development database: python -m backend.fixtures.build_fixture_db
+data/der_fixture.db
+data/der_fixture.db.*
+data/.der_fixture.db*
+frontend/node_modules/
+frontend/dist/

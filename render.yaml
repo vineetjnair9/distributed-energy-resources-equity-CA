@@ -1,0 +1,20 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# One Docker web service serving the API and the React app.
+services:
+  - type: web
+    name: ca-der-explorer
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Deploy only after GitHub Actions CI passes on the commit.
+    autoDeployTrigger: checksPass
+    envVars:
+      # Leave unset to serve the bundled synthetic fixture. Set to the URL of a
+      # built der_tool.db (or .db.gz), e.g. a GitHub Release asset, for real data.
+      - key: DER_DB_URL
+        sync: false
+      - key: DER_DB_SHA256
+        sync: false

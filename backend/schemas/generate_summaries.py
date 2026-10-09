@@ -37,8 +37,10 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DB_PATH = PROJECT_ROOT / "data" / "der_tool.db"
 load_dotenv(PROJECT_ROOT / ".env")
+DB_PATH = Path(
+    os.environ.get("DER_DB_PATH") or PROJECT_ROOT / "data" / "der_tool.db"
+).expanduser().resolve()
 
 # Luna is inexpensive enough for the full ZCTA run and supports both Structured
 # Outputs and Batch. Set DER_SUMMARY_MODEL to compare a stronger model in a pilot.

@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: CI only reads the repo. Fork PRs never get secrets, and none
+# are used here, so untrusted PR code has nothing to exfiltrate.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4  # no LFS: tests need no raw data
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Python tests (schema, API, grounding, regression)
+        run: pytest -q -rs
+      - name: OpenAPI document is current
+        run: python scripts/export_openapi.py --check
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Generated API types match docs/openapi.json
+        run: npm run gen:types && git diff --exit-code src/api/schema.d.ts
+      - run: npm test
+      - run: npm run build
+
+  image:
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t der-app .
+      - name: Smoke check the container
+        run: |
+          docker run -d --name der -p 8000:8000 der-app
+          python3 scripts/smoke_check.py http://127.0.0.1:8000 --retries 20
+      - if: failure()
+        run: docker logs der

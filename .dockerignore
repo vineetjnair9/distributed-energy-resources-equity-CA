@@ -1,0 +1,11 @@
+# Only backend/, frontend/, docs/openapi.json and requirements-api.txt are needed.
+*
+!backend/
+!frontend/
+!docs/openapi.json
+!requirements-api.txt
+**/__pycache__
+**/*.pyc
+frontend/node_modules
+frontend/dist
+**/.DS_Store

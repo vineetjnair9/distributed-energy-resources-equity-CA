@@ -11,6 +11,26 @@ In practice, the project:
 - produces a final analysis file, `data/processed/combined_der_dataset_w_controls_predictors.csv`
 - uses that file for exploratory plots, regression models, robustness checks, and figure generation
 
+## Decision-support app
+
+A full-stack app (React, FastAPI, SQLite) for querying and comparing DER adoption,
+demographics, regression screening, and evidence-grounded LLM summaries across
+California ZCTAs. It runs end to end on a synthetic fixture database, so no data
+build is needed:
+
+```bash
+python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python -m backend.fixtures.build_fixture_db
+npm --prefix frontend ci && npm --prefix frontend run build
+DER_DB_PATH=data/der_fixture.db .venv/bin/uvicorn backend.api.api:app   # http://localhost:8000
+.venv/bin/python -m pytest -q -rs && npm --prefix frontend test
+```
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): system, data model (ER diagram), request path
+- [docs/API.md](docs/API.md) and [docs/openapi.json](docs/openapi.json): API reference
+- [docs/MODEL_AND_SUMMARIES.md](docs/MODEL_AND_SUMMARIES.md): model layer, grounded-summary behavior and guardrails
+- [docs/OPERATIONS.md](docs/OPERATIONS.md): setup, environment variables, Docker/Render deployment, failure modes
+
 ## Repository navigation
 
 The main places to look are:
