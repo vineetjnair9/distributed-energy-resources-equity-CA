@@ -1,15 +1,44 @@
 import sqlite3
+import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
 import pandas as pd
 
+from backend.formatting import _trimmed_decimal, format_metric_value
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DB_PATH = PROJECT_ROOT / "data" / "der_tool.db"
 CSV_PATH = PROJECT_ROOT / "data" / "processed" / "combined_der_dataset_w_controls_predictors.csv"
 CSV_W_SHAPE_PATH = PROJECT_ROOT / "data" / "processed" / "combined_der_dataset_w_shape.csv"
 CSV_UTILITY_PATH = PROJECT_ROOT / "data" / "processed" / "zip_to_utility.csv"
 MODEL_OUTPUTS_PATH = PROJECT_ROOT / "data" / "processed" / "model_outputs_by_region.csv"
+
+
+def required_input_paths(processed_dir=None):
+    directory = Path(processed_dir) if processed_dir is not None else CSV_PATH.parent
+    return {
+        "dataset": directory / CSV_PATH.name,
+        "geometries": directory / CSV_W_SHAPE_PATH.name,
+        "utilities": directory / CSV_UTILITY_PATH.name,
+        "models": directory / MODEL_OUTPUTS_PATH.name,
+    }
+
+
+def preflight_inputs(processed_dir=None):
+    """Report every missing input before creating or changing a database."""
+    paths = required_input_paths(processed_dir)
+    missing = [path for path in paths.values() if not path.is_file()]
+    if missing:
+        raise FileNotFoundError(
+            "Missing database inputs:\n"
+            + "\n".join(f"  {_short(path)}" for path in missing)
+            + "\nBuild processed data and model outputs first: python scripts/run_all.py "
+            "--only data models"
+        )
+    return paths
 
 
 def _short(path):
@@ -27,7 +56,7 @@ def _read_required(path, command, what):
     looking for a missing file rather than for the stage that writes it.
     """
     if not path.exists():
-        raise SystemExit(
+        raise FileNotFoundError(
             f"missing {_short(path)} ({what}).\n"
             f"Build it first:  {command}"
         )
@@ -202,36 +231,6 @@ def source_url_for(source_name):
     Return a stable public URL for source families when available.
     """
     return SOURCE_URLS.get(source_name)
-
-
-def _trimmed_decimal(value, places):
-    formatted = f"{float(value):,.{places}f}".rstrip("0").rstrip(".")
-    return "0" if formatted == "-0" else formatted
-
-
-def format_metric_value(metric_value, metric_unit):
-    """Format a stored metric for people rather than exposing database precision."""
-    value = float(metric_value)
-    if metric_unit == "share":
-        return f"{value:.1%}"
-    if metric_unit == "dollars":
-        return f"${value:,.0f}"
-    if metric_unit in {"chargers", "turbines"}:
-        label = metric_unit[:-1] if round(value) == 1 else metric_unit
-        return f"{value:,.0f} {label}"
-    if metric_unit in {"people", "kWh"}:
-        return f"{value:,.0f} {metric_unit}"
-    if metric_unit == "degree_days":
-        return f"{value:,.0f} degree days"
-    if metric_unit == "index":
-        return f"{value:,.1f} index points"
-    if metric_unit == "MW":
-        return f"{_trimmed_decimal(value, 3)} MW"
-    if metric_unit == "kWh/m2/day":
-        return f"{_trimmed_decimal(value, 2)} kWh/m²/day"
-    if metric_unit == "m/s":
-        return f"{_trimmed_decimal(value, 2)} m/s"
-    return f"{_trimmed_decimal(metric_value, 3)} {metric_unit}".strip()
 
 
 def format_metric_evidence(row):
@@ -557,11 +556,11 @@ def populate_geometries_table(conn, df_shape):
     print(f"Skipped {skipped_count} geometries with no matching region.")
 
 
-def load_main_dataset():
+def load_main_dataset(path=None):
     """
     Load and clean the main processed DER dataset.
     """
-    df = pd.read_csv(CSV_PATH)
+    df = pd.read_csv(path if path is not None else CSV_PATH)
 
     df[REGION_ID_COL] = df[REGION_ID_COL].apply(clean_region_id)
     df = df.dropna(subset=[REGION_ID_COL])
@@ -849,52 +848,42 @@ def populate_evidence_chunks_table(conn):
     print(f"Inserted {len(evidence_rows)} evidence chunks.")
 
 
-def reset_tables(conn):
-    """
-    Clear tables before repopulating them.
-
-    Delete child/dependent tables first, then parent tables.
-    This avoids foreign key constraint errors.
-    """
-    tables = [
-        "summary_evidence",
-        "summary_responses",
-        "evidence_chunks",
-        "model_outputs",
-        "metric_observations",
-        "region_geometries",
-        "regions",
-        "utilities",
-    ]
-
-    for table in tables:
-        conn.execute(f"DELETE FROM {table}")
-
-    conn.commit()
-    print("Reset database tables.")
-
-
-def main():
-    df = load_main_dataset()
-    df_utils = pd.read_csv(CSV_UTILITY_PATH)
+def populate_database(path, *, processed_dir=None):
+    """Populate an initialized, empty staging database; never reset saved data."""
+    paths = preflight_inputs(processed_dir)
+    df = load_main_dataset(paths["dataset"])
+    df_utils = pd.read_csv(paths["utilities"])
     df_utils["zip_code"] = df_utils["zip_code"].apply(clean_region_id)
     df_utils = df_utils.set_index("zip_code")
     df_shape = _read_required(
-        CSV_W_SHAPE_PATH,
+        paths["geometries"],
         "python scripts/run_all.py --only data",
         "ZCTA polygons for the geometries table",
     )
     df_outputs = _read_required(
-        MODEL_OUTPUTS_PATH,
+        paths["models"],
         "python scripts/run_all.py --only models",
         "per-ZIP predictions and residuals, written by notebooks/regression.ipynb",
     )
-    conn = sqlite3.connect(DB_PATH)
+    # mode=rw refuses to create an accidental second database from a typo.
+    path = Path(path).expanduser().resolve()
+    conn = sqlite3.connect(f"{path.as_uri()}?mode=rw", uri=True)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
 
     try:
-        reset_tables(conn)
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()
+        for row in tables:
+            name = row["name"].replace('"', '""')
+            if conn.execute(f'SELECT 1 FROM "{name}" LIMIT 1').fetchone():
+                raise ValueError(
+                    "Refusing to populate a nonempty database. No data was changed. "
+                    "Use python -m backend.schemas.build_database --replace-existing "
+                    "for an explicit rebuild with a backup."
+                )
         populate_utilities_table(conn, df_utils)
         utility_lookup = build_id_lookup(
             conn=conn,
@@ -915,6 +904,15 @@ def main():
         conn.close()
 
     print("Loaded core data into database.")
+
+
+def main(argv=None):
+    # Preserve the old entrypoint while applying the same staging and backup
+    # safeguards as the supported database build command.
+    from backend.schemas.build_database import main as build_main
+
+    build_main(argv)
+
 
 if __name__ == "__main__":
     main()
