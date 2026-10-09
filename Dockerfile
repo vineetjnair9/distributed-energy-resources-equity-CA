@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # 1. Frontend: typecheck, test, and build the React app.
-FROM node:22-alpine AS frontend
+FROM node:25-alpine AS frontend
 WORKDIR /app
 COPY docs/openapi.json docs/openapi.json
 WORKDIR /app/frontend
