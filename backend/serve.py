@@ -28,7 +28,7 @@ LOGGER = logging.getLogger("der.serve")
 # https for real deployments; file for local testing. Never plain http, which
 # would let anyone on the path substitute the database.
 ALLOWED_SCHEMES = {"https", "file"}
-MAX_DOWNLOAD_BYTES = 4 * 1024**3  # the real database is ~300 MB; refuse to fill the disk
+MAX_DOWNLOAD_BYTES = 4 * 1024**3  # the real database is ~740 MB; refuse to fill the disk
 
 
 def fetch_database(url, path, expected_sha256=None, max_bytes=MAX_DOWNLOAD_BYTES):

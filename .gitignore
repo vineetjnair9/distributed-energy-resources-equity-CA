@@ -8,7 +8,7 @@ __pycache__/
 .env
 *.bak
 
-# Generated SQLite database (~300MB, over GitHub's 100MB file limit).
+# Generated SQLite database (~740MB, over GitHub's 100MB file limit).
 # Rebuild with: python scripts/run_all.py --only database
 data/der_tool.db
 data/der_tool.db.*

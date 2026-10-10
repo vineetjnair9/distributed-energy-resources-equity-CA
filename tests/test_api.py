@@ -124,6 +124,14 @@ def test_region_search_filters_and_paginates(client):
     assert client.get("/api/regions", params={"utility": "SMUD"}).json()["total"] == 2
 
 
+def test_every_fixture_region_has_its_county(fixture_db):
+    # Regression: the loader read a "county" column, but the pipeline writes
+    # "county_name", so every real region silently lost its county.
+    with closing(sqlite3.connect(fixture_db)) as conn:
+        counties = dict(conn.execute("SELECT region_id, county FROM regions"))
+    assert counties == {zcta: county for zcta, county, *_ in fixture.REGIONS}
+
+
 def test_region_without_utility_mapping_returns_null_utility(client):
     assert client.get("/api/regions/93654").json()["region"]["utility"] is None
 

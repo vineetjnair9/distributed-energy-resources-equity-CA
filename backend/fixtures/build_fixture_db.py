@@ -130,7 +130,8 @@ def synthetic_frames(seed=SEED):
     for zcta, county, lat, lon, acronym, tier, wind_site in REGIONS:
         noise = lambda scale=1.0: rng.gauss(0, 0.08 * scale)  # noqa: E731
         population = rng.randint(9_000, 62_000)
-        row = {"zip_code": int(zcta), "county": county}
+        # Same column name rebuild_processed_data.py writes.
+        row = {"zip_code": int(zcta), "county_name": county}
         if zcta == THIN_REGION:
             row.update({column: 0.0 for column in DER_COLUMNS})
         else:

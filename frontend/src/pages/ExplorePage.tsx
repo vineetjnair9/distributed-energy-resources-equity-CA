@@ -5,7 +5,7 @@ import { useApi } from "../api/useApi";
 import { CompareToggle } from "../components/CompareToggle";
 import { useDebounced } from "../components/RegionSearch";
 import { Empty, ErrorNotice, Loading } from "../components/Status";
-import { OUTCOME_PHRASES, flagDirection, label, percentile } from "../lib/labels";
+import { OUTCOME_PHRASES, UTILITY_GAP, flagDirection, label, percentile } from "../lib/labels";
 
 const PAGE = 25;
 
@@ -106,7 +106,7 @@ export function ExplorePage() {
                         <tr key={region.region_id}>
                           <th scope="row" className="id"><Link to={`/regions/${region.region_id}`}>{region.region_id}</Link></th>
                           <td>{region.county ?? "—"}</td>
-                          <td title={region.utility?.utility_name}>{region.utility?.utility_acronym ?? region.utility?.utility_name ?? <span className="na">unmapped</span>}</td>
+                          <td title={region.utility?.utility_name ?? UTILITY_GAP}>{region.utility?.utility_acronym ?? region.utility?.utility_name ?? <span className="na">other</span>}</td>
                           <td className="right"><CompareToggle regionId={region.region_id} compact /></td>
                         </tr>
                       ))}

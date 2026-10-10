@@ -42,7 +42,7 @@ The database stage is NOT run by default. Run it explicitly with --only database
 after data and models, or use --only data models database for an application build.
 It never makes OpenAI calls. Generate summaries separately when needed.
 
-data/der_tool.db is deliberately not version-controlled. It is ~300MB, exceeds
+data/der_tool.db is deliberately not version-controlled. It is ~740MB, exceeds
 GitHub's 100MB per-file limit, and is fully rebuildable from the processed CSVs. Of its
 nine tables, the optional summaries and their evidence links are produced separately;
 the core database is deterministic formatting over observations and model outputs.
