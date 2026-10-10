@@ -4,4 +4,4 @@
 fastapi==0.141.1
 uvicorn==0.52.1
 openai==3.0.0
-python-dotenv==1.2.2
+python-dotenv==1.2.4
