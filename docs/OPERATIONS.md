@@ -65,7 +65,7 @@ types/tests/build, Docker build, container smoke check) → Render builds the
 2. Without `DER_DB_URL`, the service serves the bundled synthetic fixture, and the
    UI shows a "Synthetic demo data" banner.
 3. To serve real data, upload a built database. A GitHub Release asset works; the
-   file is about 300 MB, too large to commit.
+   file is about 740 MB (70 MB gzipped), too large to commit. The current build is the `db-2026-10` release.
 
    ```bash
    gzip -k data/der_tool.db && shasum -a 256 data/der_tool.db.gz

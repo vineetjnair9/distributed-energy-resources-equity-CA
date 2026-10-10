@@ -64,6 +64,7 @@ def _read_required(path, command, what):
 
 
 REGION_ID_COL = "zip_code"
+COUNTY_COLUMNS = ("county_name", "county")
 
 METRIC_COLUMNS = {
     "total_population": ("people", "demographic", "ACS 5-year"),
@@ -572,6 +573,8 @@ def populate_regions_table(df, df_utils, conn, utility_lookup):
     """
     Populate the regions table from the main processed DER dataset.
     """
+    # rebuild_processed_data.py writes county_name; older extracts used county.
+    county_col = next((c for c in COUNTY_COLUMNS if c in df.columns), None)
     for _, row in df.iterrows():
         region_id = row[REGION_ID_COL]
         if region_id in df_utils.index:
@@ -579,7 +582,8 @@ def populate_regions_table(df, df_utils, conn, utility_lookup):
             utility_id = utility_lookup.get(utility_name)
         else:
             utility_id = None
-        county = row["county"] if "county" in df.columns and pd.notna(row.get("county")) else None
+        county = row.get(county_col) if county_col else None
+        county = county if pd.notna(county) else None
         conn.execute(
             """
             INSERT OR REPLACE INTO regions (

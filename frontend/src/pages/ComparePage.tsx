@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, type CompareResponse } from "../api/client";
 import { useApi } from "../api/useApi";
@@ -7,7 +7,7 @@ import { RegionPicker } from "../components/RegionSearch";
 import { Empty, ErrorNotice, Loading } from "../components/Status";
 import { SummaryBody } from "../components/SummaryPanel";
 import { MAX_COMPARE, useCompareSelection } from "../lib/compareSelection";
-import { CATEGORY_LABELS, CATEGORY_ORDER, METRIC_LABELS, OUTCOME_LABELS, label, modelName } from "../lib/labels";
+import { CATEGORY_LABELS, CATEGORY_ORDER, METRIC_LABELS, OUTCOME_LABELS, isKeySpec, label, modelName } from "../lib/labels";
 
 export function ComparePage() {
   const [params] = useSearchParams();
@@ -67,6 +67,9 @@ export function extremes(values: (number | null | undefined)[]) {
 
 export function CompareTables({ data }: { data: CompareResponse }) {
   const ids = data.region_ids;
+  const [showAll, setShowAll] = useState(false);
+  const keyRows = data.model_outputs.filter((row) => isKeySpec(row.model_version));
+  const modelRows = showAll || keyRows.length === 0 ? data.model_outputs : keyRows;
   const categories = [...new Set(data.metrics.map((metric) => metric.metric_category ?? "other"))].sort(
     (a, b) => (CATEGORY_ORDER.indexOf(a) + 1 || 99) - (CATEGORY_ORDER.indexOf(b) + 1 || 99),
   );
@@ -124,7 +127,7 @@ export function CompareTables({ data }: { data: CompareResponse }) {
             <table className="table compare-table">
               {head("Outcome and specification")}
               <tbody>
-                {[...data.model_outputs].sort((a, b) => outcomeRank(a.outcome_name) - outcomeRank(b.outcome_name)).map((row) => (
+                {[...modelRows].sort((a, b) => outcomeRank(a.outcome_name) - outcomeRank(b.outcome_name)).map((row) => (
                   <tr key={`${row.outcome_name}-${row.model_version}`}>
                     <th scope="row" className="sticky-col">
                       {label(OUTCOME_LABELS, row.outcome_name)}
@@ -140,6 +143,13 @@ export function CompareTables({ data }: { data: CompareResponse }) {
                 ))}
               </tbody>
             </table>
+            {keyRows.length > 0 && keyRows.length < data.model_outputs.length && (
+              <p style={{ marginTop: "0.75rem" }}>
+                <button type="button" className="textbtn" onClick={() => setShowAll(!showAll)}>
+                  {showAll ? "Show headline specifications only" : `Show all ${data.model_outputs.length} specifications`}
+                </button>
+              </p>
+            )}
           </div>
         )}
       </section>

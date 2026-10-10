@@ -1,6 +1,6 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import type { ModelOutput } from "../api/client";
-import { OUTCOME_LABELS, flagDirection, label, modelName, number, percentile } from "../lib/labels";
+import { OUTCOME_LABELS, flagDirection, isKeySpec, label, modelName, number, percentile } from "../lib/labels";
 
 const OUTCOME_ORDER = Object.keys(OUTCOME_LABELS);
 export const outcomeRank = (outcome: string) => OUTCOME_ORDER.indexOf(outcome) + 1 || OUTCOME_ORDER.length + 1;
@@ -25,6 +25,8 @@ export function FlagBadge({ flag }: { flag: boolean | null | undefined }) {
 }
 
 export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const hidden = outputs.filter((row) => !isKeySpec(row.model_version)).length;
   const byOutcome = new Map<string, ModelOutput[]>();
   for (const output of outputs) byOutcome.set(output.outcome_name, [...(byOutcome.get(output.outcome_name) ?? []), output]);
   const outcomes = [...byOutcome.entries()].sort(([a], [b]) => outcomeRank(a) - outcomeRank(b));
@@ -50,11 +52,11 @@ export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
                   <th colSpan={6} scope="colgroup">
                     {label(OUTCOME_LABELS, outcome)}{" "}
                     <span className={flagged ? "flag" : "muted"} style={{ fontFamily: "var(--sans)", fontSize: "0.8rem", fontWeight: 500 }}>
-                      {flagged ? `flagged by ${flagged} of ${rows.length}` : `not flagged by any of ${rows.length}`}
+                      {flagged ? `flagged by ${flagged} of ${rows.length} specifications` : `not flagged by any of ${rows.length} specifications`}
                     </span>
                   </th>
                 </tr>
-                {rows.map((row) => (
+                {rows.filter((row) => showAll || isKeySpec(row.model_version) || !rows.some((r) => isKeySpec(r.model_version))).map((row) => (
                   <tr key={row.model_output_id}>
                     <th scope="row">{modelName(row.model_version)}</th>
                     <td className="num">{number(row.actual_value)}</td>
@@ -69,6 +71,13 @@ export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
           })}
         </tbody>
       </table>
+      {hidden > 0 && (
+        <p style={{ marginTop: "0.75rem" }}>
+          <button type="button" className="textbtn" onClick={() => setShowAll(!showAll)}>
+            {showAll ? "Show headline specifications only" : `Show all ${outputs.length} specifications (${hidden} more)`}
+          </button>
+        </p>
+      )}
     </div>
   );
 }

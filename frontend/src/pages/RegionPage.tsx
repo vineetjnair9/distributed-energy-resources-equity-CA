@@ -7,7 +7,7 @@ import { ModelTable } from "../components/ModelTable";
 import { RegionMap } from "../components/RegionMap";
 import { Empty, ErrorNotice, Loading } from "../components/Status";
 import { SummaryPanel } from "../components/SummaryPanel";
-import { KEY_METRICS } from "../lib/labels";
+import { KEY_METRICS, UTILITY_GAP, UTILITY_TYPES } from "../lib/labels";
 
 export function RegionPage() {
   const { regionId = "" } = useParams();
@@ -28,8 +28,8 @@ export function RegionPage() {
   if (!detail.data) return null;
   const { region, metrics, missing_metric_categories: missing, geometry } = detail.data;
   const utility = region.utility
-    ? `${region.utility.utility_name}${region.utility.utility_type ? ` (${region.utility.utility_type.toLowerCase()})` : ""}`
-    : "No utility mapping";
+    ? `${region.utility.utility_name}${region.utility.utility_type ? ` (${UTILITY_TYPES[region.utility.utility_type] ?? region.utility.utility_type})` : ""}`
+    : UTILITY_GAP;
 
   return (
     <article>

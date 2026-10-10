@@ -122,3 +122,26 @@ export function modelName(version: string) {
   const parts = version.split(" | ").map((part) => part.trim());
   return parts.length >= 3 ? parts[1] : version;
 }
+
+// The headline specifications (the ones the paper and summaries lean on). The
+// full ladder has ~25 per outcome; tables show these first and expand on request.
+export const KEY_SPECS = [
+  "Model 1 baseline (climate controls)",
+  "Model 2D (add housing structure and tenure)",
+  "Model 6B county fe",
+  "Model 7 (infrastructure controls, outcome-safe)",
+  "Model 8 add demand proxy",
+  "Model 9 + pv control (most controlled)",
+  "Model 9A (predicting burden)",
+];
+export const isKeySpec = (version: string) => KEY_SPECS.includes(modelName(version));
+
+// Only investor-owned utility territories are in the source boundary file.
+export const UTILITY_GAP = "Not in PG&E, SCE, or SDG&E territory; other utilities aren't mapped";
+
+export const UTILITY_TYPES: Record<string, string> = {
+  IOU: "investor-owned",
+  POU: "publicly owned",
+  "Investor Owned Utility": "investor-owned",
+  "Publicly Owned Utility": "publicly owned",
+};
