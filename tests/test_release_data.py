@@ -21,6 +21,19 @@ requires_processed = pytest.mark.skipif(
 )
 
 
+def _is_lfs_pointer(path):
+    # A checkout without Git LFS (as in CI) has a small text stub in place of
+    # the data file; the test is about the data, so skip rather than misread it.
+    with open(path, "rb") as handle:
+        return handle.read(40).startswith(b"version https://git-lfs.github.com")
+
+
+requires_acs_snapshot = pytest.mark.skipif(
+    _is_lfs_pointer(RAW_ACS / "acs_2023_5yr_housing_ca_zcta.csv"),
+    reason="ACS snapshot is a Git LFS pointer here: run `git lfs pull`",
+)
+
+
 @requires_processed
 def test_released_dataset_has_complete_housing_composition():
     path = PROCESSED / "combined_der_dataset_w_controls_predictors.csv"
@@ -68,6 +81,7 @@ def test_release_and_clusters_exclude_non_california_zips():
     assert "98125" not in set(assignments["zip_code"])
 
 
+@requires_acs_snapshot
 def test_acs_housing_snapshot_has_estimates_moes_and_matching_manifest():
     csv_path = RAW_ACS / "acs_2023_5yr_housing_ca_zcta.csv"
     manifest_path = RAW_ACS / "acs_2023_5yr_housing_query_manifest.json"
