@@ -1,1 +1,7 @@
 entrypoint = "backend.api.api:app"
+
+[tool.pytest.ini_options]
+# Tests import backend/ and scripts/ from the repo root; plain `pytest`
+# (as in CI and the README) does not put the root on sys.path by itself.
+pythonpath = ["."]
+testpaths = ["tests"]
