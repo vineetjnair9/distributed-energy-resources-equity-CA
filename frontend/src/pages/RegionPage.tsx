@@ -58,8 +58,10 @@ export function RegionPage() {
           <h2 id="models-heading">How it compares with similar places</h2>
         </div>
         <p className="note" style={{ marginBottom: "1rem" }}>
-          Each row is one regression of the outcome on demographic, housing, climate, and infrastructure controls. A negative residual
-          means less than predicted. Flags mark the bottom quarter for adoption and the top quarter for energy burden.
+          Each row is one regression of the outcome on demographic, housing, climate, and infrastructure controls. Actual and predicted
+          values are on each outcome's modeled scale (for solar, log of kW per 1,000 residents), so compare them with each other, not
+          with the indicators below. A negative residual means less than predicted.{" "}
+          <Link to="/definitions#priority">What "priority" means</Link> · <Link to="/definitions#specifications">the specifications</Link>
         </p>
         {models.error && <ErrorNotice error={models.error} />}
         {models.loading && !models.data && <Loading label="Loading model results" />}

@@ -164,6 +164,51 @@
         "title": "CompareResponse",
         "type": "object"
       },
+      "Definitions": {
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricDefinition"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "outcomes": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeDefinition"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "specifications": {
+            "items": {
+              "$ref": "#/components/schemas/SpecificationDefinition"
+            },
+            "title": "Specifications",
+            "type": "array"
+          },
+          "standard_errors": {
+            "title": "Standard Errors",
+            "type": "string"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/Term"
+            },
+            "title": "Terms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "terms",
+          "metrics",
+          "outcomes",
+          "specifications",
+          "standard_errors"
+        ],
+        "title": "Definitions",
+        "type": "object"
+      },
       "Evidence": {
         "properties": {
           "evidence_id": {
@@ -452,6 +497,56 @@
         "title": "Metric",
         "type": "object"
       },
+      "MetricDefinition": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "definition": {
+            "title": "Definition",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric_name": {
+            "title": "Metric Name",
+            "type": "string"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric_name",
+          "label",
+          "category",
+          "unit",
+          "source_name",
+          "source_url",
+          "definition"
+        ],
+        "title": "MetricDefinition",
+        "type": "object"
+      },
       "ModelOutput": {
         "properties": {
           "actual_value": {
@@ -580,6 +675,40 @@
           "items"
         ],
         "title": "ModelOutputList",
+        "type": "object"
+      },
+      "OutcomeDefinition": {
+        "properties": {
+          "flag_rule": {
+            "enum": [
+              "low",
+              "high",
+              "absolute"
+            ],
+            "title": "Flag Rule",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "modeled_as": {
+            "description": "Scale of the Actual and Predicted values.",
+            "title": "Modeled As",
+            "type": "string"
+          },
+          "outcome_name": {
+            "title": "Outcome Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome_name",
+          "label",
+          "modeled_as",
+          "flag_rule"
+        ],
+        "title": "OutcomeDefinition",
         "type": "object"
       },
       "Region": {
@@ -792,6 +921,24 @@
         "title": "ScreeningRow",
         "type": "object"
       },
+      "SpecificationDefinition": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "SpecificationDefinition",
+        "type": "object"
+      },
       "SummaryCategory": {
         "properties": {
           "category": {
@@ -1002,6 +1149,24 @@
         "title": "SummaryResponse",
         "type": "object"
       },
+      "Term": {
+        "properties": {
+          "definition": {
+            "title": "Definition",
+            "type": "string"
+          },
+          "term": {
+            "title": "Term",
+            "type": "string"
+          }
+        },
+        "required": [
+          "term",
+          "definition"
+        ],
+        "title": "Term",
+        "type": "object"
+      },
       "Utility": {
         "properties": {
           "utility_acronym": {
@@ -1138,6 +1303,28 @@
         "summary": "Compare",
         "tags": [
           "regions"
+        ]
+      }
+    },
+    "/api/definitions": {
+      "get": {
+        "description": "Plain-language definitions of every term, indicator, outcome, and specification.",
+        "operationId": "definitions_api_definitions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Definitions"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Definitions",
+        "tags": [
+          "reference"
         ]
       }
     },

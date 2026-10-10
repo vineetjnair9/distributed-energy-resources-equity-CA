@@ -8,6 +8,13 @@ if __package__ in {None, ""}:
 
 import pandas as pd
 
+from backend.catalog import (
+    BURDEN_PRIORITY_OUTCOMES,
+    DER_PRIORITY_OUTCOMES,
+    METRIC_COLUMNS,
+    METRIC_INTERPRETATIONS,
+    SOURCE_URLS,
+)
 from backend.formatting import _trimmed_decimal, format_metric_value
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -66,129 +73,10 @@ def _read_required(path, command, what):
 REGION_ID_COL = "zip_code"
 COUNTY_COLUMNS = ("county_name", "county")
 
-METRIC_COLUMNS = {
-    "total_population": ("people", "demographic", "ACS 5-year"),
-    "population": ("people", "demographic", "ACS 5-year"),
-    "median_household_income": ("dollars", "socioeconomic", "ACS 5-year"),
-    "poverty_rate": ("share", "socioeconomic", "ACS 5-year"),
-    "pct_bachelors_plus": ("share", "education", "ACS 5-year"),
-    "pct_black": ("share", "demographic", "ACS 5-year"),
-    "pct_hispanic": ("share", "demographic", "ACS 5-year"),
-    "pct_asian": ("share", "demographic", "ACS 5-year"),
-    "median_housing_value": ("dollars", "housing", "ACS 5-year"),
-    "pct_single_family_units": ("share", "housing", "ACS 5-year"),
-    "pct_multifamily_units": ("share", "housing", "ACS 5-year"),
-    "pct_mobile_home_units": ("share", "housing", "ACS 5-year"),
-    "pct_other_housing_units": ("share", "housing", "ACS 5-year"),
-    "owner_occupied_rate": ("share", "housing", "ACS 5-year"),
-    # rebuild_processed_data.py converts the source kW values to MW before
-    # aggregating them by ZCTA.
-    "PV_system_size_DC": ("MW", "der_observed", "LBNL Tracking the Sun processed"),
-    "storage_capacity_mw": ("MW", "der_observed", "CEC Energy Storage System Survey export"),
-    "total_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
-    "level1_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
-    "level2_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
-    "dc_fast_chargers": ("chargers", "der_observed", "CEC ZEV Infrastructure Stats export"),
-    "wind_capacity_mw": ("MW", "der_observed", "USGS USWTDB"),
-    "wind_turbine_count": ("turbines", "der_observed", "USGS USWTDB"),
-    "energy_burden_pct": ("share", "energy_affordability", "Energy burden Tableau export"),
-    "energy_affordability_index": ("index", "energy_affordability", "Energy burden Tableau export"),
-    "energy_affordability_gap": ("dollars", "energy_affordability", "Energy burden Tableau export"),
-    "kwh_annual_total": ("kWh", "demand", "Utility electricity usage by ZIP export"),
-    "cdd65_2023": ("degree_days", "weather", "NASA POWER gridded centroid"),
-    "hdd65_2023": ("degree_days", "weather", "NASA POWER gridded centroid"),
-    "ghi_mean_kwh_m2_day_2023": ("kWh/m2/day", "solar_resource", "NASA POWER gridded centroid"),
-    "wind_ws10m_mean_2023": ("m/s", "wind_resource", "NASA POWER gridded centroid"),
-    "wind_ws50m_mean_2023": ("m/s", "wind_resource", "NASA POWER gridded centroid"),
-}
-
-SOURCE_URLS = {
-    "ACS 5-year": "https://www.census.gov/programs-surveys/acs",
-    "NASA POWER gridded centroid": "https://power.larc.nasa.gov/",
-    "LBNL Tracking the Sun processed": "https://emp.lbl.gov/tracking-the-sun/",
-    "CEC Energy Storage System Survey export": "https://www.energy.ca.gov/data-reports/energy-almanac/california-electricity-data/california-energy-storage-system-survey",
-    "CEC ZEV Infrastructure Stats export": "https://www.energy.ca.gov/data-reports/energy-almanac/zero-emission-vehicle-and-infrastructure-statistics-collection/electric",
-    "USGS USWTDB": "https://energy.usgs.gov/uswtdb/data/",
-    "Energy burden Tableau export": "https://www.energy.ca.gov/data-reports/data-exploration-tools/energy-equity-indicators-dashboard-collection/deep-dive-energy",
-    "Utility electricity usage by ZIP export": (
-        "https://www.sce.com/regulatory/regulatory-information/energy-data-reports-compliances; "
-        "https://pge-energydatarequest.com/public_datasets; "
-        "https://energydata.sdge.com"
-    ),
-    "Regression model outputs": None,
-}
-
 MODEL_COLUMNS = {
     "pv_model_score": "pv_adoption_score",
     "storage_model_score": "storage_adoption_score",
     "charger_model_score": "charger_adoption_score",
-}
-
-METRIC_INTERPRETATIONS = {
-    "pct_black": "This is the non-Hispanic Black share of the population.",
-    "pct_hispanic": "This is the Hispanic or Latino share of the population, of any race.",
-    "pct_asian": "This is the non-Hispanic Asian share of the population.",
-    "poverty_rate": (
-        "This is the share of the population for whom poverty status was determined "
-        "that is below the poverty line."
-    ),
-    "pct_bachelors_plus": (
-        "This is the share of residents age 25 or older with a bachelor's degree "
-        "or higher."
-    ),
-    "pct_single_family_units": (
-        "This is the share of all housing units that are single-family."
-    ),
-    "pct_multifamily_units": (
-        "This is the share of all housing units that are multifamily."
-    ),
-    "pct_mobile_home_units": (
-        "This is the share of all housing units that are mobile homes."
-    ),
-    "pct_other_housing_units": (
-        "This is the share of all housing units in other structures."
-    ),
-    "owner_occupied_rate": (
-        "This is the share of occupied housing units that are owner-occupied."
-    ),
-    "PV_system_size_DC": (
-        "This is aggregate reported PV capacity in the processed Tracking the Sun data."
-    ),
-    "kwh_annual_total": (
-        "This is the electricity usage reported for this ZIP in the utility export. "
-        "Coverage is uneven across ZIPs and utilities, so treat it as reported usage "
-        "for the accounts present in that export, not as total ZCTA consumption."
-    ),
-    "energy_burden_pct": (
-        "This is the percentage of income spent on energy annually. It is a "
-        "ZCTA-level figure and is not a household burden, so it cannot be compared "
-        "against the 7% household affordability threshold."
-    ),
-    "energy_affordability_gap": (
-        "The CEC defines this as a population-weighted measure of the gap between "
-        "affordable and unaffordable energy burdens; burdens above 7% are treated "
-        "as unaffordable in this analysis."
-    ),
-    "energy_affordability_index": (
-        "The CEC index combines the percentile of financial energy burden with the "
-        "percentile of disposable income per person to represent household burden "
-        "and ability to respond to energy-price changes."
-    ),
-}
-
-DER_PRIORITY_OUTCOMES = {
-    "y_pv",
-    "y_storage",
-    "y_chargers",
-    "y_level1_chargers",
-    "y_level2_chargers",
-    "y_dc_fast_chargers",
-    "y_wind_mw",
-}
-BURDEN_PRIORITY_OUTCOMES = {
-    "energy_burden_pct",
-    "energy_affordability_index",
-    "log_energy_gap_per_capita",
 }
 
 # Above this share of zero observations an outcome carries too little variation

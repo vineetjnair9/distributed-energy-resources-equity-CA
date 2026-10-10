@@ -3,24 +3,12 @@ region_id, so the five-character ZCTA stays the single join key across layers.""
 
 import sqlite3
 
+from backend.catalog import BURDEN_PRIORITY_OUTCOMES as BURDEN_OUTCOMES
+from backend.catalog import DER_PRIORITY_OUTCOMES as DER_OUTCOMES
+from backend.catalog import METRIC_COLUMNS
 from backend.formatting import format_metric_value
 
-
-# Mirrors the categories in populate_tables.METRIC_COLUMNS (checked by a test)
-# without importing pandas into the web server.
-METRIC_CATEGORIES = (
-    "demographic", "socioeconomic", "education", "housing", "der_observed",
-    "energy_affordability", "demand", "weather", "solar_resource", "wind_resource",
-)
-
-
-# Matches populate_tables: DER outcomes flag low residuals, burden outcomes high
-# ones, and anything else flags large absolute residuals.
-DER_OUTCOMES = {
-    "y_pv", "y_storage", "y_chargers", "y_level1_chargers", "y_level2_chargers",
-    "y_dc_fast_chargers", "y_wind_mw",
-}
-BURDEN_OUTCOMES = {"energy_burden_pct", "energy_affordability_index", "log_energy_gap_per_capita"}
+METRIC_CATEGORIES = tuple(dict.fromkeys(category for _, category, _ in METRIC_COLUMNS.values()))
 
 
 class RegionNotFound(LookupError):

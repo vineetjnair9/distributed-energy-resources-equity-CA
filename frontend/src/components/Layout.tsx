@@ -28,6 +28,7 @@ export function Layout() {
             <NavLink to={selection.ids.length ? `/compare?ids=${selection.ids.join(",")}` : "/compare"}>
               Compare{selection.ids.length ? <span className="count">({selection.ids.length})</span> : null}
             </NavLink>
+            <NavLink to="/definitions">Definitions</NavLink>
             <NavLink to="/about">Method</NavLink>
             <a href="/api/docs">API</a>
           </nav>

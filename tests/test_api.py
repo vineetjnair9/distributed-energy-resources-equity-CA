@@ -405,3 +405,49 @@ def test_static_route_never_serves_files_outside_the_build(client, path):
         pytest.skip("frontend not built")
     response = client.get(path)
     assert "import " not in response.text and "# DER Data UROP" not in response.text
+
+
+def test_summary_misstating_its_evidence_is_withheld(mutable_client):
+    client, path = mutable_client
+    with closing(sqlite3.connect(path)) as conn:
+        conn.execute(
+            "UPDATE summary_responses SET summary_text = ? "
+            "WHERE region_id = '90001' AND category = 'model_pv'",
+            ("The PV residual ranked at the 3rd percentile; the observed value was zero.",),
+        )
+        conn.commit()
+    body = summary(client, "90001", "model_pv")
+    assert body["status"] == "unavailable"
+    assert body["summary_text"] is None
+    assert "misstates the evidence" in body["warnings"][0]
+    assert body["evidence"]
+
+
+# --- definitions ----------------------------------------------------------------
+
+def test_definitions_cover_everything_the_app_shows(client, fixture_db):
+    body = client.get("/api/definitions").json()
+    assert {t["term"] for t in body["terms"]} >= {"Priority", "Residual", "Residual rank"}
+    defined = {m["metric_name"] for m in body["metrics"]}
+    with closing(sqlite3.connect(fixture_db)) as conn:
+        stored = {r[0] for r in conn.execute("SELECT DISTINCT metric_name FROM metric_observations")}
+        outcomes = {r[0] for r in conn.execute("SELECT DISTINCT outcome_name FROM model_outputs")}
+        specs = {r[0].split(" | ")[-2] if " | " in r[0] else r[0]
+                 for r in conn.execute("SELECT DISTINCT model_version FROM model_outputs")}
+    assert stored <= defined
+    assert outcomes <= {o["outcome_name"] for o in body["outcomes"]}
+    assert specs <= {s["name"] for s in body["specifications"]}
+    rules = {o["outcome_name"]: o["flag_rule"] for o in body["outcomes"]}
+    assert (rules["y_pv"], rules["energy_burden_pct"], rules["any_turbines"]) == ("low", "high", "absolute")
+
+
+def test_frontend_labels_match_the_catalog():
+    # The UI keeps its own label map for synchronous rendering; keep it honest.
+    import re
+    from pathlib import Path
+    from backend import catalog
+    source = (Path(__file__).resolve().parents[1] / "frontend/src/lib/labels.ts").read_text()
+    block = source[source.index("METRIC_LABELS"):source.index("};", source.index("METRIC_LABELS"))]
+    ui = dict(re.findall(r"(\w+): \"([^\"]+)\"", block))
+    for name, (label, _) in catalog.METRIC_DEFINITIONS.items():
+        assert ui.get(name) == label, name

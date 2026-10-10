@@ -8,11 +8,15 @@ citations check out:
 
 * a summary that cites no evidence is withheld;
 * a summary citing evidence from a different region is withheld;
+* a summary whose percentile or observed-zero claims don't match the evidence
+  it cites is withheld (backend/grounding.py);
 * when no summary exists, the response says so and still returns the evidence
   packet the generator would have used, so the user sees data, not silence.
 """
 
 import json
+
+from backend.grounding import claim_problems
 
 from backend.schemas.generate_summaries import (
     DESCRIPTIVE_CATEGORIES,
@@ -36,6 +40,9 @@ NO_EVIDENCE = "The stored summary cites no evidence, so it is withheld as unsupp
 FOREIGN_EVIDENCE = (
     "The stored summary cites evidence belonging to another region, so it is "
     "withheld as untraceable."
+)
+MISSTATED_EVIDENCE = (
+    "The stored summary misstates the evidence it cites, so it is withheld."
 )
 FIXTURE_WARNING = "Synthetic fixture text for development; not a research finding."
 INSUFFICIENT_WARNING = "Too little data for an integrated overview of this region."
@@ -127,6 +134,12 @@ def get_summary(conn, region_id, category=OVERVIEW_CATEGORY):
         return _unavailable(conn, region_id, category, NO_EVIDENCE, record)
     if any(item["region_id"] != region_id for item in evidence):
         return _unavailable(conn, region_id, category, FOREIGN_EVIDENCE, record)
+    problems = claim_problems(record["summary_text"], [item["evidence_text"] for item in evidence])
+    if problems:
+        return _unavailable(
+            conn, region_id, category,
+            f"{MISSTATED_EVIDENCE} It {'; it '.join(problems)}.", record,
+        )
 
     try:
         snapshot = json.loads(record["metric_snapshot"]) if record["metric_snapshot"] else None

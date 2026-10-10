@@ -15,6 +15,7 @@ export type SummaryResponse = Schemas["SummaryResponse"];
 export type SummaryCategoryList = Schemas["SummaryCategoryList"];
 export type Facets = Schemas["Facets"];
 export type ScreeningResponse = Schemas["ScreeningResponse"];
+export type Definitions = Schemas["Definitions"];
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -66,6 +67,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ region_id, category }),
     }),
+  definitions: () => request<Definitions>("/api/definitions"),
   facets: () => request<Facets>("/api/facets"),
   screening: (params: { outcome_name: string; county?: string; utility?: string; limit?: number }) =>
     request<ScreeningResponse>(`/api/screening${query({ ...params })}`),

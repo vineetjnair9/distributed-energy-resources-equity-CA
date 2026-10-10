@@ -48,3 +48,4 @@ data/der_fixture.db.*
 data/.der_fixture.db*
 frontend/node_modules/
 frontend/dist/
+frontend/*.tsbuildinfo

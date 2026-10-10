@@ -21,6 +21,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Definitions
+         * @description Plain-language definitions of every term, indicator, outcome, and specification.
+         */
+        get: operations["definitions_api_definitions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/facets": {
         parameters: {
             query?: never;
@@ -273,6 +293,19 @@ export interface components {
             /** Regions */
             regions: components["schemas"]["Region"][];
         };
+        /** Definitions */
+        Definitions: {
+            /** Metrics */
+            metrics: components["schemas"]["MetricDefinition"][];
+            /** Outcomes */
+            outcomes: components["schemas"]["OutcomeDefinition"][];
+            /** Specifications */
+            specifications: components["schemas"]["SpecificationDefinition"][];
+            /** Standard Errors */
+            standard_errors: string;
+            /** Terms */
+            terms: components["schemas"]["Term"][];
+        };
         /** Evidence */
         Evidence: {
             /** Evidence Id */
@@ -366,6 +399,23 @@ export interface components {
             /** Source Name */
             source_name: string | null;
         };
+        /** MetricDefinition */
+        MetricDefinition: {
+            /** Category */
+            category: string;
+            /** Definition */
+            definition: string;
+            /** Label */
+            label: string;
+            /** Metric Name */
+            metric_name: string;
+            /** Source Name */
+            source_name: string;
+            /** Source Url */
+            source_url: string | null;
+            /** Unit */
+            unit: string;
+        };
         /** ModelOutput */
         ModelOutput: {
             /** Actual Value */
@@ -401,6 +451,23 @@ export interface components {
             items: components["schemas"]["ModelOutput"][];
             /** Region Id */
             region_id: string;
+        };
+        /** OutcomeDefinition */
+        OutcomeDefinition: {
+            /**
+             * Flag Rule
+             * @enum {string}
+             */
+            flag_rule: "low" | "high" | "absolute";
+            /** Label */
+            label: string;
+            /**
+             * Modeled As
+             * @description Scale of the Actual and Predicted values.
+             */
+            modeled_as: string;
+            /** Outcome Name */
+            outcome_name: string;
         };
         /** Region */
         Region: {
@@ -473,6 +540,13 @@ export interface components {
             /** Specification Count */
             specification_count: number;
         };
+        /** SpecificationDefinition */
+        SpecificationDefinition: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+        };
         /** SummaryCategory */
         SummaryCategory: {
             /** Category */
@@ -543,6 +617,13 @@ export interface components {
              */
             warnings: string[];
         };
+        /** Term */
+        Term: {
+            /** Definition */
+            definition: string;
+            /** Term */
+            term: string;
+        };
         /** Utility */
         Utility: {
             /** Utility Acronym */
@@ -604,6 +685,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    definitions_api_definitions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Definitions"];
                 };
             };
         };

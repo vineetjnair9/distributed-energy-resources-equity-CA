@@ -16,8 +16,8 @@ export function AboutPage() {
       </p>
       <h2>Model results</h2>
       <p>
-        Each outcome is regressed (OLS) on a ladder of specifications, from climate alone up to demographic, housing, and
-        infrastructure controls with county fixed effects. A ZIP code's residual is ranked against every other ZIP code in the fit.
+        Each outcome is regressed (OLS) on a ladder of about 25 specifications. All start from income, race and ethnicity shares, and
+        poverty, then add climate, housing, education, utility or county fixed effects, and existing energy infrastructure. A ZIP code's residual is ranked against every other ZIP code in the fit.
         For adoption, the bottom quarter is flagged: less solar, storage, or charging than similar places. For energy burden, the
         top quarter is flagged.
       </p>
@@ -32,7 +32,8 @@ export function AboutPage() {
         it says so and lists the records instead.
       </p>
       <p>
-        The full API is documented at <a href="/api/docs">/api/docs</a>.
+        Every term, indicator and specification is defined on the <a href="/definitions">Definitions</a> page. The full API is
+        documented at <a href="/api/docs">/api/docs</a>.
       </p>
     </article>
   );

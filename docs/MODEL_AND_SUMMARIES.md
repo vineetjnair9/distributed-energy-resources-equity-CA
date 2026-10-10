@@ -12,7 +12,7 @@ request handler.
 `y_chargers` and charger levels, `y_wind_mw`, `any_turbines`) and energy affordability
 (`energy_burden_pct`, `log_energy_gap_per_capita`).
 
-**Specifications.** A ladder from climate controls only (Model 1) through
+**Specifications.** About 25 per outcome, all built on core terms (log median income, Black, Hispanic and Asian shares, poverty rate). The ladder runs from the baseline (Model 1: core terms plus the outcome's climate control) through
 demographic, socioeconomic, housing-structure and tenure controls (Model 2 variants),
 county fixed effects (Model 6B), infrastructure controls (Model 7), a demand proxy
 (Model 8), and the most-controlled storage model with a PV control (Model 9). Model
