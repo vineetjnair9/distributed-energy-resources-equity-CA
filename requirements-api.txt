@@ -1,7 +1,7 @@
 # Runtime dependencies of the web service only (see Dockerfile). The API imports
 # the summary category definitions from generate_summaries, which needs openai
 # and python-dotenv at import time; it never calls the OpenAI API.
-fastapi==0.141.1
+fastapi==0.142.2
 uvicorn==0.52.1
 openai==3.0.0
 python-dotenv==1.2.2
