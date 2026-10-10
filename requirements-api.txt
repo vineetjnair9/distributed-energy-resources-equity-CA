@@ -2,6 +2,6 @@
 # the summary category definitions from generate_summaries, which needs openai
 # and python-dotenv at import time; it never calls the OpenAI API.
 fastapi==0.141.1
-uvicorn==0.52.1
+uvicorn==0.54.0
 openai==3.0.0
 python-dotenv==1.2.2
