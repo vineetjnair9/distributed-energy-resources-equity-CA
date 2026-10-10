@@ -1,5 +1,7 @@
 import { Fragment, useState } from "react";
+import { Link } from "react-router-dom";
 import type { ModelOutput } from "../api/client";
+import { outcomeHref, termHref } from "../lib/anchors";
 import { OUTCOME_LABELS, flagDirection, isKeySpec, label, modelName, number, percentile } from "../lib/labels";
 
 const OUTCOME_ORDER = Object.keys(OUTCOME_LABELS);
@@ -21,7 +23,7 @@ export function PercentileBar({ value, outcome }: { value: number | null; outcom
 
 export function FlagBadge({ flag }: { flag: boolean | null | undefined }) {
   if (flag === null || flag === undefined) return <span className="na">—</span>;
-  return flag ? <span className="flag">Priority</span> : <span className="noflag">—</span>;
+  return flag ? <Link to={termHref("Priority")} className="flag deflink">Priority</Link> : <span className="noflag">—</span>;
 }
 
 export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
@@ -39,7 +41,7 @@ export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
             <th scope="col" className="num">Actual</th>
             <th scope="col" className="num">Predicted</th>
             <th scope="col" className="num">Residual</th>
-            <th scope="col">Residual rank</th>
+            <th scope="col"><Link to={termHref("Residual rank")} className="deflink">Residual rank</Link></th>
             <th scope="col">Flag</th>
           </tr>
         </thead>
@@ -50,7 +52,7 @@ export function ModelTable({ outputs }: { outputs: ModelOutput[] }) {
               <Fragment key={outcome}>
                 <tr className="group-row">
                   <th colSpan={6} scope="colgroup">
-                    {label(OUTCOME_LABELS, outcome)}{" "}
+                    <Link to={outcomeHref(outcome)} className="deflink" >{label(OUTCOME_LABELS, outcome)}</Link>{" "}
                     <span className={flagged ? "flag" : "muted"} style={{ fontFamily: "var(--sans)", fontSize: "0.8rem", fontWeight: 500 }}>
                       {flagged ? `flagged by ${flagged} of ${rows.length} specifications` : `not flagged by any of ${rows.length} specifications`}
                     </span>

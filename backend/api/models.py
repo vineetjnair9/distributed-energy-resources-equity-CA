@@ -155,6 +155,41 @@ class ScreeningResponse(BaseModel):
     items: list[ScreeningRow]
 
 
+class Term(BaseModel):
+    term: str
+    definition: str
+
+
+class MetricDefinition(BaseModel):
+    metric_name: str
+    label: str
+    category: str
+    unit: str
+    source_name: str
+    source_url: str | None
+    definition: str
+
+
+class OutcomeDefinition(BaseModel):
+    outcome_name: str
+    label: str
+    modeled_as: str = Field(description="Scale of the Actual and Predicted values.")
+    flag_rule: Literal["low", "high", "absolute"]
+
+
+class SpecificationDefinition(BaseModel):
+    name: str
+    description: str
+
+
+class Definitions(BaseModel):
+    terms: list[Term]
+    metrics: list[MetricDefinition]
+    outcomes: list[OutcomeDefinition]
+    specifications: list[SpecificationDefinition]
+    standard_errors: str
+
+
 class SummaryRequest(BaseModel):
     region_id: str = Field(max_length=16, examples=["90001"])
     category: str = Field("overview", max_length=64, examples=["overview", "observed_der", "model_pv"])

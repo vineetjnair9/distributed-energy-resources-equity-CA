@@ -8,8 +8,10 @@ from fastapi import APIRouter, FastAPI, HTTPException, Path as PathParam, Query,
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from backend import catalog
 from backend.api.models import (
     CompareResponse,
+    Definitions,
     Evidence,
     Facets,
     HealthResponse,
@@ -284,6 +286,36 @@ def request_summary(request: SummaryRequest):
     """
     with get_connection() as conn:
         return summary_service.get_summary(conn, request.region_id, request.category)
+
+
+@router.get("/definitions", response_model=Definitions, tags=["reference"])
+def definitions():
+    """Plain-language definitions of every term, indicator, outcome, and specification."""
+    return {
+        "terms": [{"term": t, "definition": d} for t, d in catalog.TERMS],
+        "metrics": [
+            {
+                "metric_name": name,
+                "label": catalog.METRIC_DEFINITIONS[name][0],
+                "definition": catalog.METRIC_DEFINITIONS[name][1],
+                "unit": unit,
+                "category": category,
+                "source_name": source,
+                "source_url": catalog.SOURCE_URLS.get(source),
+            }
+            for name, (unit, category, source) in catalog.METRIC_COLUMNS.items()
+            if name in catalog.METRIC_DEFINITIONS
+        ],
+        "outcomes": [
+            {"outcome_name": name, "label": label, "modeled_as": scale,
+             "flag_rule": region_service.flag_direction(name)}
+            for name, (label, scale) in catalog.OUTCOME_DEFINITIONS.items()
+        ],
+        "specifications": [
+            {"name": name, "description": text} for name, text in catalog.SPECIFICATIONS
+        ],
+        "standard_errors": catalog.STANDARD_ERRORS,
+    }
 
 
 @router.get("/summary-categories", response_model=dict[str, str], tags=["summaries"])

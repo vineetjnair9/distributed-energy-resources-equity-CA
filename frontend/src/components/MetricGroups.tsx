@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import type { Metric } from "../api/client";
+import { metricHref } from "../lib/anchors";
 import { CATEGORY_LABELS, CATEGORY_ORDER, METRIC_LABELS, label } from "../lib/labels";
 
 export function MetricGroups({ metrics, missing }: { metrics: Metric[]; missing: string[] }) {
@@ -22,7 +24,7 @@ export function MetricGroups({ metrics, missing }: { metrics: Metric[]; missing:
                   <dl>
                     {rows.map((metric) => (
                       <div key={metric.metric_name} className="fact">
-                        <dt title={metric.metric_name}>{label(METRIC_LABELS, metric.metric_name)}</dt>
+                        <dt><Link to={metricHref(metric.metric_name)} className="deflink">{label(METRIC_LABELS, metric.metric_name)}</Link></dt>
                         <dd>{metric.display_value}</dd>
                       </div>
                     ))}

@@ -231,3 +231,19 @@ button, select, input { font: inherit; color: inherit; }
   .masthead nav { gap: 1rem; }
   .sticky-col { min-width: 140px; }
 }
+
+/* --- Definitions ----------------------------------------------------------- */
+.toc { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: 1.25rem; font-size: 0.9rem; }
+.glossary { margin: 0; }
+.gloss { display: grid; grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); gap: 0.25rem 2rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule); scroll-margin-top: 5rem; }
+.gloss dt { font-weight: 600; }
+.gloss dt .sub { margin-top: 0.15rem; }
+.gloss dd { margin: 0; max-width: var(--measure); color: var(--ink-2); }
+.def-group { margin-bottom: 2rem; }
+.def-group h3 { margin-bottom: 0.2rem; }
+tr[id] { scroll-margin-top: 5rem; }
+.target-flash { animation: flash 2.4s ease-out; }
+@keyframes flash { from { background: var(--mark); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .target-flash { animation: none; background: var(--mark); } }
+.deflink { color: inherit; text-decoration: underline dotted var(--ink-3); text-underline-offset: 3px; }
+@media (max-width: 640px) { .gloss { grid-template-columns: 1fr; } }
