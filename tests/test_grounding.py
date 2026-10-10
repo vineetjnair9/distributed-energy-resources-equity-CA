@@ -34,3 +34,10 @@ def test_zero_claim_backed_by_evidence_passes():
                 "estimated an actual value of 0, a predicted value of 0.12. This outcome is "
                 "observed as zero in 98% of fitted regions."]
     assert claim_problems("The observed value was zero in this ZCTA.", evidence) == []
+
+
+def test_below_first_paraphrases_a_zeroth_percentile():
+    evidence = ["The residual ranks at the 0th percentile within the fitted sample."]
+    assert claim_problems("It ranked below the 1st percentile.", evidence) == []
+    # ...but not when the evidence has no 0th percentile to paraphrase.
+    assert claim_problems("It ranked below the 1st percentile.", PV_EVIDENCE)

@@ -15,6 +15,7 @@ import re
 PERCENTILE = re.compile(r"\b(\d{1,3})(?:st|nd|rd|th)\b")
 # Thresholds named in flag definitions, not region-specific results.
 DEFINITIONAL_PERCENTILES = {"25", "75"}
+BELOW_FIRST = re.compile(r"below the 1st percentile", re.IGNORECASE)
 ZERO_CLAIM = re.compile(
     r"observed (?:value )?(?:was|is|as|were|are) (?:reported as )?zero"
     r"|(?:was|were|is) zero in (?:nearly|almost|most|\d+%)"
@@ -38,8 +39,14 @@ def claim_problems(summary_text, evidence_texts):
     """Return human-readable problems; an empty list means the claims check out."""
     evidence = " ".join(evidence_texts)
     problems = []
-    stated = set(PERCENTILE.findall(summary_text)) - DEFINITIONAL_PERCENTILES
-    unsupported = sorted(stated - set(PERCENTILE.findall(evidence)), key=int)
+    cited = set(PERCENTILE.findall(evidence))
+    text = summary_text
+    if "0" in cited:
+        # The evidence rounds the most extreme rank to the "0th percentile";
+        # "below the 1st percentile" is a faithful way to say that.
+        text = BELOW_FIRST.sub("", text)
+    stated = set(PERCENTILE.findall(text)) - DEFINITIONAL_PERCENTILES
+    unsupported = sorted(stated - cited, key=int)
     if unsupported:
         problems.append(
             "states percentile ranks not in its cited evidence: "
