@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api, type Evidence, type SummaryResponse } from "../api/client";
 import { useApi } from "../api/useApi";
 import { safeHref } from "../lib/safeHref";
+import { Busy } from "./Busy";
 import { ErrorNotice, Loading } from "./Status";
 
 const PREVIEW = 5;
@@ -108,7 +109,11 @@ export function SummaryPanel({ regionId }: { regionId: string }) {
       <div role="tabpanel">
         {summary.loading && !summary.data && <Loading label="Loading summary" />}
         {summary.error && <ErrorNotice error={summary.error} />}
-        {summary.data && <SummaryBody summary={summary.data} />}
+        {summary.data && (
+          <Busy when={summary.loading}>
+            <SummaryBody summary={summary.data} />
+          </Busy>
+        )}
       </div>
       <p className="note" style={{ marginTop: "1rem" }}>
         Written in advance from the sources listed. A summary that can't be traced to this ZIP code's own records is not shown.

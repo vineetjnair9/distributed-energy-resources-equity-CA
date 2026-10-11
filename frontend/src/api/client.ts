@@ -1,3 +1,4 @@
+import { inflight } from "./inflight";
 import type { components } from "./schema";
 
 // Generated from docs/openapi.json (npm run gen:types); never edit by hand.
@@ -23,7 +24,11 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+function request<T>(path: string, init?: RequestInit): Promise<T> {
+  return inflight.track(send<T>(path, init));
+}
+
+async function send<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
     headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) },
