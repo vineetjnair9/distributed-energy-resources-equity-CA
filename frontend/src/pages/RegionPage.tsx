@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import { ApiError, api } from "../api/client";
 import { useApi } from "../api/useApi";
+import { Busy } from "../components/Busy";
 import { CompareToggle } from "../components/CompareToggle";
 import { KeyStats, MetricGroups } from "../components/MetricGroups";
 import { ModelTable } from "../components/ModelTable";
@@ -32,6 +33,9 @@ export function RegionPage() {
     : UTILITY_GAP;
 
   return (
+    // Moving between regions keeps the old page up until the new one arrives;
+    // dim it so the change visibly registers.
+    <Busy when={detail.loading}>
     <article>
       <nav className="crumbs" aria-label="Breadcrumb"><Link to="/">Regions</Link> / {region.region_id}</nav>
       <header className="region-head">
@@ -65,9 +69,9 @@ export function RegionPage() {
         </p>
         {models.error && <ErrorNotice error={models.error} />}
         {models.loading && !models.data && <Loading label="Loading model results" />}
-        {models.data && (models.data.items.length
+        {models.data && <Busy when={models.loading}>{(models.data.items.length
           ? <ModelTable outputs={models.data.items} />
-          : <Empty>No model results: this ZIP code wasn't in the fitted sample, usually because census data is missing.</Empty>)}
+          : <Empty>No model results: this ZIP code wasn't in the fitted sample, usually because census data is missing.</Empty>)}</Busy>}
       </section>
 
       <section className="section" aria-labelledby="metrics-heading">
@@ -77,5 +81,6 @@ export function RegionPage() {
         {metrics.length ? <MetricGroups metrics={metrics} missing={missing} /> : <Empty>No indicators are reported for this ZIP code.</Empty>}
       </section>
     </article>
+    </Busy>
   );
 }

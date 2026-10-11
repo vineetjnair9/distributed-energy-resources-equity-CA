@@ -36,15 +36,39 @@ export function DefinitionsPage() {
   return (
     <article className="definitions">
       <header className="index-head">
-        <h1>Definitions</h1>
-        <p className="dek">What every term, indicator and model in the atlas means, and how each is computed.</p>
+        <h1>Method and definitions</h1>
+        <p className="dek">How the atlas is built, what every term means, and how each number is computed.</p>
         <nav className="toc" aria-label="On this page">
+          <a href="#how-it-works">How it works</a>
           <a href="#key-terms">Key terms</a>
           <a href="#indicators">Indicators</a>
           <a href="#outcomes">Model outcomes</a>
           <a href="#specifications">Specifications</a>
         </nav>
       </header>
+
+      <section className="section" aria-labelledby="how-it-works">
+        <div className="section-head"><h2 id="how-it-works">How it works</h2></div>
+        <div className="prose">
+        <p>
+          Every number is attached to a California ZIP code area (<a href="#zcta">ZCTA</a>). Rooftop solar comes from LBNL's Tracking the
+          Sun; battery storage and EV chargers from California Energy Commission data; wind turbines from the USGS turbine database. These
+          are joined to Census demographics, CEC energy-burden measures, utility electricity reports and NASA climate data, all for 2023.
+        </p>
+        <p>
+          Each adoption and burden outcome is then fit with about 25 regression <a href="#specification">specifications</a>, from a
+          baseline of income, race and ethnicity, poverty and climate up to housing, utility and county effects and existing
+          infrastructure. A ZIP code that falls in the bottom quarter of adoption relative to similar places, or the top quarter of energy
+          burden, is flagged as a <a href="#priority">priority</a>. Agreement across specifications is the robustness signal; any single
+          flag is a prompt to look closer, not a causal finding.
+        </p>
+        <p>
+          Summaries are written ahead of time by a language model working only from a fixed packet of each ZIP code's records, and it must
+          cite the records it used. The site shows a summary only when every citation belongs to that ZIP code and the percentiles and
+          "zero" claims it makes match those records; otherwise it says why and lists the records instead.
+        </p>
+        </div>
+      </section>
 
       <section className="section" aria-labelledby="key-terms">
         <div className="section-head"><h2 id="key-terms">Key terms</h2></div>

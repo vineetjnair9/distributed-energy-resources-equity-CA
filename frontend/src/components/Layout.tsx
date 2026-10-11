@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { api } from "../api/client";
 import { useApi } from "../api/useApi";
 import { useCompareSelection } from "../lib/compareSelection";
+import { ProgressBar } from "./Busy";
 
 export function Layout() {
   const health = useApi(api.health, "health");
@@ -28,11 +29,11 @@ export function Layout() {
             <NavLink to={selection.ids.length ? `/compare?ids=${selection.ids.join(",")}` : "/compare"}>
               Compare{selection.ids.length ? <span className="count">({selection.ids.length})</span> : null}
             </NavLink>
-            <NavLink to="/definitions">Definitions</NavLink>
-            <NavLink to="/about">Method</NavLink>
+            <NavLink to="/definitions">Method &amp; definitions</NavLink>
             <a href="/api/docs">API</a>
           </nav>
         </div>
+        <ProgressBar />
       </header>
       {health.error && (
         <div className="service-down" role="alert">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { useApi } from "../api/useApi";
+import { Busy } from "../components/Busy";
 import { CompareToggle } from "../components/CompareToggle";
 import { useDebounced } from "../components/RegionSearch";
 import { Empty, ErrorNotice, Loading } from "../components/Status";
@@ -84,7 +85,7 @@ export function ExplorePage() {
           {regions.error && <ErrorNotice error={regions.error} />}
           {regions.loading && !regions.data && <Loading label="Searching" />}
           {regions.data && (
-            <>
+            <Busy when={regions.loading}>
               <p className="result-count" aria-live="polite">
                 {regions.data.total.toLocaleString()} region{regions.data.total === 1 ? "" : "s"}
               </p>
@@ -121,7 +122,7 @@ export function ExplorePage() {
                   <button type="button" className="textbtn" disabled={offset + PAGE >= regions.data.total} onClick={() => update({ offset: String(offset + PAGE) })}>Next</button>
                 </div>
               )}
-            </>
+            </Busy>
           )}
         </section>
 
@@ -156,7 +157,7 @@ function ScreeningCard({ outcomes, county, utility }: { outcomes: string[]; coun
       </p>
       {screening.error && <ErrorNotice error={screening.error} />}
       {screening.loading && !screening.data && <Loading />}
-      {screening.data && (screening.data.items.length === 0 ? (
+      {screening.data && <Busy when={screening.loading}>{screening.data.items.length === 0 ? (
         <Empty>No region is flagged for this outcome with the current filters.</Empty>
       ) : (
         <table className="table table-hover" style={{ marginTop: "1rem" }}>
@@ -183,12 +184,12 @@ function ScreeningCard({ outcomes, county, utility }: { outcomes: string[]; coun
             ))}
           </tbody>
         </table>
-      ))}
+      )}</Busy>}
       {screening.data && screening.data.total > screening.data.items.length && (
         <p className="note" style={{ marginTop: "0.6rem" }}>Top {screening.data.items.length} of {screening.data.total} flagged.</p>
       )}
       <p className="note" style={{ marginTop: "0.6rem" }}>
-        Ranked by how many model specifications agree. <Link to="/about">How the models work</Link>
+        Ranked by how many model specifications agree. <Link to="/definitions#specifications">How the models work</Link>
       </p>
     </section>
   );

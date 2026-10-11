@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, type CompareResponse } from "../api/client";
 import { useApi } from "../api/useApi";
+import { Busy } from "../components/Busy";
 import { FlagBadge, PercentileBar, outcomeRank } from "../components/ModelTable";
 import { RegionPicker } from "../components/RegionSearch";
 import { Empty, ErrorNotice, Loading } from "../components/Status";
@@ -52,7 +53,11 @@ export function ComparePage() {
       {ids.length < 2 && <Empty>Add {2 - ids.length} more to compare.</Empty>}
       {comparison.error && <ErrorNotice error={comparison.error} />}
       {comparison.loading && !comparison.data && <Loading label="Comparing" />}
-      {comparison.data && ids.length >= 2 && <CompareTables data={comparison.data} />}
+      {comparison.data && ids.length >= 2 && (
+        <Busy when={comparison.loading}>
+          <CompareTables data={comparison.data} />
+        </Busy>
+      )}
     </>
   );
 }
