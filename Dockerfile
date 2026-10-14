@@ -12,7 +12,7 @@ RUN npm test && npm run build
 
 # 2. Database: build the synthetic fixture through the production loaders.
 #    pandas is needed here only, so it stays out of the runtime image.
-FROM python:3.11-slim AS database
+FROM python:3.14-slim AS database
 WORKDIR /app
 RUN pip install --no-cache-dir pandas==2.3.3 numpy==1.26.4 openai==3.0.0 \
         python-dotenv==1.2.2 pydantic==2.13.5
@@ -20,7 +20,7 @@ COPY backend/ backend/
 RUN python -m backend.fixtures.build_fixture_db --database /app/data/der.db
 
 # 3. Runtime: FastAPI serves the API and the built frontend on one port.
-FROM python:3.11-slim
+FROM python:3.14-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DER_DB_PATH=/app/data/der.db \
