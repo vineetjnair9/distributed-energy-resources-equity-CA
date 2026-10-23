@@ -28,8 +28,10 @@ from paper_figure_utils import (
     apply_paper_style,
     load_all_coefs,
     plot_stability_from_csvs,
+    significance_marker_handles,
     stars_from_pval,
     sync_site_figure,
+    term_color_handles,
 )
 
 
@@ -117,13 +119,19 @@ def plot_ladder_coefficient_path(save_path: Path) -> None:
         sub = all_coefs[all_coefs["outcome"] == outcome].copy()
         for term in COEFFICIENT_PATH_TERMS:
             s = sub[sub["term"] == term].copy()
-            s["model_short"] = pd.Categorical(s["model_short"], categories=PAPER_LADDER_MODELS, ordered=True)
-            s = s.sort_values("model_short")
+            s["x"] = s["model_short"].map({m: i for i, m in enumerate(PAPER_LADDER_MODELS)})
+            s = s.sort_values("x")
             color = TERM_COLORS.get(term, "#374151")
-            ax.plot(
-                range(len(s)), s["coef"], marker="o", linewidth=2.1, markersize=5.8,
-                color=color, label=TERM_LABELS.get(term, term),
-            )
+            # Same convention as Fig. 2 and Supplementary Figs. S1-S3: filled = p < 0.05,
+            # hollow = p >= 0.05 (C5 p-values are county-clustered). Previously every
+            # marker was filled, which under that convention read as "all significant".
+            ax.plot(s["x"], s["coef"], linewidth=2.1, color=color,
+                    label=TERM_LABELS.get(term, term), zorder=2)
+            sig = s["pval"] < 0.05
+            ax.scatter(s.loc[sig, "x"], s.loc[sig, "coef"], s=48, facecolor=color,
+                       edgecolor="white", linewidth=0.9, zorder=4)
+            ax.scatter(s.loc[~sig, "x"], s.loc[~sig, "coef"], s=48, facecolor=HOLLOW_FACE,
+                       edgecolor=color, linewidth=1.5, zorder=4)
         ax.axhline(0, linestyle="--", linewidth=1.1, color=MUTED)
         ax.grid(axis="y", linestyle="-", linewidth=0.7)
         ax.set_title(title, fontsize=14, fontweight="bold", loc="left", pad=8)
@@ -134,9 +142,13 @@ def plot_ladder_coefficient_path(save_path: Path) -> None:
     axes[-1].set_xticks(x)
     axes[-1].set_xticklabels(x_labels)
     axes[-1].set_xlabel("Model ladder (C1-C5)")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.955))
-    fig.tight_layout(rect=[0.03, 0.06, 0.985, 0.9])
+    # Two legend rows: colour = term, fill = significance.
+    fig.legend(handles=term_color_handles(COEFFICIENT_PATH_TERMS), loc="upper center",
+               ncol=len(COEFFICIENT_PATH_TERMS), frameon=False, bbox_to_anchor=(0.5, 0.985),
+               handletextpad=0.7, columnspacing=1.8)
+    fig.legend(handles=significance_marker_handles(), loc="upper center", ncol=2,
+               frameon=False, bbox_to_anchor=(0.5, 0.952), handletextpad=0.7, columnspacing=1.8)
+    fig.tight_layout(rect=[0.03, 0.06, 0.985, 0.91])
 
     if True:
         fig.patch.set_alpha(0)

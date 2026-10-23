@@ -647,16 +647,22 @@ def plot_housing_structure_attenuation(
     outcomes = outcomes or {"y_pv": "Solar PV", "y_storage": "Storage", "y_chargers": "EV Chargers"}
     race_terms = list(race_terms)
 
-    fig, axes = plt.subplots(1, len(outcomes), figsize=(13.4, 5.4), sharey=True)
+    fig, axes = plt.subplots(1, len(outcomes), figsize=(13.4, 6.0), sharey=True)
     if len(outcomes) == 1:
         axes = [axes]
 
+    # Fill carries significance (filled = p < 0.05, hollow = p >= 0.05), the convention
+    # of every other coefficient figure. The two specifications are told apart by marker
+    # shape instead: circle = baseline, diamond = + structure & tenure. This figure used
+    # to make hollow mean "baseline" and filled mean "Model 2D", which read as the
+    # opposite of significance next to Figs. 2 and 4.
     offset = 0.17
+    spec_markers = ((baseline_model, offset, "o", 8.0), (structure_model, -offset, "D", 7.2))
     for ax, (outcome, label) in zip(axes, outcomes.items()):
         for i, term in enumerate(race_terms):
             y0 = len(race_terms) - 1 - i
             color = TERM_COLORS.get(term, "#374151")
-            for model, dy, filled in ((baseline_model, offset, False), (structure_model, -offset, True)):
+            for model, dy, marker, size in spec_markers:
                 row = all_coefs[
                     (all_coefs["outcome"] == outcome)
                     & (all_coefs["model"] == model)
@@ -665,10 +671,11 @@ def plot_housing_structure_attenuation(
                 if row.empty:
                     continue
                 r = row.iloc[0]
+                sig = pd.notna(r["pval"]) and r["pval"] < 0.05
                 ax.hlines(y0 + dy, r["conf_low"], r["conf_high"], color=color, lw=2.4, alpha=0.9)
                 ax.plot(
-                    r["coef"], y0 + dy, "o", ms=8,
-                    markerfacecolor=color if filled else HOLLOW_FACE,
+                    r["coef"], y0 + dy, marker, ms=size,
+                    markerfacecolor=color if sig else HOLLOW_FACE,
                     markeredgecolor=color, markeredgewidth=1.7, zorder=3,
                 )
                 if r["stars"]:
@@ -685,17 +692,28 @@ def plot_housing_structure_attenuation(
         ax.tick_params(axis="y", length=0)
         ax.spines["left"].set_visible(False)
 
-    fig.tight_layout(rect=[0.01, 0.16, 0.99, 0.985])
-    handles = [
-        Line2D([0], [0], marker="o", linestyle="none", markerfacecolor=HOLLOW_FACE,
-               markeredgecolor=MUTED, markeredgewidth=1.7, markersize=8,
-               label=f"Baseline ({baseline_model.split(' (')[0]})"),
+    fig.tight_layout(rect=[0.01, 0.20, 0.99, 0.985])
+    # Two legend rows: marker shape = specification, marker fill = significance.
+    spec_handles = [
         Line2D([0], [0], marker="o", linestyle="none", markerfacecolor=MUTED,
-               markeredgecolor=MUTED, markersize=8, label="+ structure & tenure (Model 2D)"),
+               markeredgecolor=MUTED, markeredgewidth=1.7, markersize=8,
+               label="Circle: baseline (Model 1)"),
+        Line2D([0], [0], marker="D", linestyle="none", markerfacecolor=MUTED,
+               markeredgecolor=MUTED, markeredgewidth=1.7, markersize=7.2,
+               label="Diamond: + housing structure & tenure (Model 2D)"),
         ci_handle(),
     ]
+    add_figure_legend(fig, spec_handles, ncol=3, y=0.105)
+    fill_handles = [
+        Line2D([0], [0], marker="o", linestyle="none", markerfacecolor=MUTED,
+               markeredgecolor=MUTED, markeredgewidth=1.7, markersize=8,
+               label="Filled: p < 0.05"),
+        Line2D([0], [0], marker="o", linestyle="none", markerfacecolor=HOLLOW_FACE,
+               markeredgecolor=MUTED, markeredgewidth=1.7, markersize=8,
+               label="Hollow: p ≥ 0.05"),
+    ]
     add_figure_legend(
-        fig, handles, ncol=3, y=0.075,
+        fig, fill_handles, ncol=2, y=0.055,
         note=SIG_NOTE + "   ·   exhaustive structure shares vs single-family; tenure is owner share (renters omitted)",
     )
     _finish_figure(fig, save_path)

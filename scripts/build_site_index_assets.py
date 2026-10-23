@@ -30,6 +30,7 @@ from statsmodels.nonparametric.smoothers_lowess import lowess
 
 from paper_figure_utils import (
     GRID,
+    HOLLOW_FACE,
     MUTED,
     PANEL_BG,
     PAPER_BG,
@@ -38,7 +39,9 @@ from paper_figure_utils import (
     TEXT,
     TRANSPARENT_BG,
     apply_paper_style,
+    significance_marker_handles,
     sync_site_tree,
+    term_color_handles,
 )
 
 
@@ -309,10 +312,21 @@ def build_predictor_lowess_small_multiples(
         smooth = lowess_with_bootstrap_ci(df, x_col, y_col)
         smooths[y_col] = smooth
         metric_rows.append(summarize_lowess_gradient(smooth, x_col, y_col))
-        y_ranges.append(np.nanpercentile(smooth[["ci_low", "ci_high"]].to_numpy(), [1, 99]))
+        # Shared y-range from the 1st-99th percentile of the scattered outcomes (the rule
+        # build_income_small_multiples uses), widened to the bootstrap bands. It used to
+        # come from the bands alone, which only worked while the three outcomes sat on
+        # similar scales: after the PV refresh (log(1 + kW per 1,000), median ~6) it cut
+        # the top of the solar scatter off.
+        y_obs = df[y_col].replace([np.inf, -np.inf], np.nan).dropna()
+        y_ranges.append((
+            min(float(np.nanpercentile(y_obs, 1)), float(smooth["ci_low"].min())),
+            max(float(np.nanpercentile(y_obs, 99)), float(smooth["ci_high"].max())),
+        ))
 
     y_min = min(r[0] for r in y_ranges)
     y_max = max(r[1] for r in y_ranges)
+    y_pad = 0.02 * (y_max - y_min)
+    y_min, y_max = y_min - y_pad, y_max + y_pad
     x_values = df[x_col].replace([np.inf, -np.inf], np.nan).dropna()
     x_limits = (
         float(np.nanpercentile(x_values, 1)),
@@ -364,14 +378,17 @@ def build_coefficient_path() -> None:
         # Was "Model 1 baseline (CDD+HDD)", a label no current notebook produces — this
         # figure had been silently drawing an M1 column from a stale table left over
         # from an earlier notebook version.
-        ("M1", "Model 1 baseline (climate controls)"),
-        ("M2A", "Model 2A (add bachelors)"),
-        ("M3", "Model 3B (temp only)"),
-        ("M4", "Model 4R interactions (centered, no poverty control)"),
-        ("M5", "Model 5 utility FE"),
-        ("M6", "Model 6B county fe"),
-        ("M7", "Model 7 (infrastructure controls, outcome-safe)"),
-        ("M8", "Model 8 add demand proxy"),
+        #
+        # Codes match Supplementary Table S1, so each tick names the exact variant drawn
+        # (M3B, not "M3"); the second line says what that variant changes.
+        ("M1", "Model 1 baseline (climate controls)", "M1\nCore"),
+        ("M2A", "Model 2A (add bachelors)", "M2A\n+ Education"),
+        ("M3B", "Model 3B (temp only)", "M3B\nMean temp.\ncontrol"),
+        ("M4R", "Model 4R interactions (centered, no poverty control)", "M4R\nInteractions,\nno poverty"),
+        ("M5", "Model 5 utility FE", "M5\n+ Utility FE"),
+        ("M6B", "Model 6B county fe", "M6B\nCounty FE"),
+        ("M7", "Model 7 (infrastructure controls, outcome-safe)", "M7\n+ Infrastructure"),
+        ("M8", "Model 8 add demand proxy", "M8\n+ Demand proxy"),
     ]
     outcomes = {
         "y_pv": "Solar PV",
@@ -388,7 +405,7 @@ def build_coefficient_path() -> None:
 
     frames = []
     for outcome in outcomes:
-        for short, label in model_map:
+        for short, label, _ in model_map:
             path = STANDARDIZED_TABLES / f"{outcome} | {label}.csv"
             df = load_coef(path)
             df = df[df["term"].isin(terms)].copy()
@@ -396,27 +413,28 @@ def build_coefficient_path() -> None:
             df["model_short"] = short
             frames.append(df)
     all_coefs = pd.concat(frames, ignore_index=True)
+    model_to_x = {short: i for i, (short, _, _) in enumerate(model_map)}
+    all_coefs["x"] = all_coefs["model_short"].map(model_to_x)
 
-    fig, axes = plt.subplots(3, 1, figsize=(12.8, 10.6), sharex=True, facecolor=PAPER_BG)
+    fig, axes = plt.subplots(3, 1, figsize=(12.8, 11.0), sharex=True, facecolor=PAPER_BG)
     x = np.arange(len(model_map))
 
     for ax, (outcome, title) in zip(axes, outcomes.items()):
         sub = all_coefs[all_coefs["outcome"] == outcome].copy()
         for term in terms:
-            s = sub[sub["term"] == term].copy()
-            s["model_short"] = pd.Categorical(s["model_short"], categories=[m[0] for m in model_map], ordered=True)
-            s = s.sort_values("model_short")
-            x_positions = [i for i, short in enumerate([m[0] for m in model_map]) if short in set(s["model_short"].astype(str))]
+            s = sub[sub["term"] == term].sort_values("x")
             color = TERM_COLORS.get(term, "#374151")
-            ax.plot(
-                x_positions,
-                s["coef"],
-                marker="o",
-                linewidth=2.1,
-                markersize=5.8,
-                color=color,
-                label=TERM_LABELS.get(term, term),
-            )
+            # Line only; markers are drawn separately so that fill can carry significance:
+            # filled = p < 0.05, hollow = p >= 0.05, the convention of Figs. 3 and 4 and
+            # Supplementary Figs. S1-S3. A term absent from a specification (poverty rate
+            # in M4R) has no marker there and the line joins its neighbours.
+            ax.plot(s["x"], s["coef"], linewidth=2.1, color=color,
+                    label=TERM_LABELS.get(term, term), zorder=2)
+            sig = s["pval"] < 0.05
+            ax.scatter(s.loc[sig, "x"], s.loc[sig, "coef"], s=48, facecolor=color,
+                       edgecolor="white", linewidth=0.9, zorder=4)
+            ax.scatter(s.loc[~sig, "x"], s.loc[~sig, "coef"], s=48, facecolor=HOLLOW_FACE,
+                       edgecolor=color, linewidth=1.5, zorder=4)
         ax.axhline(0, linestyle="--", linewidth=1.1, color=MUTED)
         ax.grid(axis="y", linestyle="-", linewidth=0.7)
         ax.set_title(title, fontsize=14, fontweight="bold", loc="left", pad=8)
@@ -425,11 +443,19 @@ def build_coefficient_path() -> None:
         ax.set_ylabel("Standardized coefficient")
 
     axes[-1].set_xticks(x)
-    axes[-1].set_xticklabels([m[0] for m in model_map])
-    axes[-1].set_xlabel("Model ladder")
-    handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="upper center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.955))
-    fig.tight_layout(rect=[0.03, 0.06, 0.985, 0.9])
+    axes[-1].set_xticklabels([tick for _, _, tick in model_map], fontsize=9.5, linespacing=1.15)
+    axes[-1].set_xlabel("Model series")
+    # Two legend rows: colour = term, fill = significance.
+    fig.legend(handles=term_color_handles(terms), loc="upper center", ncol=len(terms),
+               frameon=False, bbox_to_anchor=(0.5, 0.985), handletextpad=0.7, columnspacing=1.8)
+    fig.legend(handles=significance_marker_handles(), loc="upper center", ncol=2,
+               frameon=False, bbox_to_anchor=(0.5, 0.952), handletextpad=0.7, columnspacing=1.8)
+    fig.tight_layout(rect=[0.03, 0.02, 0.985, 0.91])
+    # Nature-style panel letters, level with each panel title (same 8 pt pad).
+    for ax, letter in zip(axes, "abc"):
+        ax.annotate(letter, xy=(-0.085, 1.0), xycoords="axes fraction", xytext=(0, 8),
+                    textcoords="offset points", fontsize=18, fontweight="bold",
+                    ha="left", va="bottom", color=TEXT)
     _save(fig, "coefficient_path_across_models.png")
 
 

@@ -62,18 +62,30 @@ TARGETS = {
         climate=["ghi_mean_kwh_m2_day_2023"],
         out=FIG_ROOT / "pv_maps" / "y_pv_model_1_baseline_climate_controls_spatial_figure.png",
         label="Solar PV adoption",
+        units="log(1 + kW per 1,000 residents)",
     ),
     "y_storage": dict(
         climate=["cdd65_2023", "hdd65_2023"],
         out=FIG_ROOT / "storage_maps" / "y_storage_model_1_baseline_climate_controls_spatial_figure.png",
         label="Storage deployment",
+        units="log(1 + MW per 100,000 residents)",
     ),
     "y_chargers": dict(
         climate=["cdd65_2023", "hdd65_2023"],
         out=FIG_ROOT / "chargers_maps" / "y_chargers_model_1_baseline_climate_controls_spatial_figure.png",
         label="EV charger availability",
+        units="log(1 + chargers per 1,000 residents)",
     ),
 }
+
+# California ZCTAs are the three-digit ZIP prefixes 900-961. Every one of them is drawn,
+# not only the analysis sample, so ZCTAs outside the sample show as grey rather than as
+# blank space that reads like missing geography.
+CA_ZIP3 = (900, 961)
+# Hatched rather than flat grey: coolwarm's midpoint is itself a light grey, so a flat
+# grey fill would be indistinguishable from a near-zero residual.
+OUT_OF_SAMPLE_STYLE = {"facecolor": "#ECECEC", "edgecolor": "#9A9A9A", "hatch": "//////",
+                       "linewidth": 0.1}
 
 
 def build_analysis_frame() -> pd.DataFrame:
@@ -142,21 +154,26 @@ def render_map(df: pd.DataFrame, zips: gpd.GeoDataFrame, ca_outline, outcome: st
     fig, axes = plt.subplots(1, 2, figsize=(16, 7))
     vmax = float(np.nanpercentile(merged["std_residual"].abs(), 99)) or 1.0
 
-    for ax, (col, cmap, title, kw) in zip(
+    for ax, (col, cmap, title, cbar_label, kw) in zip(
         axes,
         [
-            (outcome, "viridis", f"{cfg['label']}: observed", {}),
+            (outcome, "viridis", f"{cfg['label']}: observed", cfg["units"], {}),
             ("std_residual", "coolwarm", f"{cfg['label']}: Model 1 standardized residuals",
-             dict(vmin=-vmax, vmax=vmax)),
+             "Standardized residual (SD)", dict(vmin=-vmax, vmax=vmax)),
         ],
     ):
         merged.plot(column=col, cmap=cmap, linewidth=0.1, edgecolor="white", legend=True,
-                    ax=ax, missing_kwds={"color": "lightgray", "label": "No data"}, **kw)
+                    legend_kwds={"label": cbar_label},
+                    ax=ax, missing_kwds=OUT_OF_SAMPLE_STYLE, **kw)
         ca_outline.plot(ax=ax, facecolor="none", edgecolor=TEXT, linewidth=1.2, zorder=10)
         ax.set_title(title, fontsize=13, fontweight="bold", pad=8, color=TEXT)
         ax.axis("off")
 
-    fig.text(0.5, 0.02, f"ZIP-level, N = {int(res.nobs)}. Grey = outside the analysis sample.",
+    n_used = int(res.nobs)
+    n_grey = int(merged["std_residual"].isna().sum())
+    fig.text(0.5, 0.02,
+             f"ZCTA level; analysis sample N = {n_used:,}. Hatched grey: the {n_grey:,} other California "
+             "ZCTAs, outside the analysis sample (population under 1,000 or incomplete ACS data).",
              ha="center", fontsize=9, color=MUTED)
     fig.tight_layout(rect=[0, 0.04, 1, 1])
 
@@ -173,7 +190,10 @@ def main() -> None:
 
     zips = gpd.read_file(ZCTA_SHP)
     zips["zip_code"] = zips["ZCTA5CE20"].astype(str).str.zfill(5)
-    zips = zips[zips["zip_code"].isin(set(df["zip_code"].dropna()))][["zip_code", "geometry"]].copy()
+    zip3 = pd.to_numeric(zips["zip_code"].str[:3], errors="coerce")
+    zips = zips[zip3.between(*CA_ZIP3)][["zip_code", "geometry"]].copy()
+    in_sample = zips["zip_code"].isin(set(df["zip_code"].dropna()))
+    print(f"California ZCTAs drawn: {len(zips)} ({int(in_sample.sum())} in the analysis frame)")
 
     county = gpd.read_file(COUNTY_SHP)
     ca_outline = county[county["STATEFP"] == "06"].to_crs(zips.crs).dissolve()
