@@ -1,4 +1,4 @@
 predictor,outcome,endpoint_change,average_slope_mid90
-combined_nonwhite_share,y_pv,-0.18920437619504057,-0.21329607499220926
-combined_nonwhite_share,y_storage,-1.5822063970049505,-1.7836712928924692
-combined_nonwhite_share,y_chargers,-0.04772775875439128,-0.05380501135974019
+combined_nonwhite_share,y_pv,-1.035883428770764,-1.1677841387691288
+combined_nonwhite_share,y_storage,-1.5822063970049536,-1.7836712928924727
+combined_nonwhite_share,y_chargers,-0.0477277587543915,-0.05380501135974044

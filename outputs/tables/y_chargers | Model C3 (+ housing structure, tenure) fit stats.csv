@@ -1,6 +1,6 @@
 statistic,value
 nobs,1160
 df_resid,1146
-rsquared,0.20252347572964546
-rsquared_adj,0.1934770579150603
+rsquared,0.20430601484228617
+rsquared_adj,0.19527981780297532
 cov_type,HC1

@@ -1,8 +1,8 @@
 feature,VIF
-log_median_household_income,4.944304946585097
-log_median_housing_value,2.844063948935036
-poverty_rate,2.6765704469120277
-pct_hispanic,1.4330849924146998
-pct_asian,1.2945160759522092
-ghi_mean_kwh_m2_day_2023,1.1781292217828467
-pct_black,1.0533844490199933
+log_median_household_income,4.942299564824956
+log_median_housing_value,2.843493312158849
+poverty_rate,2.6759060218836366
+pct_hispanic,1.4343592818306814
+pct_asian,1.2944445429793074
+ghi_mean_kwh_m2_day_2023,1.1803930630654642
+pct_black,1.0533540921801228

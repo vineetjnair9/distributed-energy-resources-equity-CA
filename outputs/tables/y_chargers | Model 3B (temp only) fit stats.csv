@@ -1,2 +1,6 @@
-nobs,df_resid,rsquared,rsquared_adj,cov_type
-1390,1383.0,0.06747748566629319,0.0634318348448889,HC1
+statistic,value
+nobs,1390
+df_resid,1383
+rsquared,0.06936867094833365
+rsquared_adj,0.06533122483531129
+cov_type,HC1
