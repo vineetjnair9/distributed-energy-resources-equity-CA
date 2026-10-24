@@ -1,4 +1,10 @@
 predictor,outcome,endpoint_change,average_slope_mid90
+<<<<<<< Updated upstream
 combined_nonwhite_share,y_pv,-1.035883428770764,-1.1677841387691288
 combined_nonwhite_share,y_storage,-1.5822063970049536,-1.7836712928924727
 combined_nonwhite_share,y_chargers,-0.0477277587543915,-0.05380501135974044
+=======
+combined_nonwhite_share,y_pv,-1.0358834287707515,-1.1677841387691148
+combined_nonwhite_share,y_storage,-1.5822063970049502,-1.783671292892469
+combined_nonwhite_share,y_chargers,-0.047727758754391336,-0.05380501135974025
+>>>>>>> Stashed changes
