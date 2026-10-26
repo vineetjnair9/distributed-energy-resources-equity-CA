@@ -38,7 +38,7 @@ Column groups:
 
 The four housing-structure shares are exhaustive and sum to 1 within floating-point
 tolerance, with single-family as the natural omitted reference in regression use.
-Structure is complete for 1,717 ZIP/ZCTAs and owner occupancy for a similar count;
+Structure is complete for 1,717 ZIP/ZCTAs and owner occupancy for 1,713;
 coverage is not universal, so expect missingness on those columns.
 
 ## Scope
@@ -133,9 +133,10 @@ ACS snapshot matching its manifest hash.
 
 ## Citation
 
-If you use this dataset, please cite both this record and the accompanying paper,
-*The Unequal Energy Transition: Racial and Socioeconomic Disparities in Distributed
-Energy Resource Adoption Across California*.
+If you use this dataset, please cite both this record
+([10.5281/zenodo.22053001](https://doi.org/10.5281/zenodo.22053001), which resolves to the
+latest version) and the accompanying paper, *Inequity in distributed energy resource
+adoption is technology-specific, not uniform*.
 
 Underlying sources retain their own citation requirements — in particular LBNL
 *Tracking the Sun*, the USGS US Wind Turbine Database, CaliforniaDGStats

@@ -16,18 +16,19 @@ housing structure and tenure, NASA POWER climate and solar resource, utility ser
 territory, annual electricity demand from all three investor-owned utilities, and
 California Energy Commission energy burden and affordability measures.
 
-Using it. Geography is the 2023 ZCTA, keyed by `zip_code` as a five-digit string —
-read it as text, not as an integer. Coverage is not universal on every column: housing
-structure and tenure are complete for 1,717 ZCTAs and energy burden for 1,669, so expect
+Using it. Geography is the 2023 ZCTA, keyed by `zip_code` as a five-digit string — read it
+as text, not as an integer. Coverage is not universal on every column: housing structure
+is complete for 1,717 ZCTAs, tenure for 1,713, and energy burden for 1,669, so expect
 missingness rather than assuming a balanced panel. The four housing-structure shares are
 exhaustive and sum to one, with single-family the natural omitted reference.
 
-Beyond the panel. The record also carries the 347 coefficient tables behind every
-figure in the accompanying paper, so results can be redrawn without refitting; the raw
-inputs that have no stable public download URL, including LBNL's Tracking the Sun file;
-the exact Census API response and its query manifest, preserved because the Census serves
-current vintages rather than historical snapshots; and the pinned environment the pipeline
-runs under. `CHECKSUMS.sha256` covers every file.
+Beyond the panel. The record also carries the 740 model-output tables (254 coefficient
+tables with their VIF and fit statistics) behind every figure in the accompanying paper,
+so results can be redrawn without refitting; the raw inputs that have no stable public
+download URL, including LBNL's Tracking the Sun file; the exact Census API response and
+its query manifest, preserved because the Census serves current vintages rather than
+historical snapshots; and the pinned environment the pipeline runs under.
+`CHECKSUMS.sha256` covers every file.
 
 Underlying sources retain their own citation requirements, in particular LBNL Tracking the
 Sun, the USGS US Wind Turbine Database, CaliforniaDGStats, NASA POWER, the California
