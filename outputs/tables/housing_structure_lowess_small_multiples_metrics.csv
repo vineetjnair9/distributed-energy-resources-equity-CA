@@ -1,9 +1,4 @@
 predictor,outcome,endpoint_change,average_slope_mid90
-<<<<<<< Updated upstream
 pct_single_family_units,y_pv,2.2646976965703534,2.5163307739670597
 pct_single_family_units,y_storage,1.999915658474978,2.2221285094166423
-=======
-pct_single_family_units,y_pv,2.264697696570294,2.5163307739669936
-pct_single_family_units,y_storage,1.9999156584749787,2.222128509416643
->>>>>>> Stashed changes
 pct_single_family_units,y_chargers,-1.2484898555003325,-1.3872109505559251

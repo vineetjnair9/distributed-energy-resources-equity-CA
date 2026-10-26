@@ -1,10 +1,4 @@
 predictor,outcome,endpoint_change,average_slope_mid90
-<<<<<<< Updated upstream
 pct_bachelors_plus,y_pv,-0.6030359869399904,-0.6700399854888782
 pct_bachelors_plus,y_storage,0.6065667858620025,0.6739630954022251
 pct_bachelors_plus,y_chargers,1.1713959726844796,1.301551080760533
-=======
-pct_bachelors_plus,y_pv,-0.6030359869399975,-0.6700399854888862
-pct_bachelors_plus,y_storage,0.6065667858619992,0.6739630954022214
-pct_bachelors_plus,y_chargers,1.1713959726844878,1.3015510807605422
->>>>>>> Stashed changes
