@@ -481,11 +481,19 @@ def affordability_outliers(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
 
 # ------------------------------------------------------------ 10. SD conversion aid
 def sd_conversion(df: pd.DataFrame) -> pd.DataFrame:
-    """Predictor means and SDs, so a standardised coefficient can be read in points."""
+    """Predictor means and SDs, so a standardised coefficient can be read in points.
+
+    Computed on the regression sample (ZCTAs with every focal predictor, i.e. the 1,390
+    with income data, not all 1,422 above the population floor) and with the population
+    SD (ddof=0), because that is what regression.ipynb's StandardScaler uses. These are
+    therefore exactly the SDs behind the standardized coefficients in Tables 1-2.
+    """
+    reg = df.dropna(subset=FOCAL)
     sd = pd.DataFrame({
         "predictor": FOCAL,
-        "mean": [df[c].mean() for c in FOCAL],
-        "sd": [df[c].std() for c in FOCAL],
+        "n": len(reg),
+        "mean": [reg[c].mean() for c in FOCAL],
+        "sd": [reg[c].std(ddof=0) for c in FOCAL],
     })
     sd["one_sd_in_pp"] = np.where(sd["predictor"] == INCOME, np.nan, sd["sd"] * 100)
     return sd

@@ -72,6 +72,9 @@ COEFFICIENT_PATH_TERMS = ["log_median_household_income", "pct_black", "pct_hispa
 
 SPEC_CURVE_OUTCOMES = ["y_pv", "y_chargers", "y_storage", "y_wind_mw"]
 SPEC_CURVE_TERM = "log_median_household_income"
+# Supplementary Fig. S5 and the "n/48" column of Table 2 are about the race and ethnicity
+# terms, so the per-outcome spec-curve exports plot those (standardized, like Table 2).
+SPEC_CURVE_RACE_TERMS = ["pct_black", "pct_hispanic", "pct_asian"]
 SPEC_CURVE_BLOCK_LABELS = {
     "education": "Education",
     "housing_value": "Housing value",
@@ -226,6 +229,109 @@ def plot_spec_curve(spec_curve_df: pd.DataFrame, outcome: str, term: str, save_p
     plt.close(fig)
 
 
+def load_predictor_sds(spec_curve_df: pd.DataFrame, terms: list[str] = SPEC_CURVE_RACE_TERMS,
+                       outcomes: tuple[str, ...] = ("y_pv", "y_storage", "y_chargers")) -> dict[str, float]:
+    """Factor that puts spec_curve.csv's raw coefficients on the standardized_tables scale.
+
+    Calibrated against the saved standardized tables rather than recomputed, so Fig. S5 uses
+    exactly the scale of Tables 1-2: the "education" spec-curve fit is the same model as
+    Model 2A, so standardized / raw gives the predictor SD the tables used. The factor must
+    agree across outcomes, which confirms the two fits are the same model.
+    """
+    factors: dict[str, float] = {}
+    for term in terms:
+        ratios = []
+        for outcome in outcomes:
+            std = pd.read_csv(TAB_DIR / f"{outcome} | Model 2A (add bachelors).csv", index_col=0)
+            raw = spec_curve_df[(spec_curve_df["outcome"] == outcome) & (spec_curve_df["term"] == term)
+                                & (spec_curve_df["blocks"] == "education")]["coef"]
+            ratios.append(float(std.loc[term].iloc[0]) / float(raw.iloc[0]))
+        if max(ratios) - min(ratios) > 1e-6 * abs(ratios[0]):
+            raise ValueError(f"Inconsistent standardization factor for {term}: {ratios}")
+        factors[term] = ratios[0]
+    return factors
+
+
+def plot_spec_curve_terms(
+    spec_curve_df: pd.DataFrame,
+    outcome: str,
+    terms: list[str],
+    sds: dict[str, float],
+    save_path: Path,
+) -> dict[str, int]:
+    """One outcome, one column per focal term: sorted standardized coefficient with its 95%
+    interval above, block membership below. Fill = p < 0.05. Returns the n-significant-and-
+    same-signed count per term, which must equal Table 2's spec-curve column."""
+    apply_paper_style()
+    block_names = list(SPEC_CURVE_BLOCK_LABELS.keys())
+    fig, axes = plt.subplots(
+        2, len(terms), figsize=(5.4 * len(terms), 6.6),
+        gridspec_kw={"height_ratios": [2.3, 1.25], "hspace": 0.06, "wspace": 0.22},
+        facecolor=PAPER_BG, squeeze=False,
+    )
+    counts: dict[str, int] = {}
+    for j, term in enumerate(terms):
+        sub = spec_curve_df[(spec_curve_df["outcome"] == outcome) & (spec_curve_df["term"] == term)].copy()
+        if sub.empty:
+            raise MissingModelError(f"No spec-curve rows for {outcome} | {term}")
+        scale = sds[term]
+        sub["coef_std"] = sub["coef"] * scale
+        sub["lo"] = (sub["coef"] - 1.96 * sub["se"]) * scale
+        sub["hi"] = (sub["coef"] + 1.96 * sub["se"]) * scale
+        sub = sub.sort_values("coef_std").reset_index(drop=True)
+        sub["x"] = np.arange(len(sub))
+        sig = (sub["pval"] < 0.05).to_numpy()
+        same = (np.sign(sub["coef"]) == np.sign(sub["coef"].median())).to_numpy()
+        n_specs, n_ok = len(sub), int((sig & same).sum())
+        counts[term] = n_ok
+
+        color = TERM_COLORS.get(term, "#374151")
+        ax, axm = axes[0, j], axes[1, j]
+        ax.fill_between(sub["x"], sub["lo"], sub["hi"], color=color, alpha=0.15, linewidth=0)
+        ax.plot(sub["x"], sub["coef_std"], color=color, lw=1.1, alpha=0.55)
+        ax.scatter(sub.loc[sig, "x"], sub.loc[sig, "coef_std"], s=22, facecolor=color,
+                   edgecolor="white", linewidth=0.5, zorder=4)
+        ax.scatter(sub.loc[~sig, "x"], sub.loc[~sig, "coef_std"], s=22, facecolor=HOLLOW_FACE,
+                   edgecolor=color, linewidth=1.0, zorder=4)
+        ax.axhline(0, linestyle="--", linewidth=1.0, color=MUTED)
+        ax.grid(axis="y", linestyle="-", linewidth=0.7)
+        ax.spines["left"].set_color(GRID)
+        ax.spines["bottom"].set_visible(False)
+        ax.tick_params(axis="x", length=0, labelbottom=False)
+        ax.set_xlim(-0.8, n_specs - 0.2)
+        ax.set_title(f"{TERM_LABELS.get(term, term)}: {n_ok}/{n_specs} significant, same sign",
+                     fontsize=12, fontweight="bold", loc="left", pad=8)
+        if j == 0:
+            ax.set_ylabel("Standardized coefficient")
+
+        for i, name in enumerate(block_names):
+            y = len(block_names) - 1 - i
+            present = sub["blocks"].map(lambda s, name=name: name in str(s).split("+")).to_numpy()
+            axm.scatter(sub.loc[present, "x"], np.full(int(present.sum()), y), s=9, color=MUTED, marker="s")
+        axm.set_ylim(-0.6, len(block_names) - 0.4)
+        axm.set_xlim(-0.8, n_specs - 0.2)
+        axm.set_yticks(range(len(block_names)))
+        axm.set_yticklabels([SPEC_CURVE_BLOCK_LABELS[n] for n in reversed(block_names)] if j == 0 else [],
+                            fontsize=9)
+        axm.tick_params(axis="both", length=0, labelbottom=False)
+        for side in ("left", "top", "right"):
+            axm.spines[side].set_visible(False)
+        axm.set_xlabel("Specification, sorted by coefficient", fontsize=9)
+
+    fig.suptitle(OUTCOME_DISPLAY.get(outcome, outcome), x=0.06, ha="left", fontsize=15, fontweight="bold")
+    fig.legend(handles=significance_marker_handles(), loc="upper right", ncol=2, frameon=False,
+               bbox_to_anchor=(0.985, 1.0), fontsize=10)
+    fig.subplots_adjust(left=0.08, right=0.985, top=0.86, bottom=0.07)
+    transparent = HOLLOW_FACE == "none"
+    if transparent:
+        fig.patch.set_alpha(0)
+        for a in fig.axes:
+            a.patch.set_alpha(0)
+    fig.savefig(save_path, dpi=320, bbox_inches="tight", transparent=transparent)
+    plt.close(fig)
+    return counts
+
+
 def main() -> None:
     all_coefs = load_all_coefs(TAB_DIR)
     generated = []
@@ -254,10 +360,11 @@ def main() -> None:
     spec_curve_csv = RAW_TAB_DIR / "spec_curve.csv"
     if spec_curve_csv.exists():
         spec_curve_df = load_spec_curve(spec_curve_csv)
+        sds = load_predictor_sds(spec_curve_df)
         for outcome in SPEC_CURVE_OUTCOMES:
             save_path = FIG_DIR / f"spec_curve_{outcome}.png"
             try:
-                plot_spec_curve(spec_curve_df, outcome, SPEC_CURVE_TERM, save_path)
+                plot_spec_curve_terms(spec_curve_df, outcome, SPEC_CURVE_RACE_TERMS, sds, save_path)
                 generated.append(save_path)
             except MissingModelError as exc:
                 skipped.append(f"spec_curve_{outcome}.png: {exc}")

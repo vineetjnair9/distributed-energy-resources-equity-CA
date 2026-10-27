@@ -925,13 +925,14 @@ def plot_charger_subtype_comparison(
     for ax in axes[2:]:
         ax.set_xlabel("Standardized coefficient estimate")
 
-    fig.tight_layout(rect=[0.03, 0.13, 0.985, 0.985])
+    fig.tight_layout(rect=[0.03, 0.11, 0.985, 0.985])
+    # Significance is carried by marker fill (filled = p < 0.05); the figure draws no
+    # stars, so no star-threshold note.
     add_figure_legend(
         fig,
         term_color_handles(var_order) + [ci_handle()] + significance_marker_handles(),
         ncol=4,
-        y=0.058,
-        note=SIG_NOTE,
+        y=0.045,
     )
     _finish_figure(fig, save_path)
     return fig
