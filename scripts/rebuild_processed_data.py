@@ -363,11 +363,24 @@ def write_csv(df: pd.DataFrame, path: Path, *, index: bool = False) -> None:
     LOGGER.info("Wrote %s (%s rows)", path.relative_to(ROOT), len(df))
 
 
+STORAGE_RECORDS_XLSX = "Storage_Map_Zip_Pie_Full Data_data.xlsx"
+
+
 def build_storage_der() -> pd.DataFrame:
-    storage = pd.read_excel(RAW / "storage" / "Storage_LatLong.xlsx")
+    """Customer-sited storage systems, one row per CEC survey record.
+
+    Built from the record-level export of the CEC Energy Storage System Survey.
+    `Storage_LatLong.xlsx` is the same export already summed to ZIP x sector, and
+    applying DER_THRESHOLD to those sums (as this function used to) dropped every ZIP
+    whose *total* residential storage exceeded 5 MW -- 49 of the highest-adoption ZIPs
+    lost all of their residential capacity. The threshold is a per-system size cut, so
+    it is applied here to individual records, before aggregation. Records approved after
+    the analysis year are dropped, matching the Tracking the Sun cutoff.
+    """
+    storage = pd.read_excel(RAW / "storage" / STORAGE_RECORDS_XLSX)
     rename_map = {
         "Utility": "utility_name",
-        "Nameplate Capacity (MW)": "storage_capacity_mw",
+        "Nameplate Capacity (MW)": "nameplate_capacity_mw_reported",
         "Nameplate Capacity (in KW AC)": "nameplate_capacity_kw_ac",
         "Fuel Type": "fuel_type",
         "Facility City": "city",
@@ -379,16 +392,25 @@ def build_storage_der() -> pd.DataFrame:
         "Technology Type": "technology_type",
         "Disconnect Date": "disconnect_date",
         "OG Reported Technology Type": "og_reported_technology_type",
-        "Count of Nameplate Capacity (in KW AC)": "count_of_nameplate_capacity_kw_ac",
-        "Latitude (generated)": "latitude",
-        "Longitude (generated)": "longitude",
     }
     storage = storage.rename(columns=rename_map)
     storage["storage_capacity_mw"] = pd.to_numeric(storage["nameplate_capacity_kw_ac"], errors="coerce") / 1000.0
     storage_der = storage[storage["sector"].isin(["Residential", "Commercial"])].copy()
     storage_der = storage_der[storage_der["storage_capacity_mw"] <= DER_THRESHOLD].copy()
+    # Same 2023 alignment as Tracking the Sun: the export runs to early 2025, and about a
+    # third of customer-sited capacity was approved after 2023. Undated records are kept.
+    approved = pd.to_datetime(storage_der["approval_date"], errors="coerce")
+    after_cutoff = approved > pd.Timestamp(f"{YEAR}-12-31")
+    LOGGER.info(
+        "Storage date filter: dropping %s records approved after %s-12-31; %s undated records retained.",
+        int(after_cutoff.sum()), YEAR, int(approved.isna().sum()),
+    )
+    storage_der = storage_der[~after_cutoff].copy()
     storage_der["zip_code"] = clean_zip(storage_der["zip_code"])
     storage_der = storage_der[is_valid_zip(storage_der["zip_code"])].copy()
+    keep = ["zip_code", "sector", "storage_capacity_mw", "nameplate_capacity_kw_ac",
+            "approval_date", "technology_type", "utility_name", "county"]
+    storage_der = storage_der[[c for c in keep if c in storage_der.columns]]
     write_csv(storage_der, PROCESSED / "storage_der.csv")
     return storage_der
 

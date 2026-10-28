@@ -44,7 +44,9 @@ sys.path.append(str(ROOT / "scripts"))
 from model_helpers import common_sample_index, fit_stats, pv_kw_per_1000, run_ols  # noqa: E402
 
 DATA = ROOT / "data/processed/combined_der_dataset_w_controls_predictors.csv"
-STORAGE_XLSX = ROOT / "data/raw/storage/EnergyStorage_Cleaned_August2024_ada.xlsx"
+# Record-level CEC survey export: the same source rebuild_processed_data.py aggregates.
+STORAGE_XLSX = ROOT / "data/raw/storage/Storage_Map_Zip_Pie_Full Data_data.xlsx"
+STORAGE_MAX_MW = 5.0  # per-system DER size cut, as in rebuild_processed_data.DER_THRESHOLD
 CHARGERS = ROOT / "data/processed/ev_chargers.csv"
 SPEC_CURVE = ROOT / "outputs/tables/spec_curve.csv"
 OUT = ROOT / "outputs/nature_revision"
@@ -245,9 +247,17 @@ def storage_by_sector(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     sectors = x["Customer Sector"].value_counts(dropna=False).to_dict()
     x["zip"] = pd.to_numeric(x["Facility Zip"], errors="coerce")
     kw = "Nameplate Capacity (in KW AC)"
-    all_mw = x.groupby("zip")[kw].sum() / 1_000.0
-    res = x[x["Customer Sector"].astype(str).str.strip().eq("Residential")]
+    x[kw] = pd.to_numeric(x[kw], errors="coerce")
+    sector = x["Customer Sector"].astype(str).str.strip()
+    x = x[x[kw] <= STORAGE_MAX_MW * 1_000.0]
+    # same 2023 approval cutoff as rebuild_processed_data.build_storage_der
+    x = x[~(pd.to_datetime(x["Approval Date"], errors="coerce") > pd.Timestamp("2023-12-31"))]
+    sector = sector.loc[x.index]
+    cust = x[sector.isin(["Residential", "Commercial"])]
+    all_mw = cust.groupby("zip")[kw].sum() / 1_000.0
+    res = x[sector.eq("Residential")]
     res_mw = res.groupby("zip")[kw].sum() / 1_000.0
+    capacity_mw = (x.groupby(sector)[kw].sum() / 1_000.0).round(3).to_dict()
 
     d = df.copy()
     d["zip"] = pd.to_numeric(d["zip_code"], errors="coerce")
@@ -255,7 +265,7 @@ def storage_by_sector(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     d["stor_res"] = d["zip"].map(res_mw).fillna(0)
 
     rows = []
-    for col, label in [("stor_all", "all sectors"), ("stor_res", "residential only")]:
+    for col, label in [("stor_all", "customer-sited (residential + commercial)"), ("stor_res", "residential only")]:
         y = f"y_{col}"
         d[y] = np.log1p(d[col] * 100_000 / d["total_population"])
         cols = [y, INCOME] + RACE + COMMON + climate_for("y_storage")
@@ -268,7 +278,9 @@ def storage_by_sector(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
                          "N": int(m.nobs), "R2": m.rsquared})
     meta = {
         "sector_counts": sectors,
-        "corr_with_processed": float(d[["storage_capacity_mw", "stor_res"]].corr().iloc[0, 1]),
+        "capacity_mw_by_sector_le5mw": capacity_mw,
+        "corr_with_processed": float(d[["storage_capacity_mw", "stor_all"]].corr().iloc[0, 1]),
+        "corr_res_with_processed": float(d[["storage_capacity_mw", "stor_res"]].corr().iloc[0, 1]),
     }
     return pd.DataFrame(rows), meta
 
@@ -529,7 +541,7 @@ def main() -> None:
     write("storage_by_sector.csv", sector)
     if meta:
         print(f"   sectors: {meta['sector_counts']}")
-        print(f"   residential-only reconstruction vs processed column: "
+        print(f"   customer-sited reconstruction vs processed column: "
               f"r = {meta['corr_with_processed']:.3f}")
 
     print("\n4. SD conversion")

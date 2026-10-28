@@ -1,7 +1,7 @@
 statistic,value
 nobs,1160
 df_resid,1100
-rsquared,0.4518788355233604
-rsquared_adj,0.4224796094287042
+rsquared,0.5612521025449516
+rsquared_adj,0.5377192607723627
 cov_type,cluster
 n_clusters,42

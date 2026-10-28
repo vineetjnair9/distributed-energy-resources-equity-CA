@@ -31,10 +31,10 @@ y_pv,log_median_household_income,46,48
 y_pv,pct_asian,34,48
 y_pv,pct_black,28,48
 y_pv,pct_hispanic,31,48
-y_storage,log_median_household_income,44,48
+y_storage,log_median_household_income,48,48
 y_storage,pct_asian,48,48
 y_storage,pct_black,36,48
-y_storage,pct_hispanic,44,48
+y_storage,pct_hispanic,48,48
 y_wind_mw,log_median_household_income,0,48
 y_wind_mw,pct_asian,0,48
 y_wind_mw,pct_black,0,48

@@ -77,8 +77,9 @@ Each of these has a known origin, recorded in the markdown cells of
 download: the files are dashboard exports, so the source page is citable but the exact
 workbook cannot yet be re-fetched by URL and checksummed.
 
-- `data/raw/storage/Storage_LatLong.xlsx`
-- `data/raw/storage/EnergyStorage_Cleaned_August2024_ada.xlsx`
+- `data/raw/storage/Storage_Map_Zip_Pie_Full Data_data.xlsx` (record-level export; the storage outcome is built from this file)
+- `data/raw/storage/Storage_LatLong.xlsx` (the same export summed to ZIP x sector; no longer read by the pipeline)
+- `data/raw/storage/EnergyStorage_Cleaned_August2024_ada.xlsx` (an earlier cleaned extract; not used)
   Source: California Energy Commission, California Energy Storage System Survey.
   Public page: https://www.energy.ca.gov/data-reports/energy-almanac/california-electricity-data/california-energy-storage-system-survey
   Granularity: ZIP code, with customer sector and nameplate capacity in kW AC.

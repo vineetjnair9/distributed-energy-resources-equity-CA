@@ -10,7 +10,7 @@ geographies. Assembling it into one consistent panel is the point of this releas
 
 ## The headline file
 
-`combined_der_dataset_w_controls_predictors.csv` — **2,549 ZIP/ZCTAs × 50 columns**.
+`combined_der_dataset_w_controls_predictors.csv` — **2,548 ZIP/ZCTAs × 50 columns**.
 This is the analysis-ready panel; the other files are the inputs and intermediates
 behind it, published so results can be traced rather than taken on trust.
 

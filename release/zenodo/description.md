@@ -8,7 +8,7 @@ single 2023 panel keyed to Census ZIP Code Tabulation Areas, so questions that r
 comparing technologies — who has storage but not solar, where charging is dense but
 residential access is not — can be asked directly.
 
-Coverage. 2,549 California ZCTAs by 50 columns. Rooftop solar PV capacity, battery
+Coverage. 2,548 California ZCTAs by 50 columns. Rooftop solar PV capacity, battery
 storage capacity, EV charging counts split by Level 1, Level 2 and DC fast, EV
 registrations, wind capacity and turbine counts, and power-plant capacity. Each is joined
 to American Community Survey 2023 five-year demographics and socioeconomics, exhaustive
